@@ -1,6 +1,6 @@
-package com.demo.tourwave.domain.handler
+package com.demo.tourwave.domain.user.handler
 
-import com.demo.tourwave.domain.User
+import com.demo.tourwave.domain.user.User
 
 interface UserCommandHandler {
     fun registerUser(name: String, email: String): User

@@ -1,4 +1,4 @@
-package com.demo.tourwave.domain
+package com.demo.tourwave.domain.user
 
 class User(
     val name: String,

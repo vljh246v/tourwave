@@ -1,9 +1,9 @@
-package com.demo.tourwave.domain.service
+package com.demo.tourwave.domain.user.service
 
 import org.springframework.stereotype.Service
-import com.demo.tourwave.domain.User
-import com.demo.tourwave.domain.handler.UserCommandHandler
-import com.demo.tourwave.domain.port.UserQueryPort
+import com.demo.tourwave.domain.user.User
+import com.demo.tourwave.domain.user.handler.UserCommandHandler
+import com.demo.tourwave.domain.user.port.UserQueryPort
 
 @Service
 class UserCommandService(

@@ -1,8 +1,8 @@
 package com.demo.tourwave.repository
 
 import org.springframework.stereotype.Component
-import com.demo.tourwave.domain.User
-import com.demo.tourwave.domain.port.UserQueryPort
+import com.demo.tourwave.domain.user.User
+import com.demo.tourwave.domain.user.port.UserQueryPort
 
 @Component
 class UserPersistent: UserQueryPort {
