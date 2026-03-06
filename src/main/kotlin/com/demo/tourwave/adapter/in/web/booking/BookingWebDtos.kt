@@ -1,15 +1,15 @@
-package com.demo.tourwave.domain.booking.application
+package com.demo.tourwave.adapter.`in`.web.booking
 
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import java.time.Instant
 
-data class BookingCreateRequest(
+data class BookingCreateWebRequest(
     val partySize: Int,
     val noteToOperator: String? = null
 )
 
-data class BookingResponse(
+data class BookingCreateWebResponse(
     val id: Long,
     val organizationId: Long,
     val occurrenceId: Long,
@@ -20,9 +20,4 @@ data class BookingResponse(
     val currency: String? = null,
     val amountPaid: Int? = null,
     val createdAt: Instant
-)
-
-data class BookingCreateResult(
-    val status: Int,
-    val body: BookingResponse
 )

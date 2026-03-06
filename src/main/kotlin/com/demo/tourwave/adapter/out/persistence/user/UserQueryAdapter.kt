@@ -1,8 +1,8 @@
-package com.demo.tourwave.repository
+package com.demo.tourwave.adapter.out.persistence.user
 
-import org.springframework.stereotype.Component
+import com.demo.tourwave.application.user.port.UserQueryPort
 import com.demo.tourwave.domain.user.User
-import com.demo.tourwave.domain.user.port.UserQueryPort
+import org.springframework.stereotype.Component
 
 @Component
 class UserQueryAdapter: UserQueryPort {

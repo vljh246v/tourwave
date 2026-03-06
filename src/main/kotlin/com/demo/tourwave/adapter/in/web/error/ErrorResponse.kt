@@ -1,4 +1,4 @@
-package com.demo.tourwave.api
+package com.demo.tourwave.adapter.`in`.web.error
 
 import com.demo.tourwave.domain.common.ErrorCode
 

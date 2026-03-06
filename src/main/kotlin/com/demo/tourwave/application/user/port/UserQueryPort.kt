@@ -1,4 +1,4 @@
-package com.demo.tourwave.domain.user.port
+package com.demo.tourwave.application.user.port
 
 import com.demo.tourwave.domain.user.User
 

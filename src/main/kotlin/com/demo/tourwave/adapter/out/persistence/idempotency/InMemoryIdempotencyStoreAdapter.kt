@@ -1,5 +1,9 @@
-package com.demo.tourwave.domain.common
+package com.demo.tourwave.adapter.out.persistence.idempotency
 
+import com.demo.tourwave.application.common.port.IdempotencyDecision
+import com.demo.tourwave.application.common.port.IdempotencyStore
+import com.demo.tourwave.domain.common.DomainException
+import com.demo.tourwave.domain.common.ErrorCode
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
@@ -23,7 +27,7 @@ data class IdempotencyScope(
 )
 
 @Component
-class InMemoryIdempotencyStore : IdempotencyStore {
+class InMemoryIdempotencyStoreAdapter : IdempotencyStore {
     private val records = ConcurrentHashMap<IdempotencyScope, IdempotencyRecord>()
 
     override fun reserveOrReplay(

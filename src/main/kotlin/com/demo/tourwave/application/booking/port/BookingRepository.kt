@@ -1,4 +1,4 @@
-package com.demo.tourwave.domain.booking.repository
+package com.demo.tourwave.application.booking.port
 
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus

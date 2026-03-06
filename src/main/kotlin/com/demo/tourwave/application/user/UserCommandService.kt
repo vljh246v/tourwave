@@ -1,11 +1,8 @@
-package com.demo.tourwave.domain.user.service
+package com.demo.tourwave.application.user
 
-import org.springframework.stereotype.Service
+import com.demo.tourwave.application.user.port.UserQueryPort
 import com.demo.tourwave.domain.user.User
-import com.demo.tourwave.domain.user.handler.UserCommandHandler
-import com.demo.tourwave.domain.user.port.UserQueryPort
 
-@Service
 class UserCommandService(
     private val userQueryPort: UserQueryPort
 ): UserCommandHandler {

@@ -1,4 +1,4 @@
-package com.demo.tourwave.domain.booking.application
+package com.demo.tourwave.application.booking
 
 enum class BookingMutationType(
     val pathTemplate: String
@@ -10,7 +10,13 @@ enum class BookingMutationType(
     OFFER_DECLINE("/bookings/{bookingId}/offer/decline")
 }
 
-data class BookingMutationResult(
-    val status: Int
+data class MutateBookingCommand(
+    val bookingId: Long,
+    val actorUserId: Long,
+    val idempotencyKey: String,
+    val mutationType: BookingMutationType
 )
 
+data class MutateBookingResult(
+    val status: Int
+)

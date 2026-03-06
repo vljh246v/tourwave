@@ -1,4 +1,6 @@
-package com.demo.tourwave.domain.occurrence
+package com.demo.tourwave.application.booking.port
+
+import com.demo.tourwave.domain.occurrence.Occurrence
 
 interface OccurrenceRepository {
     fun getOrCreate(occurrenceId: Long): Occurrence

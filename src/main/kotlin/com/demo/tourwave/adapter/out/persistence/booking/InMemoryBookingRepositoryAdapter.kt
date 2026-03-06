@@ -1,5 +1,6 @@
-package com.demo.tourwave.domain.booking.repository
+package com.demo.tourwave.adapter.out.persistence.booking
 
+import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import org.springframework.stereotype.Repository
@@ -7,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Repository
-class InMemoryBookingRepository : BookingRepository {
+class InMemoryBookingRepositoryAdapter : BookingRepository {
     private val sequence = AtomicLong(0)
     private val bookings = ConcurrentHashMap<Long, Booking>()
 

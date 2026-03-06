@@ -1,12 +1,12 @@
 package com.demo.tourwave.domain.booking.application
 
+import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
-import com.demo.tourwave.domain.booking.repository.BookingRepository
-import com.demo.tourwave.domain.common.IdempotencyStore
 import com.demo.tourwave.domain.occurrence.Occurrence
-import com.demo.tourwave.domain.occurrence.OccurrenceRepository
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

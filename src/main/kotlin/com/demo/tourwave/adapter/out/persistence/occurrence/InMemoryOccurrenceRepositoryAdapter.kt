@@ -1,10 +1,13 @@
-package com.demo.tourwave.domain.occurrence
+package com.demo.tourwave.adapter.out.persistence.occurrence
 
+import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.domain.occurrence.Occurrence
+import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 
 @Repository
-class InMemoryOccurrenceRepository : OccurrenceRepository {
+class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
     private val occurrences = ConcurrentHashMap<Long, Occurrence>()
 
     override fun getOrCreate(occurrenceId: Long): Occurrence {

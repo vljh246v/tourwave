@@ -1,4 +1,4 @@
-package com.demo.tourwave.domain.common
+package com.demo.tourwave.application.common.port
 
 interface IdempotencyStore {
     fun reserveOrReplay(

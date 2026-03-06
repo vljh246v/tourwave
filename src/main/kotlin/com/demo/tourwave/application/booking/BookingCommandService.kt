@@ -1,65 +1,58 @@
-package com.demo.tourwave.domain.booking.application
+package com.demo.tourwave.application.booking
 
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
-import com.demo.tourwave.domain.common.IdempotencyDecision
-import com.demo.tourwave.domain.common.IdempotencyStore
-import com.demo.tourwave.domain.booking.repository.BookingRepository
-import com.demo.tourwave.domain.occurrence.OccurrenceRepository
+import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.common.port.IdempotencyDecision
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
-import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.Clock
 
-@Service
 class BookingCommandService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
     private val idempotencyStore: IdempotencyStore,
     private val clock: Clock
 ) {
-    fun createBooking(
-        occurrenceId: Long,
-        actorUserId: Long,
-        idempotencyKey: String,
-        request: BookingCreateRequest
-    ): BookingCreateResult {
-        validateCreateRequest(request)
+    fun createBooking(command: CreateBookingCommand): CreateBookingResult {
+        validateCreateRequest(command)
 
         val pathTemplate = "/occurrences/{occurrenceId}/bookings"
-        val requestHash = requestHash(occurrenceId, request)
+        val requestHash = requestHash(command)
 
         return when (
             val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = actorUserId,
+                actorUserId = command.actorUserId,
                 method = "POST",
                 pathTemplate = pathTemplate,
-                idempotencyKey = idempotencyKey,
+                idempotencyKey = command.idempotencyKey,
                 requestHash = requestHash
             )
         ) {
-            is IdempotencyDecision.Replay -> BookingCreateResult(
+            is IdempotencyDecision.Replay -> CreateBookingResult(
                 status = decision.status,
-                body = decision.body as BookingResponse
+                booking = decision.body as BookingCreated
             )
 
             IdempotencyDecision.Reserved -> {
-                val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
+                val occurrence = occurrenceRepository.getOrCreate(command.occurrenceId)
 
                 if (occurrence.status == OccurrenceStatus.CANCELED) {
                     throw DomainException(
                         errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
                         status = 409,
                         message = "Occurrence is already canceled",
-                        details = mapOf("occurrenceId" to occurrenceId)
+                        details = mapOf("occurrenceId" to command.occurrenceId)
                     )
                 }
 
                 val unavailableSeats = bookingRepository.findByOccurrenceAndStatuses(
-                    occurrenceId = occurrenceId,
+                    occurrenceId = command.occurrenceId,
                     statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
                 ).sumOf { it.partySize }
 
@@ -69,13 +62,13 @@ class BookingCommandService(
                     Booking.create(
                         occurrenceId = occurrence.id,
                         organizationId = occurrence.organizationId,
-                        leaderUserId = actorUserId,
-                        partySize = request.partySize,
+                        leaderUserId = command.actorUserId,
+                        partySize = command.partySize,
                         availableSeats = availableSeats
                     ).copy(createdAt = clock.instant())
                 )
 
-                val response = BookingResponse(
+                val response = BookingCreated(
                     id = requireNotNull(created.id),
                     organizationId = created.organizationId,
                     occurrenceId = created.occurrenceId,
@@ -87,89 +80,84 @@ class BookingCommandService(
                 )
 
                 idempotencyStore.complete(
-                    actorUserId = actorUserId,
+                    actorUserId = command.actorUserId,
                     method = "POST",
                     pathTemplate = pathTemplate,
-                    idempotencyKey = idempotencyKey,
+                    idempotencyKey = command.idempotencyKey,
                     status = 201,
                     body = response
                 )
 
-                BookingCreateResult(status = 201, body = response)
+                CreateBookingResult(status = 201, booking = response)
             }
         }
     }
 
-    fun mutateBooking(
-        bookingId: Long,
-        actorUserId: Long,
-        idempotencyKey: String,
-        mutationType: BookingMutationType
-    ): BookingMutationResult {
-        val requestHash = requestHashForMutation(bookingId, mutationType)
+    fun mutateBooking(command: MutateBookingCommand): MutateBookingResult {
+        val requestHash = requestHashForMutation(command)
 
         return when (
             val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = actorUserId,
+                actorUserId = command.actorUserId,
                 method = "POST",
-                pathTemplate = mutationType.pathTemplate,
-                idempotencyKey = idempotencyKey,
+                pathTemplate = command.mutationType.pathTemplate,
+                idempotencyKey = command.idempotencyKey,
                 requestHash = requestHash
             )
         ) {
-            is IdempotencyDecision.Replay -> BookingMutationResult(status = decision.status)
+            is IdempotencyDecision.Replay -> MutateBookingResult(status = decision.status)
             IdempotencyDecision.Reserved -> {
-                val booking = bookingRepository.findById(bookingId)
+                val booking = bookingRepository.findById(command.bookingId)
                     ?: throw DomainException(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "Booking not found",
-                        details = mapOf("bookingId" to bookingId)
+                        details = mapOf("bookingId" to command.bookingId)
                     )
 
-                val mutated = when (mutationType) {
+                val mutated = when (command.mutationType) {
                     BookingMutationType.APPROVE -> approveBooking(booking)
                     BookingMutationType.REJECT -> rejectBooking(booking)
                     BookingMutationType.CANCEL -> cancelBooking(booking)
-                    BookingMutationType.OFFER_ACCEPT -> acceptOffer(booking, actorUserId)
-                    BookingMutationType.OFFER_DECLINE -> declineOffer(booking, actorUserId)
+                    BookingMutationType.OFFER_ACCEPT -> acceptOffer(booking, command.actorUserId)
+                    BookingMutationType.OFFER_DECLINE -> declineOffer(booking, command.actorUserId)
                 }
 
                 bookingRepository.save(mutated)
 
                 idempotencyStore.complete(
-                    actorUserId = actorUserId,
+                    actorUserId = command.actorUserId,
                     method = "POST",
-                    pathTemplate = mutationType.pathTemplate,
-                    idempotencyKey = idempotencyKey,
+                    pathTemplate = command.mutationType.pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
                     status = 204,
                     body = mapOf("ok" to true)
                 )
 
-                BookingMutationResult(status = 204)
+                MutateBookingResult(status = 204)
             }
         }
     }
 
-    private fun validateCreateRequest(request: BookingCreateRequest) {
-        if (request.partySize !in 1..50) {
+    private fun validateCreateRequest(command: CreateBookingCommand) {
+        if (command.partySize !in 1..50) {
             throw DomainException(
                 errorCode = ErrorCode.PARTY_SIZE_OUT_OF_RANGE,
                 status = 422,
                 message = "partySize must be between 1 and 50",
-                details = mapOf("partySize" to request.partySize)
+                details = mapOf("partySize" to command.partySize)
             )
         }
     }
 
-    private fun requestHash(occurrenceId: Long, request: BookingCreateRequest): String {
-        val raw = "$occurrenceId|${request.partySize}|${request.noteToOperator ?: ""}"
+    private fun requestHash(command: CreateBookingCommand): String {
+        val raw = "${command.occurrenceId}|${command.partySize}|${command.noteToOperator ?: ""}"
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
-    private fun requestHashForMutation(bookingId: Long, mutationType: BookingMutationType): String {
-        val raw = "$bookingId|${mutationType.name}"
+    private fun requestHashForMutation(command: MutateBookingCommand): String {
+        val raw = "${command.bookingId}|${command.mutationType.name}"
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
     }

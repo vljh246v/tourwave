@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.whenever
+import com.demo.tourwave.application.user.UserCommandService
+import com.demo.tourwave.application.user.port.UserQueryPort
 import com.demo.tourwave.domain.user.User
-import com.demo.tourwave.domain.user.port.UserQueryPort
-import com.demo.tourwave.domain.user.service.UserCommandService
 
 class UserCommandServiceTest {
 

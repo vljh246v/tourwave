@@ -1,4 +1,4 @@
-package com.demo.tourwave.domain.user.handler
+package com.demo.tourwave.application.user
 
 import com.demo.tourwave.domain.user.User
 
