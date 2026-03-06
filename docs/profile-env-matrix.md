@@ -15,6 +15,12 @@
 | beta | `beta` | `pre-production` | 없음(필수 env) | 없음(필수 env) |
 | real | `real` | `production` | 없음(필수 env) | 없음(필수 env) |
 
+## CI 필수 env 검증 정책
+
+- CI는 `scripts/check-required-env.sh`를 사용해 `alpha`, `beta`, `real` 프로파일만 fail-fast 검증
+- `local` 프로파일은 CI 필수 검증 대상에서 제외
+- 누락된 값이 있으면 키 이름만 출력하고 즉시 실패 (값은 출력 금지)
+
 ## 공통 환경변수
 
 - `IDEMPOTENCY_TTL_SECONDS` (선택, 기본값 `86400`)
