@@ -5,9 +5,12 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
+import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
+import com.demo.tourwave.domain.inquiry.Inquiry
+import com.demo.tourwave.domain.inquiry.InquiryStatus
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import org.junit.jupiter.api.BeforeEach
@@ -17,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -44,6 +48,9 @@ class BookingControllerIntegrationTest {
     private lateinit var inquiryRepository: InquiryRepository
 
     @Autowired
+    private lateinit var reviewRepository: ReviewRepository
+
+    @Autowired
     private lateinit var auditEventAdapter: InMemoryAuditEventAdapter
 
     @BeforeEach
@@ -52,6 +59,7 @@ class BookingControllerIntegrationTest {
         occurrenceRepository.clear()
         idempotencyStore.clear()
         inquiryRepository.clear()
+        reviewRepository.clear()
         auditEventAdapter.clear()
     }
 
@@ -71,6 +79,20 @@ class BookingControllerIntegrationTest {
             .andExpect(jsonPath("$.paymentStatus").value("AUTHORIZED"))
             .andExpect(jsonPath("$.organizationId").value(31))
             .andExpect(jsonPath("$.userId").value(101))
+    }
+
+    @Test
+    fun `create booking requires actor user header`() {
+        occurrenceRepository.save(Occurrence(id = 70011L, organizationId = 31L, capacity = 10))
+
+        mockMvc.perform(
+            post("/occurrences/70011/bookings")
+                .header("Idempotency-Key", "idem-authz-k-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"partySize":2}""")
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"))
     }
 
     @Test
@@ -751,6 +773,30 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
+    fun `inquiry create requires actor user header`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 73041L,
+                organizationId = 31L,
+                leaderUserId = 820L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T02:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/73041/inquiries")
+                .header("Idempotency-Key", "inq-authz-k-0")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"bookingId":${booking.id},"message":"hello"}""")
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"))
+    }
+
+    @Test
     fun `inquiry create is idempotent and writes audit minimum contract`() {
         val booking = bookingRepository.save(
             Booking(
@@ -792,6 +838,364 @@ class BookingControllerIntegrationTest {
         kotlin.test.assertEquals("req-inq-001", lastEvent.requestId)
         kotlin.test.assertTrue(lastEvent.actor.startsWith("USER:"))
         kotlin.test.assertNotNull(lastEvent.occurredAtUtc)
+    }
+
+    @Test
+    fun `inquiry messages allow leader and org operator`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7311L,
+                organizationId = 31L,
+                leaderUserId = 880L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:10:00Z")
+            )
+        )
+        val inquiry = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7311L,
+                bookingId = requireNotNull(booking.id),
+                createdByUserId = 880L,
+                subject = "문의",
+                createdAt = Instant.parse("2026-03-06T03:11:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-k-1")
+                .header("X-Actor-User-Id", "880")
+                .header("X-Request-Id", "req-msg-001")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"리더 메시지"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.inquiryId").value(requireNotNull(inquiry.id)))
+            .andExpect(jsonPath("$.body").value("리더 메시지"))
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-k-2")
+                .header("X-Actor-User-Id", "990")
+                .header("X-Actor-Org-Role", "ORG_ADMIN")
+                .header("X-Actor-Org-Id", "31")
+                .header("X-Request-Id", "req-msg-002")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"운영자 답변"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.body").value("운영자 답변"))
+
+        mockMvc.perform(
+            get("/inquiries/${inquiry.id}/messages")
+                .header("X-Actor-User-Id", "880")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items[0].body").value("리더 메시지"))
+            .andExpect(jsonPath("$.items[1].body").value("운영자 답변"))
+
+        val operatorEvent = auditEventAdapter.all().last()
+        kotlin.test.assertEquals("INQUIRY_MESSAGE_POSTED", operatorEvent.action)
+        kotlin.test.assertEquals("INQUIRY_MESSAGE", operatorEvent.resourceType)
+        kotlin.test.assertEquals("req-msg-002", operatorEvent.requestId)
+        kotlin.test.assertEquals("OPERATOR:990", operatorEvent.actor)
+    }
+
+    @Test
+    fun `inquiry message rejects unauthorized actor and missing body and scope mismatch`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7312L,
+                organizationId = 31L,
+                leaderUserId = 881L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:20:00Z")
+            )
+        )
+        val inquiry = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7312L,
+                bookingId = requireNotNull(booking.id),
+                createdByUserId = 881L,
+                subject = "문의",
+                createdAt = Instant.parse("2026-03-06T03:21:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-authz-k-1")
+                .header("X-Actor-User-Id", "9999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"no auth"}""")
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-body-k-1")
+                .header("X-Actor-User-Id", "881")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("REQUIRED_FIELD_MISSING"))
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-scope-k-1")
+                .header("X-Actor-User-Id", "882")
+                .header("X-Actor-Org-Role", "ORG_OWNER")
+                .header("X-Actor-Org-Id", "999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"scope"}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("BOOKING_SCOPE_MISMATCH"))
+    }
+
+    @Test
+    fun `inquiry message follows idempotency replay conflict and in-progress rules`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7313L,
+                organizationId = 31L,
+                leaderUserId = 883L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:30:00Z")
+            )
+        )
+        val inquiry = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7313L,
+                bookingId = requireNotNull(booking.id),
+                createdByUserId = 883L,
+                createdAt = Instant.parse("2026-03-06T03:31:00Z")
+            )
+        )
+
+        val firstBody = mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-idem-k-1")
+                .header("X-Actor-User-Id", "883")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"중복 테스트"}""")
+        )
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-idem-k-1")
+                .header("X-Actor-User-Id", "883")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"중복 테스트"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect { result -> kotlin.test.assertEquals(firstBody, result.response.contentAsString) }
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-idem-k-1")
+                .header("X-Actor-User-Id", "883")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"다른 payload"}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD"))
+
+        idempotencyStore.markInProgressForTest(
+            actorUserId = 883L,
+            method = "POST",
+            pathTemplate = "/inquiries/{inquiryId}/messages",
+            idempotencyKey = "inq-msg-idem-k-2",
+            requestHash = hash("${inquiry.id}|처리중|")
+        )
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/messages")
+                .header("Idempotency-Key", "inq-msg-idem-k-2")
+                .header("X-Actor-User-Id", "883")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"body":"처리중"}""")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_IN_PROGRESS"))
+    }
+
+    @Test
+    fun `inquiry close enforces state transition and idempotency with audit`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7314L,
+                organizationId = 31L,
+                leaderUserId = 884L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:40:00Z")
+            )
+        )
+        val inquiry = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7314L,
+                bookingId = requireNotNull(booking.id),
+                createdByUserId = 884L,
+                createdAt = Instant.parse("2026-03-06T03:41:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/close")
+                .header("Idempotency-Key", "inq-close-k-1")
+                .header("X-Actor-User-Id", "884")
+                .header("X-Request-Id", "req-close-001")
+        )
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/close")
+                .header("Idempotency-Key", "inq-close-k-1")
+                .header("X-Actor-User-Id", "884")
+        )
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry.id}/close")
+                .header("Idempotency-Key", "inq-close-k-2")
+                .header("X-Actor-User-Id", "884")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("INVALID_STATE_TRANSITION"))
+
+        kotlin.test.assertEquals(InquiryStatus.CLOSED, inquiryRepository.findById(requireNotNull(inquiry.id))?.status)
+        val lastEvent = auditEventAdapter.all().last()
+        kotlin.test.assertEquals("INQUIRY_CLOSED", lastEvent.action)
+        kotlin.test.assertEquals("INQUIRY", lastEvent.resourceType)
+        kotlin.test.assertEquals("req-close-001", lastEvent.requestId)
+        kotlin.test.assertEquals("USER:884", lastEvent.actor)
+        kotlin.test.assertEquals(
+            1,
+            auditEventAdapter.all().count { it.action == "INQUIRY_CLOSED" }
+        )
+    }
+
+    @Test
+    fun `inquiry close returns 422 for idempotency payload mismatch and 409 in-progress`() {
+        val booking1 = bookingRepository.save(
+            Booking(
+                occurrenceId = 7315L,
+                organizationId = 31L,
+                leaderUserId = 885L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:50:00Z")
+            )
+        )
+        val booking2 = bookingRepository.save(
+            Booking(
+                occurrenceId = 7316L,
+                organizationId = 31L,
+                leaderUserId = 885L,
+                partySize = 1,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:51:00Z")
+            )
+        )
+
+        val inquiry1 = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7315L,
+                bookingId = requireNotNull(booking1.id),
+                createdByUserId = 885L,
+                createdAt = Instant.parse("2026-03-06T03:52:00Z")
+            )
+        )
+        val inquiry2 = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7316L,
+                bookingId = requireNotNull(booking2.id),
+                createdByUserId = 885L,
+                createdAt = Instant.parse("2026-03-06T03:53:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry1.id}/close")
+                .header("Idempotency-Key", "inq-close-k-3")
+                .header("X-Actor-User-Id", "885")
+        )
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry2.id}/close")
+                .header("Idempotency-Key", "inq-close-k-3")
+                .header("X-Actor-User-Id", "885")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD"))
+
+        idempotencyStore.markInProgressForTest(
+            actorUserId = 885L,
+            method = "POST",
+            pathTemplate = "/inquiries/{inquiryId}/close",
+            idempotencyKey = "inq-close-k-4",
+            requestHash = hash("${inquiry2.id}|CLOSE")
+        )
+
+        mockMvc.perform(
+            post("/inquiries/${inquiry2.id}/close")
+                .header("Idempotency-Key", "inq-close-k-4")
+                .header("X-Actor-User-Id", "885")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_IN_PROGRESS"))
+    }
+
+    @Test
+    fun `list inquiry messages rejects unauthorized actor`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7317L,
+                organizationId = 31L,
+                leaderUserId = 886L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T03:55:00Z")
+            )
+        )
+        val inquiry = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7317L,
+                bookingId = requireNotNull(booking.id),
+                createdByUserId = 886L,
+                createdAt = Instant.parse("2026-03-06T03:56:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/inquiries/${inquiry.id}/messages")
+                .header("X-Actor-User-Id", "99999")
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
     }
 
     @Test
@@ -973,6 +1377,228 @@ class BookingControllerIntegrationTest {
         )
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_IN_PROGRESS"))
+    }
+
+    @Test
+    fun `tour review create returns 201 when attendee completed booking`() {
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7401L,
+                organizationId = 31L,
+                leaderUserId = 901L,
+                partySize = 2,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7401/reviews/tour")
+                .header("Idempotency-Key", "review-tour-k-1")
+                .header("X-Actor-User-Id", "901")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5,"comment":"great tour"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.type").value("TOUR"))
+            .andExpect(jsonPath("$.rating").value(5))
+    }
+
+    @Test
+    fun `review create requires actor user header`() {
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 74011L,
+                organizationId = 31L,
+                leaderUserId = 901L,
+                partySize = 2,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/74011/reviews/tour")
+                .header("Idempotency-Key", "review-authz-k-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5,"comment":"great tour"}""")
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"))
+    }
+
+    @Test
+    fun `duplicate tour review returns 409 DUPLICATE_REVIEW`() {
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7402L,
+                organizationId = 31L,
+                leaderUserId = 902L,
+                partySize = 2,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:10:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7402/reviews/tour")
+                .header("Idempotency-Key", "review-tour-k-2")
+                .header("X-Actor-User-Id", "902")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":4}""")
+        )
+            .andExpect(status().isCreated)
+
+        mockMvc.perform(
+            post("/occurrences/7402/reviews/tour")
+                .header("Idempotency-Key", "review-tour-k-3")
+                .header("X-Actor-User-Id", "902")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5}""")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("DUPLICATE_REVIEW"))
+    }
+
+    @Test
+    fun `review create returns 422 ATTENDANCE_NOT_ELIGIBLE for non attendee`() {
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7403L,
+                organizationId = 31L,
+                leaderUserId = 903L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:20:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7403/reviews/instructor")
+                .header("Idempotency-Key", "review-inst-k-1")
+                .header("X-Actor-User-Id", "903")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":4}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("ATTENDANCE_NOT_ELIGIBLE"))
+    }
+
+    @Test
+    fun `review create follows idempotency replay and in progress policy`() {
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7404L,
+                organizationId = 31L,
+                leaderUserId = 904L,
+                partySize = 2,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:30:00Z")
+            )
+        )
+
+        val firstBody = mockMvc.perform(
+            post("/occurrences/7404/reviews/instructor")
+                .header("Idempotency-Key", "review-inst-k-2")
+                .header("X-Actor-User-Id", "904")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5,"comment":"kind"}""")
+        )
+            .andExpect(status().isCreated)
+            .andReturn().response.contentAsString
+
+        mockMvc.perform(
+            post("/occurrences/7404/reviews/instructor")
+                .header("Idempotency-Key", "review-inst-k-2")
+                .header("X-Actor-User-Id", "904")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5,"comment":"kind"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect { result -> kotlin.test.assertEquals(firstBody, result.response.contentAsString) }
+
+        idempotencyStore.markInProgressForTest(
+            actorUserId = 904L,
+            method = "POST",
+            pathTemplate = "/occurrences/{occurrenceId}/reviews/instructor",
+            idempotencyKey = "review-inst-k-3",
+            requestHash = hash("7404|INSTRUCTOR|3|pending")
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7404/reviews/instructor")
+                .header("Idempotency-Key", "review-inst-k-3")
+                .header("X-Actor-User-Id", "904")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":3,"comment":"pending"}""")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_IN_PROGRESS"))
+    }
+
+    @Test
+    fun `review summary endpoint returns aggregated minimal snapshot`() {
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7405L,
+                organizationId = 31L,
+                leaderUserId = 905L,
+                partySize = 1,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:40:00Z")
+            )
+        )
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7405L,
+                organizationId = 31L,
+                leaderUserId = 906L,
+                partySize = 1,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:41:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7405/reviews/tour")
+                .header("Idempotency-Key", "review-sum-k-1")
+                .header("X-Actor-User-Id", "905")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":4}""")
+        ).andExpect(status().isCreated)
+
+        mockMvc.perform(
+            post("/occurrences/7405/reviews/tour")
+                .header("Idempotency-Key", "review-sum-k-2")
+                .header("X-Actor-User-Id", "906")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":2}""")
+        ).andExpect(status().isCreated)
+
+        mockMvc.perform(
+            post("/occurrences/7405/reviews/instructor")
+                .header("Idempotency-Key", "review-sum-k-3")
+                .header("X-Actor-User-Id", "905")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5}""")
+        ).andExpect(status().isCreated)
+
+        mockMvc.perform(
+            get("/occurrences/7405/reviews/summary")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.occurrenceId").value(7405))
+            .andExpect(jsonPath("$.tour.count").value(2))
+            .andExpect(jsonPath("$.tour.averageRating").value(3.0))
+            .andExpect(jsonPath("$.instructor.count").value(1))
+            .andExpect(jsonPath("$.instructor.averageRating").value(5.0))
     }
 
     private fun hash(raw: String): String {

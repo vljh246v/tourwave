@@ -39,5 +39,12 @@ out/
 ### Kotlin ###
 .kotlin
 
+# Overnight automation logs/runtime
+.agent-runs/
+
 agent
 .codex
+scripts/overnight-autopilot.sh
+scripts/overnight-status.sh
+scripts/start-overnight.sh
+scripts/stop-overnight.sh
