@@ -1,6 +1,6 @@
 package com.demo.tourwave.domain.inquiry
 
-data class InquiryTicket(
+data class Inquiry(
     val id: Long? = null,
     val organizationId: Long,
     val occurrenceId: Long,
@@ -9,9 +9,8 @@ data class InquiryTicket(
     val subject: String? = null,
     val status: InquiryStatus = InquiryStatus.OPEN
 ) {
-    fun close(): InquiryTicket {
+    fun close(): Inquiry {
         if (status == InquiryStatus.CLOSED) return this
         return copy(status = InquiryStatus.CLOSED)
     }
 }
-

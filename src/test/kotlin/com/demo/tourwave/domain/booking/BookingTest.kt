@@ -50,8 +50,7 @@ class BookingTest {
         val booking = Booking.create(1L, 10L, 100L, 2, 10)
 
         assertThrows<IllegalArgumentException> {
-            booking.reducePartySize(3)
+            booking.decreasePartySize(3)
         }
     }
 }
-

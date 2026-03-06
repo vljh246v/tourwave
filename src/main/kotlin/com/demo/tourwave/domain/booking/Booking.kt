@@ -10,7 +10,8 @@ data class Booking(
     val partySize: Int,
     val status: BookingStatus,
     val paymentStatus: PaymentStatus,
-    val offerExpiresAtUtc: Instant? = null
+    val offerExpiresAtUtc: Instant? = null,
+    val createdAt: Instant = Instant.now()
 ) {
     init {
         require(partySize >= 1) { "partySize must be >= 1" }
@@ -84,10 +85,9 @@ data class Booking(
         return copy(status = BookingStatus.COMPLETED)
     }
 
-    fun reducePartySize(newPartySize: Int): Booking {
+    fun decreasePartySize(newPartySize: Int): Booking {
         require(newPartySize >= 1) { "partySize must be >= 1" }
         require(newPartySize <= partySize) { "partySize can only be decreased" }
         return copy(partySize = newPartySize)
     }
 }
-

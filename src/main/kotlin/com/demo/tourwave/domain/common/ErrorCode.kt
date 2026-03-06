@@ -1,0 +1,9 @@
+package com.demo.tourwave.domain.common
+
+enum class ErrorCode {
+    VALIDATION_ERROR,
+    PARTY_SIZE_OUT_OF_RANGE,
+    OCCURRENCE_ALREADY_CANCELED,
+    IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD,
+    IDEMPOTENCY_IN_PROGRESS
+}
