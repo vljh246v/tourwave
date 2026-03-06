@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: tourwave
+  profiles:
+    default: local
+
+tourwave:
+  environment: ${TOURWAVE_ENV:local}
+  idempotency:
+    ttl-seconds: ${IDEMPOTENCY_TTL_SECONDS:86400}
+
+integration:
+  payment:
+    base-url: ${PAYMENT_BASE_URL:http://localhost:18080/mock-payment}
+    api-key: ${PAYMENT_API_KEY:}
+  notification:
+    base-url: ${NOTIFICATION_BASE_URL:http://localhost:18081/mock-notification}
+    api-key: ${NOTIFICATION_API_KEY:}
+  asset:
+    base-url: ${ASSET_BASE_URL:http://localhost:18082/mock-asset}
+    access-token: ${ASSET_ACCESS_TOKEN:}
+

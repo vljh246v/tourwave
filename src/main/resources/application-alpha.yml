@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: alpha
+  datasource:
+    url: ${ALPHA_DB_URL}
+    username: ${ALPHA_DB_USERNAME}
+    password: ${ALPHA_DB_PASSWORD}
+
+tourwave:
+  environment: alpha
+  runtime-mode: shared-alpha
+
+integration:
+  payment:
+    base-url: ${ALPHA_PAYMENT_BASE_URL}
+  notification:
+    base-url: ${ALPHA_NOTIFICATION_BASE_URL}
+  asset:
+    base-url: ${ALPHA_ASSET_BASE_URL}
+

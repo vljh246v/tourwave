@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: beta
+  datasource:
+    url: ${BETA_DB_URL}
+    username: ${BETA_DB_USERNAME}
+    password: ${BETA_DB_PASSWORD}
+
+tourwave:
+  environment: beta
+  runtime-mode: pre-production
+
+integration:
+  payment:
+    base-url: ${BETA_PAYMENT_BASE_URL}
+  notification:
+    base-url: ${BETA_NOTIFICATION_BASE_URL}
+  asset:
+    base-url: ${BETA_ASSET_BASE_URL}
+

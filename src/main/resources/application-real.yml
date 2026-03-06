@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: real
+  datasource:
+    url: ${REAL_DB_URL}
+    username: ${REAL_DB_USERNAME}
+    password: ${REAL_DB_PASSWORD}
+
+tourwave:
+  environment: real
+  runtime-mode: production
+
+integration:
+  payment:
+    base-url: ${REAL_PAYMENT_BASE_URL}
+  notification:
+    base-url: ${REAL_NOTIFICATION_BASE_URL}
+  asset:
+    base-url: ${REAL_ASSET_BASE_URL}
+
