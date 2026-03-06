@@ -46,6 +46,16 @@ class BookingTest {
     }
 
     @Test
+    fun `acceptOffer should allow when now equals expiresAt`() {
+        val now = Instant.parse("2026-03-06T10:00:00Z")
+        val offered = Booking.create(1L, 10L, 100L, 2, 0).offer(now)
+
+        val accepted = offered.acceptOffer(now)
+
+        assertEquals(BookingStatus.CONFIRMED, accepted.status)
+    }
+
+    @Test
     fun `reducePartySize should reject increase`() {
         val booking = Booking.create(1L, 10L, 100L, 2, 10)
 

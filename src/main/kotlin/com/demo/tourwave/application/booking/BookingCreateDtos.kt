@@ -9,7 +9,8 @@ data class CreateBookingCommand(
     val actorUserId: Long,
     val idempotencyKey: String,
     val partySize: Int,
-    val noteToOperator: String? = null
+    val noteToOperator: String? = null,
+    val requestId: String? = null
 )
 
 data class BookingCreated(

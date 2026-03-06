@@ -9,6 +9,10 @@ data class BookingCreateWebRequest(
     val noteToOperator: String? = null
 )
 
+data class BookingPartySizeUpdateWebRequest(
+    val partySize: Int
+)
+
 data class BookingCreateWebResponse(
     val id: Long,
     val organizationId: Long,

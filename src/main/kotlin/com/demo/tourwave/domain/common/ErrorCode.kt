@@ -2,6 +2,8 @@ package com.demo.tourwave.domain.common
 
 enum class ErrorCode {
     VALIDATION_ERROR,
+    REQUIRED_FIELD_MISSING,
+    BOOKING_SCOPE_MISMATCH,
     PARTY_SIZE_OUT_OF_RANGE,
     INVALID_STATE_TRANSITION,
     BOOKING_TERMINAL_STATE,
