@@ -18,7 +18,7 @@ class UserCommandServiceTest {
     @Test
     fun `registerUser should throw exception when user with email already exists`() {
         val existingEmail = "old@test.com"
-        whenever(userQueryPort.getUserByEmail(existingEmail)).thenReturn(User.create("old user", existingEmail))
+        whenever(userQueryPort.findByEmail(existingEmail)).thenReturn(User.create("old user", existingEmail))
 
         val exception = assertThrows<IllegalArgumentException> {
             userCommandService.registerUser("new user", existingEmail)
@@ -30,7 +30,7 @@ class UserCommandServiceTest {
     fun `registerUser should create new user when email does not exist`() {
 
         val newEmail = "new@test.com"
-        whenever(userQueryPort.getUserByEmail(newEmail)).thenReturn(null)
+        whenever(userQueryPort.findByEmail(newEmail)).thenReturn(null)
 
         val user = userCommandService.registerUser("new user", newEmail)
 

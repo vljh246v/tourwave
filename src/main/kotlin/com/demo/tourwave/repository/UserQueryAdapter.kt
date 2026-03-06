@@ -5,8 +5,8 @@ import com.demo.tourwave.domain.user.User
 import com.demo.tourwave.domain.user.port.UserQueryPort
 
 @Component
-class UserPersistent: UserQueryPort {
-    override fun getUserByEmail(email: String): User? {
+class UserQueryAdapter: UserQueryPort {
+    override fun findByEmail(email: String): User? {
         TODO("Not yet implemented")
     }
 }
