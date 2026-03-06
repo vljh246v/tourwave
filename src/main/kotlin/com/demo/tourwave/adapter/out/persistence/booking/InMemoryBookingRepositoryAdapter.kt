@@ -27,6 +27,12 @@ class InMemoryBookingRepositoryAdapter : BookingRepository {
         return bookings.values.filter { it.occurrenceId == occurrenceId && it.status in statuses }
     }
 
+    override fun findWaitlistedByOccurrenceOrdered(occurrenceId: Long): List<Booking> {
+        return bookings.values
+            .filter { it.occurrenceId == occurrenceId && it.status == BookingStatus.WAITLISTED }
+            .sortedWith(compareBy<Booking> { it.createdAt }.thenBy { it.id ?: Long.MAX_VALUE })
+    }
+
     override fun clear() {
         bookings.clear()
         sequence.set(0)

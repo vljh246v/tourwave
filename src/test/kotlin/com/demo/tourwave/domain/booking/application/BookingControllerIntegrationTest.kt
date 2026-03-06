@@ -838,6 +838,143 @@ class BookingControllerIntegrationTest {
             .andExpect(jsonPath("$.error.code").value("OFFER_EXPIRED"))
     }
 
+    @Test
+    fun `create booking ignores expired offered seat holding on time boundary`() {
+        occurrenceRepository.save(Occurrence(id = 7307L, organizationId = 31L, capacity = 2))
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7307L,
+                organizationId = 31L,
+                leaderUserId = 840L,
+                partySize = 2,
+                status = BookingStatus.OFFERED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                offerExpiresAtUtc = Instant.now().minusSeconds(5),
+                createdAt = Instant.parse("2026-03-06T02:20:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7307/bookings")
+                .header("Idempotency-Key", "create-boundary-k-1")
+                .header("X-Actor-User-Id", "841")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"partySize":2}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.status").value("REQUESTED"))
+    }
+
+    @Test
+    fun `cancel confirmed booking promotes waitlist and creates offer window`() {
+        occurrenceRepository.save(Occurrence(id = 7308L, organizationId = 31L, capacity = 4))
+        val confirmed = bookingRepository.save(
+            Booking(
+                occurrenceId = 7308L,
+                organizationId = 31L,
+                leaderUserId = 850L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T02:30:00Z")
+            )
+        )
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7308L,
+                organizationId = 31L,
+                leaderUserId = 851L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T02:30:30Z")
+            )
+        )
+        val waitlisted = bookingRepository.save(
+            Booking(
+                occurrenceId = 7308L,
+                organizationId = 31L,
+                leaderUserId = 852L,
+                partySize = 2,
+                status = BookingStatus.WAITLISTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T02:31:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${confirmed.id}/cancel")
+                .header("Idempotency-Key", "cancel-promote-k-1")
+                .header("X-Actor-User-Id", "850")
+                .header("X-Request-Id", "req-waitlist-001")
+        )
+            .andExpect(status().isNoContent)
+
+        val promoted = bookingRepository.findById(requireNotNull(waitlisted.id))
+        kotlin.test.assertEquals(BookingStatus.OFFERED, promoted?.status)
+        kotlin.test.assertNotNull(promoted?.offerExpiresAtUtc)
+
+        val actions = auditEventAdapter.all().map { it.action }
+        kotlin.test.assertTrue(actions.contains("WAITLIST_PROMOTED_TO_OFFER"))
+    }
+
+    @Test
+    fun `inquiry create by non booking participant returns 403 validation error`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7309L,
+                organizationId = 31L,
+                leaderUserId = 860L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T02:40:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7309/inquiries")
+                .header("Idempotency-Key", "inq-authz-k-1")
+                .header("X-Actor-User-Id", "9999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"bookingId":${booking.id},"message":"문의"}""")
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }
+
+    @Test
+    fun `offer accept idempotency in progress returns 409 with code`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7310L,
+                organizationId = 31L,
+                leaderUserId = 870L,
+                partySize = 2,
+                status = BookingStatus.OFFERED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                offerExpiresAtUtc = Instant.now().plusSeconds(3600),
+                createdAt = Instant.parse("2026-03-06T02:50:00Z")
+            )
+        )
+
+        idempotencyStore.markInProgressForTest(
+            actorUserId = 870L,
+            method = "POST",
+            pathTemplate = "/bookings/{bookingId}/offer/accept",
+            idempotencyKey = "offer-in-progress-k-1",
+            requestHash = hash("${booking.id}|OFFER_ACCEPT|")
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/offer/accept")
+                .header("Idempotency-Key", "offer-in-progress-k-1")
+                .header("X-Actor-User-Id", "870")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_IN_PROGRESS"))
+    }
+
     private fun hash(raw: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }

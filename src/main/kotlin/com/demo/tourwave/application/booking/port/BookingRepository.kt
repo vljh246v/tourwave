@@ -7,5 +7,6 @@ interface BookingRepository {
     fun save(booking: Booking): Booking
     fun findById(bookingId: Long): Booking?
     fun findByOccurrenceAndStatuses(occurrenceId: Long, statuses: Set<BookingStatus>): List<Booking>
+    fun findWaitlistedByOccurrenceOrdered(occurrenceId: Long): List<Booking>
     fun clear()
 }

@@ -62,6 +62,17 @@ class InquiryCommandService(
                     )
                 }
 
+                if (booking.leaderUserId != command.actorUserId) {
+                    throw DomainException(
+                        errorCode = ErrorCode.VALIDATION_ERROR,
+                        status = 403,
+                        message = "Only booking participant can create inquiry",
+                        details = mapOf("bookingId" to bookingId, "actorUserId" to command.actorUserId)
+                    )
+                }
+
+                val now = clock.instant()
+
                 val existing = inquiryRepository.findByBookingId(bookingId)
                 val saved = if (existing != null) {
                     existing
@@ -72,7 +83,8 @@ class InquiryCommandService(
                             occurrenceId = command.occurrenceId,
                             bookingId = bookingId,
                             createdByUserId = command.actorUserId,
-                            subject = command.subject
+                            subject = command.subject,
+                            createdAt = now
                         )
                     )
                 }
@@ -85,7 +97,7 @@ class InquiryCommandService(
                     createdByUserId = saved.createdByUserId,
                     subject = saved.subject,
                     status = saved.status,
-                    createdAt = clock.instant()
+                    createdAt = saved.createdAt
                 )
 
                 idempotencyStore.complete(
@@ -119,4 +131,3 @@ class InquiryCommandService(
         return bytes.joinToString("") { "%02x".format(it) }
     }
 }
-

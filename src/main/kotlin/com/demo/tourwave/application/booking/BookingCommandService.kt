@@ -23,6 +23,10 @@ class BookingCommandService(
     private val auditEventPort: AuditEventPort,
     private val clock: Clock
 ) {
+    companion object {
+        private const val OFFER_WINDOW_SECONDS = 24 * 60 * 60L
+    }
+
     fun createBooking(command: CreateBookingCommand): CreateBookingResult {
         validateCreateRequest(command)
 
@@ -55,12 +59,11 @@ class BookingCommandService(
                     )
                 }
 
-                val unavailableSeats = bookingRepository.findByOccurrenceAndStatuses(
+                val availableSeats = availableSeatsForOccurrence(
                     occurrenceId = command.occurrenceId,
-                    statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
-                ).sumOf { it.partySize }
-
-                val availableSeats = (occurrence.capacity - unavailableSeats).coerceAtLeast(0)
+                    excludeBookingId = null,
+                    now = clock.instant()
+                )
 
                 val created = bookingRepository.save(
                     Booking.create(
@@ -209,6 +212,7 @@ class BookingCommandService(
                 }
 
                 bookingRepository.save(mutated)
+                promoteWaitlistIfSeatReleased(command, booking, mutated)
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -345,6 +349,11 @@ class BookingCommandService(
                 action = "OFFER_EXPIRED",
                 requestId = requestId
             )
+            promoteWaitlist(
+                occurrenceId = booking.occurrenceId,
+                actorUserId = actorUserId,
+                requestId = requestId
+            )
             throw DomainException(
                 errorCode = ErrorCode.OFFER_EXPIRED,
                 status = 409,
@@ -393,6 +402,11 @@ class BookingCommandService(
                 action = "OFFER_EXPIRED",
                 requestId = requestId
             )
+            promoteWaitlist(
+                occurrenceId = booking.occurrenceId,
+                actorUserId = actorUserId,
+                requestId = requestId
+            )
             throw DomainException(
                 errorCode = ErrorCode.OFFER_EXPIRED,
                 status = 409,
@@ -423,12 +437,11 @@ class BookingCommandService(
         val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
         ensureOccurrenceCanAllocate(occurrence)
 
-        val occupiedSeats = bookingRepository.findByOccurrenceAndStatuses(
+        val occupiedSeats = occupiedSeatsForOccurrence(
             occurrenceId = occurrenceId,
-            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
+            excludeBookingId = excludeBookingId,
+            now = clock.instant()
         )
-            .filterNot { excludeBookingId != null && it.id == excludeBookingId }
-            .sumOf { it.partySize }
 
         if (occupiedSeats + additionalSeats > occurrence.capacity) {
             throw DomainException(
@@ -530,5 +543,98 @@ class BookingCommandService(
                 requestId = requestId
             )
         )
+    }
+
+    private fun promoteWaitlistIfSeatReleased(command: MutateBookingCommand, before: Booking, after: Booking) {
+        val shouldPromote = when (command.mutationType) {
+            BookingMutationType.CANCEL -> isSeatHolding(before, clock.instant())
+            BookingMutationType.OFFER_DECLINE -> before.status == BookingStatus.OFFERED
+            BookingMutationType.PARTY_SIZE_PATCH -> after.partySize < before.partySize
+            BookingMutationType.APPROVE,
+            BookingMutationType.REJECT,
+            BookingMutationType.OFFER_ACCEPT -> false
+        }
+
+        if (!shouldPromote) {
+            return
+        }
+
+        promoteWaitlist(
+            occurrenceId = after.occurrenceId,
+            actorUserId = command.actorUserId,
+            requestId = command.requestId
+        )
+    }
+
+    private fun promoteWaitlist(occurrenceId: Long, actorUserId: Long, requestId: String?) {
+        val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
+        if (occurrence.status == OccurrenceStatus.CANCELED) {
+            return
+        }
+
+        val now = clock.instant()
+        var availableSeats = availableSeatsForOccurrence(
+            occurrenceId = occurrenceId,
+            excludeBookingId = null,
+            now = now
+        )
+
+        if (availableSeats <= 0) {
+            return
+        }
+
+        val waitlistedBookings = bookingRepository.findWaitlistedByOccurrenceOrdered(occurrenceId)
+
+        waitlistedBookings.forEach { waitlisted ->
+            if (waitlisted.partySize <= availableSeats) {
+                val promoted = bookingRepository.save(
+                    waitlisted.offer(now.plusSeconds(OFFER_WINDOW_SECONDS))
+                )
+                availableSeats -= promoted.partySize
+
+                appendBookingStatusAudit(
+                    actorUserId = actorUserId,
+                    booking = promoted,
+                    action = "WAITLIST_PROMOTED_TO_OFFER",
+                    requestId = requestId
+                )
+            }
+        }
+    }
+
+    private fun availableSeatsForOccurrence(
+        occurrenceId: Long,
+        excludeBookingId: Long?,
+        now: java.time.Instant
+    ): Int {
+        val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
+        val occupiedSeats = occupiedSeatsForOccurrence(occurrenceId, excludeBookingId, now)
+        return (occurrence.capacity - occupiedSeats).coerceAtLeast(0)
+    }
+
+    private fun occupiedSeatsForOccurrence(
+        occurrenceId: Long,
+        excludeBookingId: Long?,
+        now: java.time.Instant
+    ): Int {
+        return bookingRepository.findByOccurrenceAndStatuses(
+            occurrenceId = occurrenceId,
+            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
+        )
+            .filterNot { excludeBookingId != null && it.id == excludeBookingId }
+            .filter { isSeatHolding(it, now) }
+            .sumOf { it.partySize }
+    }
+
+    private fun isSeatHolding(booking: Booking, now: java.time.Instant): Boolean {
+        return when (booking.status) {
+            BookingStatus.CONFIRMED -> true
+            BookingStatus.OFFERED -> {
+                val expiresAt = booking.offerExpiresAtUtc ?: return true
+                !now.isAfter(expiresAt)
+            }
+
+            else -> false
+        }
     }
 }
