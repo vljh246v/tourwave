@@ -18,6 +18,10 @@ class InMemoryBookingRepository : BookingRepository {
         return saved
     }
 
+    override fun findById(bookingId: Long): Booking? {
+        return bookings[bookingId]
+    }
+
     override fun findByOccurrenceAndStatuses(occurrenceId: Long, statuses: Set<BookingStatus>): List<Booking> {
         return bookings.values.filter { it.occurrenceId == occurrenceId && it.status in statuses }
     }

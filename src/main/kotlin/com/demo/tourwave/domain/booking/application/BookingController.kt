@@ -26,4 +26,79 @@ class BookingController(
         )
         return ResponseEntity.status(result.status).body(result.body)
     }
+
+    @PostMapping("/bookings/{bookingId}/approve")
+    fun approveBooking(
+        @PathVariable bookingId: Long,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        val result = bookingCommandService.mutateBooking(
+            bookingId = bookingId,
+            actorUserId = actorUserId ?: 1L,
+            idempotencyKey = idempotencyKey,
+            mutationType = BookingMutationType.APPROVE
+        )
+        return ResponseEntity.status(result.status).build()
+    }
+
+    @PostMapping("/bookings/{bookingId}/reject")
+    fun rejectBooking(
+        @PathVariable bookingId: Long,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        val result = bookingCommandService.mutateBooking(
+            bookingId = bookingId,
+            actorUserId = actorUserId ?: 1L,
+            idempotencyKey = idempotencyKey,
+            mutationType = BookingMutationType.REJECT
+        )
+        return ResponseEntity.status(result.status).build()
+    }
+
+    @PostMapping("/bookings/{bookingId}/cancel")
+    fun cancelBooking(
+        @PathVariable bookingId: Long,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        val result = bookingCommandService.mutateBooking(
+            bookingId = bookingId,
+            actorUserId = actorUserId ?: 1L,
+            idempotencyKey = idempotencyKey,
+            mutationType = BookingMutationType.CANCEL
+        )
+        return ResponseEntity.status(result.status).build()
+    }
+
+    @PostMapping("/bookings/{bookingId}/offer/accept")
+    fun acceptOffer(
+        @PathVariable bookingId: Long,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        val result = bookingCommandService.mutateBooking(
+            bookingId = bookingId,
+            actorUserId = actorUserId ?: 1L,
+            idempotencyKey = idempotencyKey,
+            mutationType = BookingMutationType.OFFER_ACCEPT
+        )
+        return ResponseEntity.status(result.status).build()
+    }
+
+    @PostMapping("/bookings/{bookingId}/offer/decline")
+    fun declineOffer(
+        @PathVariable bookingId: Long,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        val result = bookingCommandService.mutateBooking(
+            bookingId = bookingId,
+            actorUserId = actorUserId ?: 1L,
+            idempotencyKey = idempotencyKey,
+            mutationType = BookingMutationType.OFFER_DECLINE
+        )
+        return ResponseEntity.status(result.status).build()
+    }
 }

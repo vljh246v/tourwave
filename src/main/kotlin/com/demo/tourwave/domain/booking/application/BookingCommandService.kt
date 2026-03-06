@@ -2,6 +2,7 @@ package com.demo.tourwave.domain.booking.application
 
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
+import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.common.IdempotencyDecision
@@ -99,6 +100,57 @@ class BookingCommandService(
         }
     }
 
+    fun mutateBooking(
+        bookingId: Long,
+        actorUserId: Long,
+        idempotencyKey: String,
+        mutationType: BookingMutationType
+    ): BookingMutationResult {
+        val requestHash = requestHashForMutation(bookingId, mutationType)
+
+        return when (
+            val decision = idempotencyStore.reserveOrReplay(
+                actorUserId = actorUserId,
+                method = "POST",
+                pathTemplate = mutationType.pathTemplate,
+                idempotencyKey = idempotencyKey,
+                requestHash = requestHash
+            )
+        ) {
+            is IdempotencyDecision.Replay -> BookingMutationResult(status = decision.status)
+            IdempotencyDecision.Reserved -> {
+                val booking = bookingRepository.findById(bookingId)
+                    ?: throw DomainException(
+                        errorCode = ErrorCode.VALIDATION_ERROR,
+                        status = 422,
+                        message = "Booking not found",
+                        details = mapOf("bookingId" to bookingId)
+                    )
+
+                val mutated = when (mutationType) {
+                    BookingMutationType.APPROVE -> approveBooking(booking)
+                    BookingMutationType.REJECT -> rejectBooking(booking)
+                    BookingMutationType.CANCEL -> cancelBooking(booking)
+                    BookingMutationType.OFFER_ACCEPT -> acceptOffer(booking, actorUserId)
+                    BookingMutationType.OFFER_DECLINE -> declineOffer(booking, actorUserId)
+                }
+
+                bookingRepository.save(mutated)
+
+                idempotencyStore.complete(
+                    actorUserId = actorUserId,
+                    method = "POST",
+                    pathTemplate = mutationType.pathTemplate,
+                    idempotencyKey = idempotencyKey,
+                    status = 204,
+                    body = mapOf("ok" to true)
+                )
+
+                BookingMutationResult(status = 204)
+            }
+        }
+    }
+
     private fun validateCreateRequest(request: BookingCreateRequest) {
         if (request.partySize !in 1..50) {
             throw DomainException(
@@ -114,5 +166,186 @@ class BookingCommandService(
         val raw = "$occurrenceId|${request.partySize}|${request.noteToOperator ?: ""}"
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun requestHashForMutation(bookingId: Long, mutationType: BookingMutationType): String {
+        val raw = "$bookingId|${mutationType.name}"
+        val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun approveBooking(booking: Booking): Booking {
+        if (booking.status.isTerminal()) {
+            throw DomainException(
+                errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
+                status = 409,
+                message = "Booking is in terminal state",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+        if (booking.status != BookingStatus.REQUESTED) {
+            throw DomainException(
+                errorCode = ErrorCode.INVALID_STATE_TRANSITION,
+                status = 409,
+                message = "Only REQUESTED booking can be approved",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+
+        ensureCapacityAvailable(
+            occurrenceId = booking.occurrenceId,
+            excludeBookingId = booking.id,
+            additionalSeats = booking.partySize
+        )
+
+        return booking.approve()
+    }
+
+    private fun rejectBooking(booking: Booking): Booking {
+        if (booking.status.isTerminal()) {
+            throw DomainException(
+                errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
+                status = 409,
+                message = "Booking is in terminal state",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+        if (booking.status != BookingStatus.REQUESTED) {
+            throw DomainException(
+                errorCode = ErrorCode.INVALID_STATE_TRANSITION,
+                status = 409,
+                message = "Only REQUESTED booking can be rejected",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+        return booking.reject()
+    }
+
+    private fun cancelBooking(booking: Booking): Booking {
+        if (booking.status.isTerminal()) {
+            throw DomainException(
+                errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
+                status = 409,
+                message = "Booking is in terminal state",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+
+        val shouldRefund = booking.paymentStatus == PaymentStatus.AUTHORIZED || booking.paymentStatus == PaymentStatus.PAID
+        return booking.cancel(refund = shouldRefund)
+    }
+
+    private fun acceptOffer(booking: Booking, actorUserId: Long): Booking {
+        ensureLeader(actorUserId, booking)
+
+        if (booking.status != BookingStatus.OFFERED) {
+            val code = if (booking.status.isTerminal()) ErrorCode.BOOKING_TERMINAL_STATE else ErrorCode.OFFER_NOT_ACTIVE
+            throw DomainException(
+                errorCode = code,
+                status = 409,
+                message = "Offer is not active",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+
+        val offerExpiresAtUtc = booking.offerExpiresAtUtc
+            ?: throw DomainException(
+                errorCode = ErrorCode.OFFER_NOT_ACTIVE,
+                status = 409,
+                message = "Offer expiration is missing",
+                details = mapOf("bookingId" to booking.id)
+            )
+
+        val now = clock.instant()
+        if (now.isAfter(offerExpiresAtUtc)) {
+            throw DomainException(
+                errorCode = ErrorCode.OFFER_EXPIRED,
+                status = 409,
+                message = "Offer is expired",
+                details = mapOf("bookingId" to booking.id, "offerExpiresAtUtc" to offerExpiresAtUtc)
+            )
+        }
+
+        ensureCapacityAvailable(
+            occurrenceId = booking.occurrenceId,
+            excludeBookingId = booking.id,
+            additionalSeats = booking.partySize
+        )
+
+        return booking.acceptOffer(now)
+    }
+
+    private fun declineOffer(booking: Booking, actorUserId: Long): Booking {
+        ensureLeader(actorUserId, booking)
+
+        if (booking.status != BookingStatus.OFFERED) {
+            val code = if (booking.status.isTerminal()) ErrorCode.BOOKING_TERMINAL_STATE else ErrorCode.OFFER_NOT_ACTIVE
+            throw DomainException(
+                errorCode = code,
+                status = 409,
+                message = "Offer is not active",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+
+        val offerExpiresAtUtc = booking.offerExpiresAtUtc
+            ?: throw DomainException(
+                errorCode = ErrorCode.OFFER_NOT_ACTIVE,
+                status = 409,
+                message = "Offer expiration is missing",
+                details = mapOf("bookingId" to booking.id)
+            )
+
+        val now = clock.instant()
+        if (now.isAfter(offerExpiresAtUtc)) {
+            throw DomainException(
+                errorCode = ErrorCode.OFFER_EXPIRED,
+                status = 409,
+                message = "Offer is expired",
+                details = mapOf("bookingId" to booking.id, "offerExpiresAtUtc" to offerExpiresAtUtc)
+            )
+        }
+
+        return booking.declineOffer(now)
+    }
+
+    private fun ensureLeader(actorUserId: Long, booking: Booking) {
+        if (actorUserId != booking.leaderUserId) {
+            throw DomainException(
+                errorCode = ErrorCode.VALIDATION_ERROR,
+                status = 422,
+                message = "Only booking leader can perform this action",
+                details = mapOf("bookingId" to booking.id, "actorUserId" to actorUserId)
+            )
+        }
+    }
+
+    private fun ensureCapacityAvailable(
+        occurrenceId: Long,
+        excludeBookingId: Long?,
+        additionalSeats: Int
+    ) {
+        val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
+
+        val occupiedSeats = bookingRepository.findByOccurrenceAndStatuses(
+            occurrenceId = occurrenceId,
+            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
+        )
+            .filterNot { excludeBookingId != null && it.id == excludeBookingId }
+            .sumOf { it.partySize }
+
+        if (occupiedSeats + additionalSeats > occurrence.capacity) {
+            throw DomainException(
+                errorCode = ErrorCode.CAPACITY_EXCEEDED,
+                status = 409,
+                message = "Seat allocation exceeds occurrence capacity",
+                details = mapOf(
+                    "occurrenceId" to occurrenceId,
+                    "capacity" to occurrence.capacity,
+                    "occupiedSeats" to occupiedSeats,
+                    "requestedSeats" to additionalSeats
+                )
+            )
+        }
     }
 }

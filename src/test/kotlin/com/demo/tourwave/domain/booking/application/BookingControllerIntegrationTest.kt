@@ -218,6 +218,346 @@ class BookingControllerIntegrationTest {
             .andExpect(jsonPath("$.error.code").value("OCCURRENCE_ALREADY_CANCELED"))
     }
 
+    @Test
+    fun `approve booking returns 204 and updates booking status`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7101L,
+                organizationId = 31L,
+                leaderUserId = 501L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/approve")
+                .header("Idempotency-Key", "approve-k-1")
+                .header("X-Actor-User-Id", "701")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = bookingRepository.findById(requireNotNull(saved.id))
+        kotlin.test.assertEquals(BookingStatus.CONFIRMED, updated?.status)
+        kotlin.test.assertEquals(PaymentStatus.PAID, updated?.paymentStatus)
+    }
+
+    @Test
+    fun `approve booking on terminal state returns 409 with BOOKING_TERMINAL_STATE`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7102L,
+                organizationId = 31L,
+                leaderUserId = 502L,
+                partySize = 2,
+                status = BookingStatus.CANCELED,
+                paymentStatus = PaymentStatus.REFUNDED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/approve")
+                .header("Idempotency-Key", "approve-k-2")
+                .header("X-Actor-User-Id", "702")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("BOOKING_TERMINAL_STATE"))
+    }
+
+    @Test
+    fun `approve booking returns 409 CAPACITY_EXCEEDED when seats are full`() {
+        occurrenceRepository.save(Occurrence(id = 7103L, organizationId = 31L, capacity = 3))
+        bookingRepository.save(
+            Booking(
+                occurrenceId = 7103L,
+                organizationId = 31L,
+                leaderUserId = 503L,
+                partySize = 3,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7103L,
+                organizationId = 31L,
+                leaderUserId = 504L,
+                partySize = 1,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:01:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/approve")
+                .header("Idempotency-Key", "approve-k-3")
+                .header("X-Actor-User-Id", "703")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("CAPACITY_EXCEEDED"))
+    }
+
+    @Test
+    fun `reject booking returns 204 and updates to REJECTED`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7104L,
+                organizationId = 31L,
+                leaderUserId = 505L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/reject")
+                .header("Idempotency-Key", "reject-k-1")
+                .header("X-Actor-User-Id", "704")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = bookingRepository.findById(requireNotNull(saved.id))
+        kotlin.test.assertEquals(BookingStatus.REJECTED, updated?.status)
+        kotlin.test.assertEquals(PaymentStatus.REFUNDED, updated?.paymentStatus)
+    }
+
+    @Test
+    fun `cancel booking returns 204 and refunds payment`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7105L,
+                organizationId = 31L,
+                leaderUserId = 506L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/cancel")
+                .header("Idempotency-Key", "cancel-k-1")
+                .header("X-Actor-User-Id", "705")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = bookingRepository.findById(requireNotNull(saved.id))
+        kotlin.test.assertEquals(BookingStatus.CANCELED, updated?.status)
+        kotlin.test.assertEquals(PaymentStatus.REFUNDED, updated?.paymentStatus)
+    }
+
+    @Test
+    fun `accept offer returns 204 and updates to CONFIRMED when leader calls`() {
+        occurrenceRepository.save(Occurrence(id = 7106L, organizationId = 31L, capacity = 10))
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7106L,
+                organizationId = 31L,
+                leaderUserId = 507L,
+                partySize = 2,
+                status = BookingStatus.OFFERED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                offerExpiresAtUtc = Instant.now().plusSeconds(3600),
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/offer/accept")
+                .header("Idempotency-Key", "offer-accept-k-1")
+                .header("X-Actor-User-Id", "507")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = bookingRepository.findById(requireNotNull(saved.id))
+        kotlin.test.assertEquals(BookingStatus.CONFIRMED, updated?.status)
+        kotlin.test.assertEquals(PaymentStatus.PAID, updated?.paymentStatus)
+    }
+
+    @Test
+    fun `accept offer returns 409 OFFER_EXPIRED after expiry`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7107L,
+                organizationId = 31L,
+                leaderUserId = 508L,
+                partySize = 2,
+                status = BookingStatus.OFFERED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                offerExpiresAtUtc = Instant.now().minusSeconds(60),
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/offer/accept")
+                .header("Idempotency-Key", "offer-accept-k-2")
+                .header("X-Actor-User-Id", "508")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("OFFER_EXPIRED"))
+    }
+
+    @Test
+    fun `decline offer returns 204 and updates to EXPIRED`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7108L,
+                organizationId = 31L,
+                leaderUserId = 509L,
+                partySize = 2,
+                status = BookingStatus.OFFERED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                offerExpiresAtUtc = Instant.now().plusSeconds(3600),
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/offer/decline")
+                .header("Idempotency-Key", "offer-decline-k-1")
+                .header("X-Actor-User-Id", "509")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = bookingRepository.findById(requireNotNull(saved.id))
+        kotlin.test.assertEquals(BookingStatus.EXPIRED, updated?.status)
+        kotlin.test.assertEquals(PaymentStatus.REFUNDED, updated?.paymentStatus)
+    }
+
+    @Test
+    fun `offer command by non-leader returns 422 with VALIDATION_ERROR`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7109L,
+                organizationId = 31L,
+                leaderUserId = 510L,
+                partySize = 2,
+                status = BookingStatus.OFFERED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                offerExpiresAtUtc = Instant.now().plusSeconds(3600),
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/offer/accept")
+                .header("Idempotency-Key", "offer-accept-k-3")
+                .header("X-Actor-User-Id", "999")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }
+
+    @Test
+    fun `same mutation idempotency key and payload returns 204 replay`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7110L,
+                organizationId = 31L,
+                leaderUserId = 511L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/approve")
+                .header("Idempotency-Key", "approve-k-4")
+                .header("X-Actor-User-Id", "711")
+        )
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/approve")
+                .header("Idempotency-Key", "approve-k-4")
+                .header("X-Actor-User-Id", "711")
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `same mutation key with different target returns 422 idempotency error`() {
+        val firstBooking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7111L,
+                organizationId = 31L,
+                leaderUserId = 512L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val secondBooking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7111L,
+                organizationId = 31L,
+                leaderUserId = 513L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:01:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${firstBooking.id}/approve")
+                .header("Idempotency-Key", "approve-k-5")
+                .header("X-Actor-User-Id", "712")
+        )
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(
+            post("/bookings/${secondBooking.id}/approve")
+                .header("Idempotency-Key", "approve-k-5")
+                .header("X-Actor-User-Id", "712")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD"))
+    }
+
+    @Test
+    fun `mutation in-progress idempotency key returns 409 code`() {
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 7112L,
+                organizationId = 31L,
+                leaderUserId = 514L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        idempotencyStore.markInProgressForTest(
+            actorUserId = 713L,
+            method = "POST",
+            pathTemplate = "/bookings/{bookingId}/approve",
+            idempotencyKey = "approve-k-6",
+            requestHash = hash("${saved.id}|APPROVE")
+        )
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/approve")
+                .header("Idempotency-Key", "approve-k-6")
+                .header("X-Actor-User-Id", "713")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("IDEMPOTENCY_IN_PROGRESS"))
+    }
+
     private fun hash(raw: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
