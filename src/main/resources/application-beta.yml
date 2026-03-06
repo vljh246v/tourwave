@@ -14,8 +14,10 @@ tourwave:
 integration:
   payment:
     base-url: ${BETA_PAYMENT_BASE_URL}
+    api-key: ${BETA_PAYMENT_API_KEY}
   notification:
     base-url: ${BETA_NOTIFICATION_BASE_URL}
+    api-key: ${BETA_NOTIFICATION_API_KEY}
   asset:
     base-url: ${BETA_ASSET_BASE_URL}
-
+    access-token: ${BETA_ASSET_ACCESS_TOKEN}

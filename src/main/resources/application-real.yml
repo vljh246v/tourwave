@@ -14,8 +14,10 @@ tourwave:
 integration:
   payment:
     base-url: ${REAL_PAYMENT_BASE_URL}
+    api-key: ${REAL_PAYMENT_API_KEY}
   notification:
     base-url: ${REAL_NOTIFICATION_BASE_URL}
+    api-key: ${REAL_NOTIFICATION_API_KEY}
   asset:
     base-url: ${REAL_ASSET_BASE_URL}
-
+    access-token: ${REAL_ASSET_ACCESS_TOKEN}
