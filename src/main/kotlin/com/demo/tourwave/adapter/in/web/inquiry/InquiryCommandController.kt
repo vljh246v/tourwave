@@ -1,6 +1,7 @@
 package com.demo.tourwave.adapter.`in`.web.inquiry
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
+import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.inquiry.CreateInquiryCommand
 import com.demo.tourwave.application.inquiry.CloseInquiryCommand
 import com.demo.tourwave.application.inquiry.InquiryActorContext
@@ -60,16 +61,15 @@ class InquiryCommandController(
         @RequestParam(required = false) cursor: String?,
         @RequestParam(required = false) limit: Int?
     ): ResponseEntity<InquiryMessageListWebResponse> {
-        val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
+        val actorAuthContext = authzGuardPort.requireActorContext(
+            actorUserId = actorUserId,
+            actorOrgRole = actorOrgRole,
+            actorOrgId = actorOrgId
+        )
         val result = inquiryQueryService.listMessages(
             ListInquiryMessagesQuery(
                 inquiryId = inquiryId,
-                actor = InquiryActorContext(
-                    actorUserId = requiredActorUserId,
-                    actorOrgRole = actorOrgRole,
-                    actorOrgId = actorOrgId,
-                    requestId = requestId
-                ),
+                actor = actorAuthContext.toInquiryActorContext(requestId),
                 cursor = cursor,
                 limit = limit
             )
@@ -88,16 +88,15 @@ class InquiryCommandController(
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
         @RequestBody request: InquiryMessageCreateWebRequest
     ): ResponseEntity<InquiryMessageWebResponse> {
-        val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
+        val actorAuthContext = authzGuardPort.requireActorContext(
+            actorUserId = actorUserId,
+            actorOrgRole = actorOrgRole,
+            actorOrgId = actorOrgId
+        )
         val result = inquiryCommandService.postMessage(
             PostInquiryMessageCommand(
                 inquiryId = inquiryId,
-                actor = InquiryActorContext(
-                    actorUserId = requiredActorUserId,
-                    actorOrgRole = actorOrgRole,
-                    actorOrgId = actorOrgId,
-                    requestId = requestId
-                ),
+                actor = actorAuthContext.toInquiryActorContext(requestId),
                 idempotencyKey = idempotencyKey,
                 body = request.body,
                 attachmentAssetIds = request.attachmentAssetIds
@@ -116,20 +115,28 @@ class InquiryCommandController(
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?
     ): ResponseEntity<Void> {
-        val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
+        val actorAuthContext = authzGuardPort.requireActorContext(
+            actorUserId = actorUserId,
+            actorOrgRole = actorOrgRole,
+            actorOrgId = actorOrgId
+        )
         val result = inquiryCommandService.closeInquiry(
             CloseInquiryCommand(
                 inquiryId = inquiryId,
-                actor = InquiryActorContext(
-                    actorUserId = requiredActorUserId,
-                    actorOrgRole = actorOrgRole,
-                    actorOrgId = actorOrgId,
-                    requestId = requestId
-                ),
+                actor = actorAuthContext.toInquiryActorContext(requestId),
                 idempotencyKey = idempotencyKey
             )
         )
         return ResponseEntity.status(result.status).build()
+    }
+
+    private fun ActorAuthContext.toInquiryActorContext(requestId: String?): InquiryActorContext {
+        return InquiryActorContext(
+            actorUserId = actorUserId,
+            actorOrgRole = actorOrgRole,
+            actorOrgId = actorOrgId,
+            requestId = requestId
+        )
     }
 
     private fun InquiryCreated.toWebResponse(): InquiryWebResponse {

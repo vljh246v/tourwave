@@ -5,7 +5,7 @@ set -euo pipefail
 profile="${1:-}"
 
 if [[ -z "$profile" ]]; then
-  echo "Usage: $0 <alpha|beta|real>"
+  echo "[ERROR][E_USAGE] Usage: $0 <alpha|beta|real>"
   exit 2
 fi
 
@@ -51,22 +51,22 @@ case "$profile" in
     )
     ;;
   *)
-    echo "Unsupported profile '$profile'. Expected one of: alpha, beta, real"
+    echo "[ERROR][E_UNSUPPORTED_PROFILE] Unsupported profile '$profile'. Expected one of: alpha, beta, real"
     exit 2
     ;;
 esac
 
 missing_keys=()
 for key in "${required_keys[@]}"; do
-  if [[ -z "${!key:-}" ]]; then
+  value="${!key:-}"
+  if [[ -z "${value//[[:space:]]/}" ]]; then
     missing_keys+=("$key")
   fi
 done
 
 if (( ${#missing_keys[@]} > 0 )); then
-  echo "[ERROR] Missing required environment variables for profile '$profile': ${missing_keys[*]}"
+  echo "[ERROR][E_MISSING_REQUIRED_ENV] Missing required environment variables for profile '$profile': ${missing_keys[*]}"
   exit 1
 fi
 
 echo "[OK] All required environment variable keys are present for profile '$profile'."
-

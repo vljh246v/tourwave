@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingRequestHeaderException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -29,6 +30,7 @@ class GlobalExceptionHandler {
         MethodArgumentNotValidException::class,
         HttpMessageNotReadableException::class,
         MissingRequestHeaderException::class,
+        MethodArgumentTypeMismatchException::class,
         IllegalArgumentException::class
     )
     fun handleValidation(e: Exception): ResponseEntity<ErrorResponse> {

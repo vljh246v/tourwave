@@ -45,12 +45,12 @@ class InquiryAccessPolicy(
             )
         }
 
-        if (booking.leaderUserId == actor.actorUserId) {
+        if (booking.leaderUserId == actor.actorUserId || inquiry.createdByUserId == actor.actorUserId) {
             return InquiryAccessType.BOOKING_LEADER
         }
 
         val normalizedRole = actor.actorOrgRole?.uppercase()
-        if (normalizedRole == "ORG_ADMIN" || normalizedRole == "ORG_OWNER") {
+        if (isOrgOperator(normalizedRole)) {
             val actorOrgId = actor.actorOrgId
                 ?: throw DomainException(
                     errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
@@ -61,8 +61,8 @@ class InquiryAccessPolicy(
 
             if (actorOrgId != inquiry.organizationId) {
                 throw DomainException(
-                    errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
-                    status = 422,
+                    errorCode = ErrorCode.FORBIDDEN,
+                    status = 403,
                     message = "operator organization does not match inquiry scope",
                     details = mapOf(
                         "inquiryId" to inquiry.id,
@@ -76,11 +76,14 @@ class InquiryAccessPolicy(
         }
 
         throw DomainException(
-            errorCode = ErrorCode.VALIDATION_ERROR,
+            errorCode = ErrorCode.FORBIDDEN,
             status = 403,
             message = "Forbidden inquiry access",
             details = mapOf("inquiryId" to inquiry.id, "actorUserId" to actor.actorUserId)
         )
     }
-}
 
+    private fun isOrgOperator(role: String?): Boolean {
+        return role == "ORG_ADMIN" || role == "ORG_OWNER"
+    }
+}

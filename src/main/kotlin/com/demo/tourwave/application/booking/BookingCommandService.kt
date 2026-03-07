@@ -50,6 +50,15 @@ class BookingCommandService(
             IdempotencyDecision.Reserved -> {
                 val occurrence = occurrenceRepository.getOrCreate(command.occurrenceId)
 
+                if (occurrence.status == OccurrenceStatus.FINISHED) {
+                    throw DomainException(
+                        errorCode = ErrorCode.INVALID_STATE_TRANSITION,
+                        status = 409,
+                        message = "Occurrence is already finished",
+                        details = mapOf("occurrenceId" to command.occurrenceId, "status" to occurrence.status)
+                    )
+                }
+
                 if (occurrence.status == OccurrenceStatus.CANCELED) {
                     throw DomainException(
                         errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
@@ -107,6 +116,67 @@ class BookingCommandService(
                 )
 
                 CreateBookingResult(status = 201, booking = response)
+            }
+        }
+    }
+
+    fun finishOccurrence(command: FinishOccurrenceCommand): FinishOccurrenceResult {
+        val pathTemplate = "/occurrences/{occurrenceId}/finish"
+        val requestHash = hash("${command.occurrenceId}|finish")
+
+        return when (
+            val decision = idempotencyStore.reserveOrReplay(
+                actorUserId = command.actorUserId,
+                method = "POST",
+                pathTemplate = pathTemplate,
+                idempotencyKey = command.idempotencyKey,
+                requestHash = requestHash
+            )
+        ) {
+            is IdempotencyDecision.Replay -> FinishOccurrenceResult(status = decision.status)
+            IdempotencyDecision.Reserved -> {
+                val occurrence = occurrenceRepository.getOrCreate(command.occurrenceId)
+                when (occurrence.status) {
+                    OccurrenceStatus.CANCELED -> throw DomainException(
+                        errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
+                        status = 409,
+                        message = "Occurrence is already canceled",
+                        details = mapOf("occurrenceId" to command.occurrenceId)
+                    )
+
+                    OccurrenceStatus.FINISHED -> throw DomainException(
+                        errorCode = ErrorCode.INVALID_STATE_TRANSITION,
+                        status = 409,
+                        message = "Occurrence is already finished",
+                        details = mapOf("occurrenceId" to command.occurrenceId, "status" to occurrence.status)
+                    )
+
+                    OccurrenceStatus.SCHEDULED -> {
+                        occurrenceRepository.save(occurrence.copy(status = OccurrenceStatus.FINISHED))
+                    }
+                }
+
+                idempotencyStore.complete(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    status = 204,
+                    body = mapOf("ok" to true)
+                )
+
+                auditEventPort.append(
+                    AuditEventCommand(
+                        actor = "USER:${command.actorUserId}",
+                        action = "OCCURRENCE_FINISHED",
+                        resourceType = "OCCURRENCE",
+                        resourceId = occurrence.id,
+                        occurredAtUtc = clock.instant(),
+                        requestId = command.requestId
+                    )
+                )
+
+                FinishOccurrenceResult(status = 204)
             }
         }
     }
@@ -209,6 +279,7 @@ class BookingCommandService(
                     BookingMutationType.OFFER_ACCEPT -> acceptOffer(booking, command.actorUserId, command.requestId)
                     BookingMutationType.OFFER_DECLINE -> declineOffer(booking, command.actorUserId, command.requestId)
                     BookingMutationType.PARTY_SIZE_PATCH -> patchPartySize(booking, command.actorUserId, command.partySize)
+                    BookingMutationType.COMPLETE -> completeBooking(booking)
                 }
 
                 bookingRepository.save(mutated)
@@ -316,6 +387,28 @@ class BookingCommandService(
 
         val shouldRefund = booking.paymentStatus == PaymentStatus.AUTHORIZED || booking.paymentStatus == PaymentStatus.PAID
         return booking.cancel(refund = shouldRefund)
+    }
+
+    private fun completeBooking(booking: Booking): Booking {
+        if (booking.status.isTerminal()) {
+            throw DomainException(
+                errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
+                status = 409,
+                message = "Booking is in terminal state",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+
+        if (booking.status != BookingStatus.CONFIRMED) {
+            throw DomainException(
+                errorCode = ErrorCode.INVALID_STATE_TRANSITION,
+                status = 409,
+                message = "Only CONFIRMED booking can be completed",
+                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+            )
+        }
+
+        return booking.complete()
     }
 
     private fun acceptOffer(booking: Booking, actorUserId: Long, requestId: String?): Booking {
@@ -517,6 +610,7 @@ class BookingCommandService(
             BookingMutationType.OFFER_ACCEPT -> "OFFER_ACCEPTED"
             BookingMutationType.OFFER_DECLINE -> "OFFER_DECLINED"
             BookingMutationType.PARTY_SIZE_PATCH -> "PARTY_SIZE_CHANGED"
+            BookingMutationType.COMPLETE -> "BOOKING_COMPLETED"
         }
 
         appendBookingStatusAudit(
@@ -552,7 +646,8 @@ class BookingCommandService(
             BookingMutationType.PARTY_SIZE_PATCH -> after.partySize < before.partySize
             BookingMutationType.APPROVE,
             BookingMutationType.REJECT,
-            BookingMutationType.OFFER_ACCEPT -> false
+            BookingMutationType.OFFER_ACCEPT,
+            BookingMutationType.COMPLETE -> false
         }
 
         if (!shouldPromote) {

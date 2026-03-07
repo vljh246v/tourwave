@@ -2,6 +2,7 @@ package com.demo.tourwave.domain.common
 
 enum class ErrorCode {
     UNAUTHORIZED,
+    FORBIDDEN,
     VALIDATION_ERROR,
     REQUIRED_FIELD_MISSING,
     BOOKING_SCOPE_MISMATCH,

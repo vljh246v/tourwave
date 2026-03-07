@@ -67,9 +67,9 @@ class InquiryCommandService(
 
                 if (booking.leaderUserId != command.actorUserId) {
                     throw DomainException(
-                        errorCode = ErrorCode.VALIDATION_ERROR,
+                        errorCode = ErrorCode.FORBIDDEN,
                         status = 403,
-                        message = "Only booking participant can create inquiry",
+                        message = "Only booking leader can create inquiry",
                         details = mapOf("bookingId" to bookingId, "actorUserId" to command.actorUserId)
                     )
                 }

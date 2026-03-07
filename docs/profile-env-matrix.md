@@ -21,6 +21,20 @@
 - `local` 프로파일은 CI 필수 검증 대상에서 제외
 - 누락된 값이 있으면 키 이름만 출력하고 즉시 실패 (값은 출력 금지)
 
+### 스크립트 실행 규약 (`scripts/check-required-env.sh`)
+
+- 실행 예시:
+  - `scripts/check-required-env.sh alpha`
+  - `scripts/check-required-env.sh beta`
+  - `scripts/check-required-env.sh real`
+- 종료 코드:
+  - `0`: 필수 env 키 존재
+  - `1`: `E_MISSING_REQUIRED_ENV` (필수 env 누락 또는 공백 값)
+  - `2`: `E_USAGE` 또는 `E_UNSUPPORTED_PROFILE` (잘못된 실행 방식)
+- 로그 규칙:
+  - 값(value)은 출력하지 않고 키 이름만 출력
+  - 에러는 `[ERROR][<분류코드>]` 포맷으로 출력
+
 ## 공통 환경변수
 
 - `IDEMPOTENCY_TTL_SECONDS` (선택, 기본값 `86400`)

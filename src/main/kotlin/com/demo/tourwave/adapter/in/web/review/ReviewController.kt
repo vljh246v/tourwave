@@ -29,11 +29,11 @@ class ReviewController(
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
         @RequestBody request: ReviewCreateWebRequest
     ): ResponseEntity<ReviewWebResponse> {
-        val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
+        val actorAuthContext = authzGuardPort.requireActorContext(actorUserId = actorUserId)
         val result = reviewCommandService.createTourReview(
             CreateReviewCommand(
                 occurrenceId = occurrenceId,
-                actorUserId = requiredActorUserId,
+                actorUserId = actorAuthContext.actorUserId,
                 idempotencyKey = idempotencyKey,
                 rating = request.rating,
                 comment = request.comment,
@@ -51,11 +51,11 @@ class ReviewController(
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
         @RequestBody request: ReviewCreateWebRequest
     ): ResponseEntity<ReviewWebResponse> {
-        val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
+        val actorAuthContext = authzGuardPort.requireActorContext(actorUserId = actorUserId)
         val result = reviewCommandService.createInstructorReview(
             CreateReviewCommand(
                 occurrenceId = occurrenceId,
-                actorUserId = requiredActorUserId,
+                actorUserId = actorAuthContext.actorUserId,
                 idempotencyKey = idempotencyKey,
                 rating = request.rating,
                 comment = request.comment,
