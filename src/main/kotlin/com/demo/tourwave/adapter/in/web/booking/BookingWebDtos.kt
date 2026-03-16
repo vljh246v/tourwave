@@ -34,6 +34,8 @@ data class BookingCreateWebResponse(
 data class BookingOccurrenceWebResponse(
     val id: Long,
     val organizationId: Long,
+    val tourId: Long?,
+    val instructorProfileId: Long?,
     val capacity: Int,
     val startsAtUtc: Instant?,
     val status: OccurrenceStatus

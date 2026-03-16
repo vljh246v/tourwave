@@ -1,6 +1,7 @@
 package com.demo.tourwave.application.inquiry
 
 import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.inquiry.Inquiry
@@ -10,17 +11,10 @@ enum class InquiryAccessType {
     ORG_OPERATOR
 }
 
-data class InquiryActorContext(
-    val actorUserId: Long,
-    val actorOrgRole: String? = null,
-    val actorOrgId: Long? = null,
-    val requestId: String? = null
-)
-
 class InquiryAccessPolicy(
     private val bookingRepository: BookingRepository
 ) {
-    fun authorize(inquiry: Inquiry, actor: InquiryActorContext): InquiryAccessType {
+    fun authorize(inquiry: Inquiry, actor: ActorAuthContext): InquiryAccessType {
         val booking = bookingRepository.findById(inquiry.bookingId)
             ?: throw DomainException(
                 errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
@@ -49,8 +43,7 @@ class InquiryAccessPolicy(
             return InquiryAccessType.BOOKING_LEADER
         }
 
-        val normalizedRole = actor.actorOrgRole?.uppercase()
-        if (isOrgOperator(normalizedRole)) {
+        if (actor.isOrgOperator()) {
             val actorOrgId = actor.actorOrgId
                 ?: throw DomainException(
                     errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
@@ -83,7 +76,4 @@ class InquiryAccessPolicy(
         )
     }
 
-    private fun isOrgOperator(role: String?): Boolean {
-        return role == "ORG_ADMIN" || role == "ORG_OWNER"
-    }
 }

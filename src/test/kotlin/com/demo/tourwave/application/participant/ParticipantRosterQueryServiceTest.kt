@@ -3,6 +3,7 @@ package com.demo.tourwave.application.participant
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.ActorAuthContext
+import com.demo.tourwave.application.common.port.ActorRole
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -47,7 +48,7 @@ class ParticipantRosterQueryServiceTest {
         ).copy(id = 1L)
 
         whenever(occurrenceRepository.getOrCreate(3001L)).thenReturn(
-            Occurrence(id = 3001L, organizationId = 31L, capacity = 10)
+            Occurrence(id = 3001L, organizationId = 31L, tourId = 801L, instructorProfileId = 901L, capacity = 10)
         )
         whenever(bookingRepository.findByOccurrenceId(3001L)).thenReturn(listOf(booking))
         whenever(participantRepository.findByBookingId(201L)).thenReturn(listOf(leader))
@@ -55,11 +56,13 @@ class ParticipantRosterQueryServiceTest {
         val result = service.getOccurrenceRoster(
             GetOccurrenceRosterQuery(
                 occurrenceId = 3001L,
-                actor = ActorAuthContext(actorUserId = 900L, actorOrgRole = "ORG_ADMIN", actorOrgId = 31L)
+                actor = ActorAuthContext(actorUserId = 900L, roles = setOf(ActorRole.USER, ActorRole.ORG_ADMIN), actorOrgId = 31L)
             )
         )
 
         assertEquals(1, result.items.size)
+        assertEquals(801L, result.tourId)
+        assertEquals(901L, result.instructorProfileId)
         assertEquals(101L, result.items.single().participantUserId)
     }
 
@@ -73,7 +76,25 @@ class ParticipantRosterQueryServiceTest {
             service.getOccurrenceRoster(
                 GetOccurrenceRosterQuery(
                     occurrenceId = 3001L,
-                    actor = ActorAuthContext(actorUserId = 900L, actorOrgRole = "ORG_ADMIN", actorOrgId = 99L)
+                    actor = ActorAuthContext(actorUserId = 900L, roles = setOf(ActorRole.USER, ActorRole.ORG_ADMIN), actorOrgId = 99L)
+                )
+            )
+        }
+
+        assertEquals(403, exception.status)
+    }
+
+    @Test
+    fun `roster rejects org member role`() {
+        whenever(occurrenceRepository.getOrCreate(3001L)).thenReturn(
+            Occurrence(id = 3001L, organizationId = 31L, capacity = 10)
+        )
+
+        val exception = assertThrows<DomainException> {
+            service.getOccurrenceRoster(
+                GetOccurrenceRosterQuery(
+                    occurrenceId = 3001L,
+                    actor = ActorAuthContext(actorUserId = 900L, roles = setOf(ActorRole.USER, ActorRole.ORG_MEMBER), actorOrgId = 31L)
                 )
             )
         }

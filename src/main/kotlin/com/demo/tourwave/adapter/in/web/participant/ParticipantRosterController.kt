@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RestController
 
 data class OccurrenceRosterWebResponse(
     val occurrenceId: Long,
+    val organizationId: Long,
+    val tourId: Long?,
+    val instructorProfileId: Long?,
     val items: List<OccurrenceRosterEntryWebResponse>
 )
 
@@ -87,6 +90,9 @@ class ParticipantRosterController(
     private fun OccurrenceRosterResult.toWebResponse(): OccurrenceRosterWebResponse {
         return OccurrenceRosterWebResponse(
             occurrenceId = occurrenceId,
+            organizationId = organizationId,
+            tourId = tourId,
+            instructorProfileId = instructorProfileId,
             items = items.map { it.toWebResponse() }
         )
     }
@@ -106,12 +112,14 @@ class ParticipantRosterController(
     }
 
     private fun OccurrenceRosterResult.toCsv(): String {
-        val header = "occurrenceId,bookingId,organizationId,bookingLeaderUserId,bookingStatus,participantId,participantUserId,participantStatus,attendanceStatus"
+        val header = "occurrenceId,organizationId,tourId,instructorProfileId,bookingId,bookingLeaderUserId,bookingStatus,participantId,participantUserId,participantStatus,attendanceStatus"
         val rows = items.joinToString("\n") { entry ->
             listOf(
                 entry.occurrenceId,
+                organizationId,
+                tourId ?: "",
+                instructorProfileId ?: "",
                 entry.bookingId,
-                entry.organizationId,
                 entry.bookingLeaderUserId,
                 entry.bookingStatus.name,
                 entry.participantId,

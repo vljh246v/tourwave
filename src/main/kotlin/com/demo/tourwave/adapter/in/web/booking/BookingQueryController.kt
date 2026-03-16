@@ -60,6 +60,8 @@ class BookingQueryController(
         return BookingOccurrenceWebResponse(
             id = id,
             organizationId = organizationId,
+            tourId = tourId,
+            instructorProfileId = instructorProfileId,
             capacity = capacity,
             startsAtUtc = startsAtUtc,
             status = status

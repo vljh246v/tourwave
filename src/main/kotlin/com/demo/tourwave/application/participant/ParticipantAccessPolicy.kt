@@ -30,8 +30,7 @@ class ParticipantAccessPolicy(
             return ParticipantAccessType.BOOKING_PARTICIPANT
         }
 
-        val normalizedRole = actor.actorOrgRole?.uppercase()
-        if (normalizedRole == "ORG_ADMIN" || normalizedRole == "ORG_OWNER") {
+        if (actor.isOrgOperator()) {
             val actorOrgId = actor.actorOrgId
                 ?: throw DomainException(
                     errorCode = ErrorCode.REQUIRED_FIELD_MISSING,

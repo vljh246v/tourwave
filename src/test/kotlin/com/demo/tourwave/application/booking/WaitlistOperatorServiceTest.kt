@@ -3,6 +3,7 @@ package com.demo.tourwave.application.booking
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.ActorAuthContext
+import com.demo.tourwave.application.common.port.ActorRole
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -50,7 +51,7 @@ class WaitlistOperatorServiceTest {
         val result = waitlistOperatorService.skip(
             ManualWaitlistActionCommand(
                 bookingId = 91L,
-                actor = ActorAuthContext(actorUserId = 900L, actorOrgRole = "ORG_ADMIN", actorOrgId = 31L),
+                actor = ActorAuthContext(actorUserId = 900L, roles = setOf(ActorRole.USER, ActorRole.ORG_ADMIN), actorOrgId = 31L),
                 note = "잠시 뒤로"
             )
         )
@@ -95,11 +96,37 @@ class WaitlistOperatorServiceTest {
             waitlistOperatorService.promote(
                 ManualWaitlistActionCommand(
                     bookingId = 92L,
-                    actor = ActorAuthContext(actorUserId = 900L, actorOrgRole = "ORG_ADMIN", actorOrgId = 31L)
+                    actor = ActorAuthContext(actorUserId = 900L, roles = setOf(ActorRole.USER, ActorRole.ORG_ADMIN), actorOrgId = 31L)
                 )
             )
         }
 
         assertEquals(409, exception.status)
+    }
+
+    @Test
+    fun `skip rejects org member role`() {
+        val booking = Booking(
+            id = 91L,
+            occurrenceId = 1001L,
+            organizationId = 31L,
+            leaderUserId = 101L,
+            partySize = 2,
+            status = BookingStatus.WAITLISTED,
+            paymentStatus = PaymentStatus.AUTHORIZED,
+            createdAt = Instant.parse("2026-03-10T00:00:00Z")
+        )
+        whenever(bookingRepository.findById(91L)).thenReturn(booking)
+
+        val exception = assertThrows<DomainException> {
+            waitlistOperatorService.skip(
+                ManualWaitlistActionCommand(
+                    bookingId = 91L,
+                    actor = ActorAuthContext(actorUserId = 900L, roles = setOf(ActorRole.USER, ActorRole.ORG_MEMBER), actorOrgId = 31L)
+                )
+            )
+        }
+
+        assertEquals(403, exception.status)
     }
 }

@@ -34,6 +34,8 @@ data class BookingDetailView(
 data class BookingOccurrenceView(
     val id: Long,
     val organizationId: Long,
+    val tourId: Long?,
+    val instructorProfileId: Long?,
     val capacity: Int,
     val startsAtUtc: Instant?,
     val status: OccurrenceStatus
@@ -91,6 +93,8 @@ class BookingQueryService(
             occurrence = BookingOccurrenceView(
                 id = occurrence.id,
                 organizationId = occurrence.organizationId,
+                tourId = occurrence.tourId,
+                instructorProfileId = occurrence.instructorProfileId,
                 capacity = occurrence.capacity,
                 startsAtUtc = occurrence.startsAtUtc,
                 status = occurrence.status

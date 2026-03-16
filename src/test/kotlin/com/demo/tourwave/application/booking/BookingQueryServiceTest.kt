@@ -64,6 +64,8 @@ class BookingQueryServiceTest {
         val occurrence = Occurrence(
             id = 601L,
             organizationId = 31L,
+            tourId = 801L,
+            instructorProfileId = 901L,
             capacity = 10,
             startsAtUtc = Instant.parse("2026-03-20T09:00:00Z"),
             status = OccurrenceStatus.SCHEDULED
@@ -98,6 +100,8 @@ class BookingQueryServiceTest {
 
         assertEquals(41L, result.id)
         assertEquals(601L, result.occurrence.id)
+        assertEquals(801L, result.occurrence.tourId)
+        assertEquals(901L, result.occurrence.instructorProfileId)
         assertEquals(2, result.participants.size)
         assertEquals(AttendanceStatus.ATTENDED, result.participants[1].attendanceStatus)
     }

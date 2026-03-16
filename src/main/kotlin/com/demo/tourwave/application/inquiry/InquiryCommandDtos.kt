@@ -1,5 +1,6 @@
 package com.demo.tourwave.application.inquiry
 
+import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.domain.inquiry.InquiryStatus
 import java.time.Instant
 
@@ -15,7 +16,7 @@ data class CreateInquiryCommand(
 
 data class PostInquiryMessageCommand(
     val inquiryId: Long,
-    val actor: InquiryActorContext,
+    val actor: ActorAuthContext,
     val idempotencyKey: String,
     val body: String?,
     val attachmentAssetIds: List<Long>? = null
@@ -23,20 +24,20 @@ data class PostInquiryMessageCommand(
 
 data class CloseInquiryCommand(
     val inquiryId: Long,
-    val actor: InquiryActorContext,
+    val actor: ActorAuthContext,
     val idempotencyKey: String
 )
 
 data class ListInquiryMessagesQuery(
     val inquiryId: Long,
-    val actor: InquiryActorContext,
+    val actor: ActorAuthContext,
     val cursor: String? = null,
     val limit: Int? = null
 )
 
 data class GetInquiryDetailQuery(
     val inquiryId: Long,
-    val actor: InquiryActorContext
+    val actor: ActorAuthContext
 )
 
 data class ListMyInquiriesQuery(

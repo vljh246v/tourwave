@@ -1,10 +1,8 @@
 package com.demo.tourwave.adapter.`in`.web.inquiry
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.inquiry.CreateInquiryCommand
 import com.demo.tourwave.application.inquiry.CloseInquiryCommand
-import com.demo.tourwave.application.inquiry.InquiryActorContext
 import com.demo.tourwave.application.inquiry.InquiryCommandService
 import com.demo.tourwave.application.inquiry.InquiryCreated
 import com.demo.tourwave.application.inquiry.InquiryMessageView
@@ -50,6 +48,7 @@ class InquiryCommandController(
         @PathVariable inquiryId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("X-Actor-Role", required = false) actorRole: String?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
@@ -57,13 +56,15 @@ class InquiryCommandController(
     ): ResponseEntity<InquiryMessageWebResponse> {
         val actorAuthContext = authzGuardPort.requireActorContext(
             actorUserId = actorUserId,
+            actorRole = actorRole,
             actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
+            actorOrgId = actorOrgId,
+            requestId = requestId
         )
         val result = inquiryCommandService.postMessage(
             PostInquiryMessageCommand(
                 inquiryId = inquiryId,
-                actor = actorAuthContext.toInquiryActorContext(requestId),
+                actor = actorAuthContext,
                 idempotencyKey = idempotencyKey,
                 body = request.body,
                 attachmentAssetIds = request.attachmentAssetIds
@@ -78,32 +79,26 @@ class InquiryCommandController(
         @PathVariable inquiryId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("X-Actor-Role", required = false) actorRole: String?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?
     ): ResponseEntity<Void> {
         val actorAuthContext = authzGuardPort.requireActorContext(
             actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
-        )
-        val result = inquiryCommandService.closeInquiry(
-            CloseInquiryCommand(
-                inquiryId = inquiryId,
-                actor = actorAuthContext.toInquiryActorContext(requestId),
-                idempotencyKey = idempotencyKey
-            )
-        )
-        return ResponseEntity.status(result.status).build()
-    }
-
-    private fun ActorAuthContext.toInquiryActorContext(requestId: String?): InquiryActorContext {
-        return InquiryActorContext(
-            actorUserId = actorUserId,
+            actorRole = actorRole,
             actorOrgRole = actorOrgRole,
             actorOrgId = actorOrgId,
             requestId = requestId
         )
+        val result = inquiryCommandService.closeInquiry(
+            CloseInquiryCommand(
+                inquiryId = inquiryId,
+                actor = actorAuthContext,
+                idempotencyKey = idempotencyKey
+            )
+        )
+        return ResponseEntity.status(result.status).build()
     }
 
     private fun InquiryCreated.toWebResponse(): InquiryWebResponse {

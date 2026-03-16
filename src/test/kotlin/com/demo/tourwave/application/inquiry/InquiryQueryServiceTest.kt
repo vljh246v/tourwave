@@ -1,6 +1,7 @@
 package com.demo.tourwave.application.inquiry
 
 import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -59,7 +60,7 @@ class InquiryQueryServiceTest {
         val result = inquiryQueryService.listMessages(
             ListInquiryMessagesQuery(
                 inquiryId = 81L,
-                actor = InquiryActorContext(actorUserId = 101L),
+                actor = ActorAuthContext(actorUserId = 101L),
                 cursor = "1",
                 limit = 1
             )

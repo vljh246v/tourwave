@@ -29,6 +29,9 @@ data class OccurrenceRosterEntryView(
 
 data class OccurrenceRosterResult(
     val occurrenceId: Long,
+    val organizationId: Long,
+    val tourId: Long?,
+    val instructorProfileId: Long?,
     val items: List<OccurrenceRosterEntryView>,
 )
 
@@ -66,6 +69,9 @@ class ParticipantRosterQueryService(
 
         return OccurrenceRosterResult(
             occurrenceId = query.occurrenceId,
+            organizationId = occurrence.organizationId,
+            tourId = occurrence.tourId,
+            instructorProfileId = occurrence.instructorProfileId,
             items = items,
         )
     }
@@ -74,8 +80,7 @@ class ParticipantRosterQueryService(
         actor: ActorAuthContext,
         organizationId: Long,
     ) {
-        val normalizedRole = actor.actorOrgRole?.uppercase()
-        if (normalizedRole != "ORG_ADMIN" && normalizedRole != "ORG_OWNER") {
+        if (!actor.isOrgOperator()) {
             throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,

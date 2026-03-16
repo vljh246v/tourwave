@@ -1,6 +1,7 @@
 package com.demo.tourwave.application.inquiry
 
 import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyDecision
@@ -312,7 +313,7 @@ class InquiryCommandService(
             )
     }
 
-    private fun actorLabel(actor: InquiryActorContext, accessType: InquiryAccessType): String {
+    private fun actorLabel(actor: ActorAuthContext, accessType: InquiryAccessType): String {
         return if (accessType == InquiryAccessType.ORG_OPERATOR) {
             "OPERATOR:${actor.actorUserId}"
         } else {

@@ -97,8 +97,7 @@ class WaitlistOperatorService(
                 details = mapOf("bookingId" to command.bookingId)
             )
 
-        val normalizedRole = command.actor.actorOrgRole?.uppercase()
-        if (normalizedRole != "ORG_ADMIN" && normalizedRole != "ORG_OWNER") {
+        if (!command.actor.isOrgOperator()) {
             throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,

@@ -1,9 +1,7 @@
 package com.demo.tourwave.adapter.`in`.web.inquiry
 
-import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.common.port.AuthzGuardPort
 import com.demo.tourwave.application.inquiry.GetInquiryDetailQuery
-import com.demo.tourwave.application.inquiry.InquiryActorContext
 import com.demo.tourwave.application.inquiry.InquiryDetailView
 import com.demo.tourwave.application.inquiry.InquiryListResult
 import com.demo.tourwave.application.inquiry.InquiryMessageListResult
@@ -28,20 +26,23 @@ class InquiryQueryController(
     fun getInquiryDetail(
         @PathVariable inquiryId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("X-Actor-Role", required = false) actorRole: String?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?
     ): ResponseEntity<InquiryDetailWebResponse> {
         val actor = authzGuardPort.requireActorContext(
             actorUserId = actorUserId,
+            actorRole = actorRole,
             actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
+            actorOrgId = actorOrgId,
+            requestId = requestId
         )
 
         val result = inquiryQueryService.getInquiryDetail(
             GetInquiryDetailQuery(
                 inquiryId = inquiryId,
-                actor = actor.toInquiryActorContext(requestId)
+                actor = actor
             )
         )
         return ResponseEntity.ok(result.toWebResponse())
@@ -70,6 +71,7 @@ class InquiryQueryController(
     fun listInquiryMessages(
         @PathVariable inquiryId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("X-Actor-Role", required = false) actorRole: String?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
@@ -78,27 +80,20 @@ class InquiryQueryController(
     ): ResponseEntity<InquiryMessageListWebResponse> {
         val actor = authzGuardPort.requireActorContext(
             actorUserId = actorUserId,
+            actorRole = actorRole,
             actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
+            actorOrgId = actorOrgId,
+            requestId = requestId
         )
         val result = inquiryQueryService.listMessages(
             ListInquiryMessagesQuery(
                 inquiryId = inquiryId,
-                actor = actor.toInquiryActorContext(requestId),
+                actor = actor,
                 cursor = cursor,
                 limit = limit
             )
         )
         return ResponseEntity.ok(result.toWebResponse())
-    }
-
-    private fun ActorAuthContext.toInquiryActorContext(requestId: String?): InquiryActorContext {
-        return InquiryActorContext(
-            actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId,
-            requestId = requestId
-        )
     }
 
     private fun InquiryDetailView.toWebResponse(): InquiryDetailWebResponse {
