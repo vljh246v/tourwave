@@ -1,10 +1,14 @@
 package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.booking.BookingCommandService
+import com.demo.tourwave.application.booking.BookingRefundPreviewService
+import com.demo.tourwave.application.booking.PaymentLedgerService
 import com.demo.tourwave.application.booking.WaitlistOperatorService
 import com.demo.tourwave.application.booking.BookingQueryService
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.booking.port.PaymentRecordRepository
+import com.demo.tourwave.application.booking.port.RefundExecutionPort
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.InquiryAccessPolicy
@@ -35,6 +39,7 @@ class UseCaseConfig {
         bookingParticipantRepository: BookingParticipantRepository,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
+        paymentLedgerService: PaymentLedgerService,
         clock: Clock
     ): BookingCommandService {
         return BookingCommandService(
@@ -43,6 +48,20 @@ class UseCaseConfig {
             bookingParticipantRepository = bookingParticipantRepository,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
+            paymentLedgerService = paymentLedgerService,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun paymentLedgerService(
+        paymentRecordRepository: PaymentRecordRepository,
+        refundExecutionPort: RefundExecutionPort,
+        clock: Clock
+    ): PaymentLedgerService {
+        return PaymentLedgerService(
+            paymentRecordRepository = paymentRecordRepository,
+            refundExecutionPort = refundExecutionPort,
             clock = clock
         )
     }
@@ -59,6 +78,23 @@ class UseCaseConfig {
             occurrenceRepository = occurrenceRepository,
             participantAccessPolicy = participantAccessPolicy,
             participantInvitationLifecycleService = participantInvitationLifecycleService
+        )
+    }
+
+    @Bean
+    fun bookingRefundPreviewService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        participantAccessPolicy: ParticipantAccessPolicy,
+        paymentLedgerService: PaymentLedgerService,
+        clock: Clock
+    ): BookingRefundPreviewService {
+        return BookingRefundPreviewService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            participantAccessPolicy = participantAccessPolicy,
+            paymentLedgerService = paymentLedgerService,
+            clock = clock
         )
     }
 

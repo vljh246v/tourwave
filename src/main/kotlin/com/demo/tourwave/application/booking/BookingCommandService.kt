@@ -3,6 +3,7 @@ package com.demo.tourwave.application.booking
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
+import com.demo.tourwave.domain.booking.RefundPolicyAction
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.domain.common.DomainException
@@ -24,6 +25,7 @@ class BookingCommandService(
     private val bookingParticipantRepository: BookingParticipantRepository,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
+    private val paymentLedgerService: PaymentLedgerService,
     private val clock: Clock
 ) {
     companion object {
@@ -94,6 +96,8 @@ class BookingCommandService(
                         createdAt = created.createdAt
                     )
                 )
+
+                paymentLedgerService.initialize(created)
 
                 val response = BookingCreated(
                     id = requireNotNull(created.id),
@@ -222,13 +226,18 @@ class BookingCommandService(
                 val bookingsToCancel = bookingRepository.findByOccurrenceAndStatuses(command.occurrenceId, nonTerminalStatuses)
 
                 bookingsToCancel.forEach { booking ->
-                    val shouldRefund = booking.paymentStatus == PaymentStatus.AUTHORIZED || booking.paymentStatus == PaymentStatus.PAID
-                    val canceled = booking.cancel(refund = shouldRefund)
-                    bookingRepository.save(canceled)
-                    cancelParticipants(bookingId = requireNotNull(canceled.id), canceledAt = clock.instant())
+                    val canceled = bookingRepository.save(booking.cancel())
+                    val refunded = paymentLedgerService.applyRefundPolicy(
+                        booking = canceled,
+                        occurrence = occurrence,
+                        action = RefundPolicyAction.OCCURRENCE_CANCEL,
+                        actorUserId = command.actorUserId
+                    )
+                    val settled = bookingRepository.save(refunded)
+                    cancelParticipants(bookingId = requireNotNull(settled.id), canceledAt = clock.instant())
                     appendBookingStatusAudit(
                         actorUserId = command.actorUserId,
-                        booking = canceled,
+                        booking = settled,
                         action = "BOOKING_CANCELED_BY_OCCURRENCE",
                         requestId = command.requestId
                     )
@@ -294,14 +303,24 @@ class BookingCommandService(
                     BookingMutationType.COMPLETE -> completeBooking(booking)
                 }
 
-                bookingRepository.save(mutated)
+                var persisted = bookingRepository.save(mutated)
+                persisted = applyPaymentLifecycle(
+                    before = booking,
+                    after = persisted,
+                    mutationType = command.mutationType,
+                    actorUserId = command.actorUserId,
+                    requestId = command.requestId
+                )
+                if (persisted != mutated) {
+                    persisted = bookingRepository.save(persisted)
+                }
                 if (command.mutationType == BookingMutationType.CANCEL) {
                     cancelParticipants(
-                        bookingId = requireNotNull(mutated.id),
+                        bookingId = requireNotNull(persisted.id),
                         canceledAt = clock.instant()
                     )
                 }
-                promoteWaitlistIfSeatReleased(command, booking, mutated)
+                promoteWaitlistIfSeatReleased(command, booking, persisted)
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -309,13 +328,13 @@ class BookingCommandService(
                     pathTemplate = command.mutationType.pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) 200 else 204,
-                    body = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) mutated else mapOf("ok" to true)
+                    body = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) persisted else mapOf("ok" to true)
                 )
 
-                appendBookingMutationAudit(command, mutated)
+                appendBookingMutationAudit(command, persisted)
 
                 val status = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) 200 else 204
-                MutateBookingResult(status = status, booking = if (status == 200) mutated else null)
+                MutateBookingResult(status = status, booking = if (status == 200) persisted else null)
             }
         }
     }
@@ -403,8 +422,7 @@ class BookingCommandService(
             )
         }
 
-        val shouldRefund = booking.paymentStatus == PaymentStatus.AUTHORIZED || booking.paymentStatus == PaymentStatus.PAID
-        return booking.cancel(refund = shouldRefund)
+        return booking.cancel()
     }
 
     private fun completeBooking(booking: Booking): Booking {
@@ -453,10 +471,18 @@ class BookingCommandService(
 
         val now = clock.instant()
         if (now.isAfter(offerExpiresAtUtc)) {
-            bookingRepository.save(booking.expireOffer().copy(paymentStatus = PaymentStatus.REFUNDED))
+            val expired = bookingRepository.save(booking.expireOffer())
+            val settled = bookingRepository.save(
+                paymentLedgerService.applyRefundPolicy(
+                    booking = expired,
+                    occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId),
+                    action = RefundPolicyAction.OFFER_EXPIRED,
+                    actorUserId = actorUserId
+                )
+            )
             appendBookingStatusAudit(
                 actorUserId = actorUserId,
-                booking = booking.copy(status = BookingStatus.EXPIRED, paymentStatus = PaymentStatus.REFUNDED),
+                booking = settled,
                 action = "OFFER_EXPIRED",
                 requestId = requestId
             )
@@ -506,10 +532,18 @@ class BookingCommandService(
 
         val now = clock.instant()
         if (now.isAfter(offerExpiresAtUtc)) {
-            bookingRepository.save(booking.expireOffer().copy(paymentStatus = PaymentStatus.REFUNDED))
+            val expired = bookingRepository.save(booking.expireOffer())
+            val settled = bookingRepository.save(
+                paymentLedgerService.applyRefundPolicy(
+                    booking = expired,
+                    occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId),
+                    action = RefundPolicyAction.OFFER_EXPIRED,
+                    actorUserId = actorUserId
+                )
+            )
             appendBookingStatusAudit(
                 actorUserId = actorUserId,
-                booking = booking.copy(status = BookingStatus.EXPIRED, paymentStatus = PaymentStatus.REFUNDED),
+                booking = settled,
                 action = "OFFER_EXPIRED",
                 requestId = requestId
             )
@@ -651,6 +685,69 @@ class BookingCommandService(
             action = action,
             requestId = command.requestId
         )
+    }
+
+    private fun applyPaymentLifecycle(
+        before: Booking,
+        after: Booking,
+        mutationType: BookingMutationType,
+        actorUserId: Long,
+        requestId: String?
+    ): Booking {
+        val occurrence = when (mutationType) {
+            BookingMutationType.APPROVE,
+            BookingMutationType.REJECT,
+            BookingMutationType.CANCEL,
+            BookingMutationType.OFFER_ACCEPT,
+            BookingMutationType.OFFER_DECLINE -> occurrenceRepository.getOrCreate(after.occurrenceId)
+
+            BookingMutationType.PARTY_SIZE_PATCH,
+            BookingMutationType.COMPLETE -> null
+        }
+
+        val settled = when (mutationType) {
+            BookingMutationType.APPROVE,
+            BookingMutationType.OFFER_ACCEPT -> paymentLedgerService.capture(after)
+
+            BookingMutationType.REJECT -> paymentLedgerService.applyRefundPolicy(
+                booking = after,
+                occurrence = requireNotNull(occurrence),
+                action = RefundPolicyAction.BOOKING_REJECTED,
+                actorUserId = actorUserId
+            )
+
+            BookingMutationType.CANCEL -> paymentLedgerService.applyRefundPolicy(
+                booking = after,
+                occurrence = requireNotNull(occurrence),
+                action = RefundPolicyAction.LEADER_CANCEL,
+                actorUserId = actorUserId
+            )
+
+            BookingMutationType.OFFER_DECLINE -> paymentLedgerService.applyRefundPolicy(
+                booking = after,
+                occurrence = requireNotNull(occurrence),
+                action = RefundPolicyAction.OFFER_DECLINED,
+                actorUserId = actorUserId
+            )
+
+            BookingMutationType.PARTY_SIZE_PATCH,
+            BookingMutationType.COMPLETE -> after
+        }
+
+        if (mutationType == BookingMutationType.CANCEL && before != settled && settled.paymentStatus == PaymentStatus.REFUND_PENDING) {
+            auditEventPort.append(
+                AuditEventCommand(
+                    actor = "USER:$actorUserId",
+                    action = "REFUND_PENDING",
+                    resourceType = "BOOKING",
+                    resourceId = requireNotNull(after.id),
+                    occurredAtUtc = clock.instant(),
+                    requestId = requestId
+                )
+            )
+        }
+
+        return settled
     }
 
     private fun appendBookingStatusAudit(

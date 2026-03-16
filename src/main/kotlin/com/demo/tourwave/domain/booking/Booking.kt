@@ -60,7 +60,7 @@ data class Booking(
         require(status == BookingStatus.OFFERED) { "Offer is not active" }
         require(offerExpiresAtUtc != null) { "offerExpiresAtUtc is required for OFFERED booking" }
         require(!now.isAfter(offerExpiresAtUtc)) { "Offer is expired" }
-        return copy(status = BookingStatus.EXPIRED, paymentStatus = PaymentStatus.REFUNDED)
+        return copy(status = BookingStatus.EXPIRED)
     }
 
     fun expireOffer(): Booking {
@@ -75,15 +75,12 @@ data class Booking(
 
     fun reject(): Booking {
         require(status == BookingStatus.REQUESTED) { "Only REQUESTED booking can be rejected" }
-        return copy(status = BookingStatus.REJECTED, paymentStatus = PaymentStatus.REFUNDED)
+        return copy(status = BookingStatus.REJECTED)
     }
 
-    fun cancel(refund: Boolean): Booking {
+    fun cancel(): Booking {
         require(!status.isTerminal()) { "Terminal booking cannot be canceled" }
-        return copy(
-            status = BookingStatus.CANCELED,
-            paymentStatus = if (refund) PaymentStatus.REFUNDED else paymentStatus
-        )
+        return copy(status = BookingStatus.CANCELED)
     }
 
     fun complete(): Booking {

@@ -5,6 +5,8 @@ import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import com.demo.tourwave.domain.participant.BookingParticipantStatus
+import com.demo.tourwave.domain.booking.RefundDecisionType
+import com.demo.tourwave.domain.booking.RefundReasonCode
 import java.time.Instant
 
 data class BookingCreateWebRequest(
@@ -59,4 +61,16 @@ data class BookingDetailWebResponse(
     val offerExpiresAtUtc: Instant?,
     val occurrence: BookingOccurrenceWebResponse,
     val participants: List<BookingDetailParticipantWebResponse>
+)
+
+data class BookingRefundPreviewWebResponse(
+    val bookingId: Long,
+    val cancelable: Boolean,
+    val status: BookingStatus,
+    val paymentStatus: PaymentStatus,
+    val refundDecisionType: RefundDecisionType?,
+    val refundReasonCode: RefundReasonCode?,
+    val refundable: Boolean,
+    val occurrenceStartsAtUtc: Instant?,
+    val evaluatedAtUtc: Instant
 )

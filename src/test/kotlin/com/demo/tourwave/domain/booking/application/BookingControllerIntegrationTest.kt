@@ -1,6 +1,8 @@
 package com.demo.tourwave.domain.booking.application
 
 import com.demo.tourwave.adapter.out.persistence.audit.InMemoryAuditEventAdapter
+import com.demo.tourwave.adapter.out.payment.InMemoryRefundExecutionAdapter
+import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.IdempotencyStore
@@ -10,6 +12,7 @@ import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
+import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import com.demo.tourwave.domain.inquiry.Inquiry
 import com.demo.tourwave.domain.inquiry.InquiryStatus
 import com.demo.tourwave.domain.occurrence.Occurrence
@@ -60,6 +63,12 @@ class BookingControllerIntegrationTest {
     @Autowired
     private lateinit var auditEventAdapter: InMemoryAuditEventAdapter
 
+    @Autowired
+    private lateinit var paymentRecordRepository: PaymentRecordRepository
+
+    @Autowired
+    private lateinit var refundExecutionAdapter: InMemoryRefundExecutionAdapter
+
     @BeforeEach
     fun setUp() {
         bookingRepository.clear()
@@ -69,6 +78,8 @@ class BookingControllerIntegrationTest {
         bookingParticipantRepository.clear()
         reviewRepository.clear()
         auditEventAdapter.clear()
+        paymentRecordRepository.clear()
+        refundExecutionAdapter.clear()
     }
 
     @Test
@@ -444,6 +455,14 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `cancel booking returns 204 and refunds payment`() {
+        occurrenceRepository.save(
+            Occurrence(
+                id = 7105L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = Instant.now().plusSeconds(72 * 60 * 60)
+            )
+        )
         val saved = bookingRepository.save(
             Booking(
                 occurrenceId = 7105L,
@@ -466,6 +485,89 @@ class BookingControllerIntegrationTest {
         val updated = bookingRepository.findById(requireNotNull(saved.id))
         kotlin.test.assertEquals(BookingStatus.CANCELED, updated?.status)
         kotlin.test.assertEquals(PaymentStatus.REFUNDED, updated?.paymentStatus)
+        kotlin.test.assertEquals(PaymentRecordStatus.REFUNDED, paymentRecordRepository.findByBookingId(requireNotNull(saved.id))?.status)
+    }
+
+    @Test
+    fun `refund preview returns no refund within 48 hours`() {
+        occurrenceRepository.save(
+            Occurrence(
+                id = 71051L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = Instant.now().plusSeconds(12 * 60 * 60)
+            )
+        )
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 71051L,
+                organizationId = 31L,
+                leaderUserId = 5061L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(saved.id),
+                userId = 5061L,
+                createdAt = saved.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            get("/bookings/${saved.id}/refund-preview")
+                .header("X-Actor-User-Id", "5061")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.cancelable").value(true))
+            .andExpect(jsonPath("$.refundDecisionType").value("NO_REFUND"))
+            .andExpect(jsonPath("$.refundReasonCode").value("LEADER_CANCEL_WITHIN_48_HOURS"))
+    }
+
+    @Test
+    fun `cancel booking leaves refund pending when refund execution is retryable failure`() {
+        occurrenceRepository.save(
+            Occurrence(
+                id = 71052L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = Instant.now().plusSeconds(72 * 60 * 60)
+            )
+        )
+        val saved = bookingRepository.save(
+            Booking(
+                occurrenceId = 71052L,
+                organizationId = 31L,
+                leaderUserId = 5062L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(saved.id),
+                userId = 5062L,
+                createdAt = saved.createdAt
+            )
+        )
+        refundExecutionAdapter.scriptRetryableFailure(requireNotNull(saved.id), "gateway-timeout")
+
+        mockMvc.perform(
+            post("/bookings/${saved.id}/cancel")
+                .header("Idempotency-Key", "cancel-k-retryable-1")
+                .header("X-Actor-User-Id", "5062")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = bookingRepository.findById(requireNotNull(saved.id))
+        kotlin.test.assertEquals(BookingStatus.CANCELED, updated?.status)
+        kotlin.test.assertEquals(PaymentStatus.REFUND_PENDING, updated?.paymentStatus)
+        kotlin.test.assertEquals(PaymentRecordStatus.REFUND_FAILED_RETRYABLE, paymentRecordRepository.findByBookingId(requireNotNull(saved.id))?.status)
     }
 
     @Test
