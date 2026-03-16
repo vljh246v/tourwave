@@ -5,7 +5,6 @@ import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyDecision
 import com.demo.tourwave.application.common.port.IdempotencyStore
-import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
@@ -13,12 +12,11 @@ import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.participant.BookingParticipant
 import java.security.MessageDigest
 import java.time.Clock
-import java.time.Instant
 
 class ParticipantCommandService(
     private val bookingRepository: BookingRepository,
-    private val occurrenceRepository: OccurrenceRepository,
     private val bookingParticipantRepository: BookingParticipantRepository,
+    private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
     private val clock: Clock
@@ -68,10 +66,7 @@ class ParticipantCommandService(
                     )
                 }
 
-                val participants = expireInvitationIfNeeded(
-                    bookingId = command.bookingId,
-                    participant = null
-                )
+                val participants = participantInvitationLifecycleService.refreshBookingParticipants(command.bookingId)
                 if (participants.any { it.userId == command.inviteeUserId }) {
                     throw DomainException(
                         errorCode = ErrorCode.VALIDATION_ERROR,
@@ -181,10 +176,10 @@ class ParticipantCommandService(
                         message = "Participant invitation not found",
                         details = mapOf("participantId" to command.participantId)
                     )
-                val refreshedParticipant = expireInvitationIfNeeded(
+                val refreshedParticipant = participantInvitationLifecycleService.refreshParticipant(
                     bookingId = command.bookingId,
-                    participant = participant
-                ).firstOrNull { it.id == command.participantId }
+                    participantId = command.participantId
+                )
                     ?: participant
 
                 if (refreshedParticipant.bookingId != command.bookingId) {
@@ -354,43 +349,5 @@ class ParticipantCommandService(
     private fun hash(raw: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
-    }
-
-    private fun expireInvitationIfNeeded(
-        bookingId: Long,
-        participant: BookingParticipant?
-    ): List<BookingParticipant> {
-        val occurrenceStartsAtUtc = bookingRepository.findById(bookingId)
-            ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId).startsAtUtc }
-        val now = clock.instant()
-        val participants = if (participant != null) {
-            bookingParticipantRepository.findByBookingId(participant.bookingId)
-        } else {
-            bookingParticipantRepository.findByBookingId(bookingId)
-        }
-
-        return participants.map { current ->
-            if (shouldExpire(current, occurrenceStartsAtUtc, now)) {
-                bookingParticipantRepository.save(current.expire(now))
-            } else {
-                current
-            }
-        }
-    }
-
-    private fun shouldExpire(
-        participant: BookingParticipant,
-        occurrenceStartsAtUtc: Instant?,
-        now: Instant
-    ): Boolean {
-        if (participant.status != com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED) {
-            return false
-        }
-        val invitedAt = participant.invitedAt ?: return false
-        if (!now.isBefore(invitedAt.plusSeconds(48 * 60 * 60L))) {
-            return true
-        }
-        val sixHoursBeforeStart = occurrenceStartsAtUtc?.minusSeconds(6 * 60 * 60L)
-        return sixHoursBeforeStart != null && !now.isBefore(sixHoursBeforeStart)
     }
 }

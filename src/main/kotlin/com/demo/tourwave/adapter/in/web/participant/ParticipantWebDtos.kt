@@ -34,3 +34,17 @@ data class ParticipantAttendanceWebResponse(
     val userId: Long,
     val attendanceStatus: AttendanceStatus
 )
+
+data class ParticipantListWebResponse(
+    val items: List<ParticipantDetailWebResponse>
+)
+
+data class ParticipantDetailWebResponse(
+    val id: Long,
+    val bookingId: Long,
+    val userId: Long,
+    val status: BookingParticipantStatus,
+    val attendanceStatus: AttendanceStatus,
+    val invitedAt: Instant?,
+    val respondedAt: Instant?
+)

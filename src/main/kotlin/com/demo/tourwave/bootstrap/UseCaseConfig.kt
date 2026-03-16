@@ -8,8 +8,11 @@ import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.InquiryAccessPolicy
 import com.demo.tourwave.application.inquiry.InquiryCommandService
 import com.demo.tourwave.application.inquiry.InquiryQueryService
+import com.demo.tourwave.application.participant.ParticipantAccessPolicy
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.participant.ParticipantCommandService
+import com.demo.tourwave.application.participant.ParticipantInvitationLifecycleService
+import com.demo.tourwave.application.participant.ParticipantQueryService
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
@@ -72,17 +75,55 @@ class UseCaseConfig {
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
         bookingParticipantRepository: BookingParticipantRepository,
+        participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
         clock: Clock
     ): ParticipantCommandService {
         return ParticipantCommandService(
             bookingRepository = bookingRepository,
-            occurrenceRepository = occurrenceRepository,
             bookingParticipantRepository = bookingParticipantRepository,
+            participantInvitationLifecycleService = participantInvitationLifecycleService,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
             clock = clock
+        )
+    }
+
+    @Bean
+    fun participantInvitationLifecycleService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        bookingParticipantRepository: BookingParticipantRepository,
+        clock: Clock
+    ): ParticipantInvitationLifecycleService {
+        return ParticipantInvitationLifecycleService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun participantAccessPolicy(
+        bookingRepository: BookingRepository,
+        bookingParticipantRepository: BookingParticipantRepository
+    ): ParticipantAccessPolicy {
+        return ParticipantAccessPolicy(
+            bookingRepository = bookingRepository,
+            bookingParticipantRepository = bookingParticipantRepository
+        )
+    }
+
+    @Bean
+    fun participantQueryService(
+        participantAccessPolicy: ParticipantAccessPolicy,
+        participantInvitationLifecycleService: ParticipantInvitationLifecycleService
+    ): ParticipantQueryService {
+        return ParticipantQueryService(
+            participantAccessPolicy = participantAccessPolicy,
+            participantInvitationLifecycleService = participantInvitationLifecycleService
         )
     }
 

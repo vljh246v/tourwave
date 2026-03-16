@@ -2508,4 +2508,130 @@ class BookingControllerIntegrationTest {
             .andExpect(status().isUnprocessableEntity)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
     }
+
+    @Test
+    fun `participant list exposes attendance to leader and refreshes expired invitations`() {
+        occurrenceRepository.save(
+            Occurrence(
+                id = 9916L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = Instant.parse("2026-03-20T18:00:00Z")
+            )
+        )
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9916L,
+                organizationId = 31L,
+                leaderUserId = 1005L,
+                partySize = 3,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 1005L,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 1006L,
+                status = BookingParticipantStatus.ACCEPTED,
+                attendanceStatus = com.demo.tourwave.domain.booking.AttendanceStatus.NO_SHOW,
+                invitedAt = Instant.parse("2026-03-06T01:00:00Z"),
+                respondedAt = Instant.parse("2026-03-06T02:00:00Z"),
+                createdAt = Instant.parse("2026-03-06T01:00:00Z")
+            )
+        )
+        val staleInvitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 1007L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = Instant.parse("2026-03-10T00:00:00Z"),
+                createdAt = Instant.parse("2026-03-10T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/bookings/${booking.id}/participants")
+                .header("X-Actor-User-Id", "1005")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items.length()").value(3))
+            .andExpect(jsonPath("$.items[0].userId").value(1005))
+            .andExpect(jsonPath("$.items[0].attendanceStatus").value("ATTENDED"))
+            .andExpect(jsonPath("$.items[1].userId").value(1006))
+            .andExpect(jsonPath("$.items[1].attendanceStatus").value("NO_SHOW"))
+            .andExpect(jsonPath("$.items[2].userId").value(1007))
+            .andExpect(jsonPath("$.items[2].status").value("EXPIRED"))
+
+        assertEquals(BookingParticipantStatus.EXPIRED, bookingParticipantRepository.findById(requireNotNull(staleInvitation.id))?.status)
+    }
+
+    @Test
+    fun `participant list rejects non participant actor`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9917L,
+                organizationId = 31L,
+                leaderUserId = 1008L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 1008L,
+                createdAt = booking.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            get("/bookings/${booking.id}/participants")
+                .header("X-Actor-User-Id", "9999")
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))
+    }
+
+    @Test
+    fun `participant list allows matching org operator`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9918L,
+                organizationId = 31L,
+                leaderUserId = 1009L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 1009L,
+                createdAt = booking.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            get("/bookings/${booking.id}/participants")
+                .header("X-Actor-User-Id", "2000")
+                .header("X-Actor-Org-Role", "ORG_ADMIN")
+                .header("X-Actor-Org-Id", "31")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items.length()").value(1))
+            .andExpect(jsonPath("$.items[0].userId").value(1009))
+    }
 }
