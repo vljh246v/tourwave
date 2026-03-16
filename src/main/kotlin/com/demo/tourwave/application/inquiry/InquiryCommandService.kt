@@ -29,6 +29,15 @@ class InquiryCommandService(
             message = "bookingId is required",
             details = mapOf("field" to "bookingId")
         )
+        val messageBody = command.message.trim()
+        if (messageBody.isEmpty()) {
+            throw DomainException(
+                errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
+                status = 422,
+                message = "message is required",
+                details = mapOf("field" to "message")
+            )
+        }
 
         val pathTemplate = "/occurrences/{occurrenceId}/inquiries"
         val requestHash = hashForCreate(command, bookingId)
@@ -80,7 +89,7 @@ class InquiryCommandService(
                 val saved = if (existing != null) {
                     existing
                 } else {
-                    inquiryRepository.save(
+                    val created = inquiryRepository.save(
                         Inquiry(
                             organizationId = booking.organizationId,
                             occurrenceId = command.occurrenceId,
@@ -90,6 +99,15 @@ class InquiryCommandService(
                             createdAt = now
                         )
                     )
+                    inquiryRepository.saveMessage(
+                        InquiryMessage(
+                            inquiryId = requireNotNull(created.id),
+                            senderUserId = command.actorUserId,
+                            body = messageBody,
+                            createdAt = now
+                        )
+                    )
+                    created
                 }
 
                 val response = InquiryCreated(

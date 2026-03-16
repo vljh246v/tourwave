@@ -109,6 +109,74 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
+    fun `participant can get booking detail`() {
+        occurrenceRepository.save(
+            Occurrence(
+                id = 70012L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = Instant.parse("2026-03-20T09:00:00Z")
+            )
+        )
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 70012L,
+                organizationId = 31L,
+                leaderUserId = 501L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 501L,
+                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/bookings/${booking.id}")
+                .header("X-Actor-User-Id", "501")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(booking.id!!.toInt()))
+            .andExpect(jsonPath("$.occurrence.id").value(70012))
+            .andExpect(jsonPath("$.participants[0].userId").value(501))
+    }
+
+    @Test
+    fun `booking detail denies unrelated actor`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 70013L,
+                organizationId = 31L,
+                leaderUserId = 502L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 502L,
+                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/bookings/${booking.id}")
+                .header("X-Actor-User-Id", "999")
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))
+    }
+
+    @Test
     fun `create booking returns WAITLISTED when available seats are insufficient`() {
         occurrenceRepository.save(Occurrence(id = 7002L, organizationId = 31L, capacity = 10))
         bookingRepository.save(
@@ -962,6 +1030,46 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
+    fun `inquiry create stores initial message`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7401L,
+                organizationId = 31L,
+                leaderUserId = 901L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        val response = mockMvc.perform(
+            post("/occurrences/7401/inquiries")
+                .header("Idempotency-Key", "inq-create-initial-message")
+                .header("X-Actor-User-Id", "901")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"bookingId":${booking.id},"subject":"문의","message":"처음 남기는 메시지"}
+                    """.trimIndent()
+                )
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+
+        val inquiryId = response.response.contentAsString
+            .substringAfter("\"id\":")
+            .substringBefore(",")
+            .trim()
+            .toLong()
+
+        val messages = inquiryRepository.findMessagesByInquiryId(inquiryId)
+        assertEquals(1, messages.size)
+        assertEquals("처음 남기는 메시지", messages.single().body)
+        assertEquals(901L, messages.single().senderUserId)
+    }
+
+    @Test
     fun `inquiry create requires actor user header`() {
         val booking = bookingRepository.save(
             Booking(
@@ -1081,16 +1189,250 @@ class BookingControllerIntegrationTest {
         mockMvc.perform(
             get("/inquiries/${inquiry.id}/messages")
                 .header("X-Actor-User-Id", "880")
+                .param("limit", "1")
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items[0].body").value("리더 메시지"))
-            .andExpect(jsonPath("$.items[1].body").value("운영자 답변"))
+            .andExpect(jsonPath("$.nextCursor").value("2"))
 
         val operatorEvent = auditEventAdapter.all().last()
         kotlin.test.assertEquals("INQUIRY_MESSAGE_POSTED", operatorEvent.action)
         kotlin.test.assertEquals("INQUIRY_MESSAGE", operatorEvent.resourceType)
         kotlin.test.assertEquals("req-msg-002", operatorEvent.requestId)
         kotlin.test.assertEquals("OPERATOR:990", operatorEvent.actor)
+    }
+
+    @Test
+    fun `inquiry detail returns last message timestamp for leader`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7402L,
+                organizationId = 31L,
+                leaderUserId = 902L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val inquiry = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7402L,
+                bookingId = requireNotNull(booking.id),
+                createdByUserId = 902L,
+                subject = "일정 문의",
+                createdAt = Instant.parse("2026-03-06T00:10:00Z")
+            )
+        )
+        inquiryRepository.saveMessage(
+            com.demo.tourwave.domain.inquiry.InquiryMessage(
+                inquiryId = requireNotNull(inquiry.id),
+                senderUserId = 902L,
+                body = "첫 문의",
+                createdAt = Instant.parse("2026-03-06T00:11:00Z")
+            )
+        )
+        inquiryRepository.saveMessage(
+            com.demo.tourwave.domain.inquiry.InquiryMessage(
+                inquiryId = requireNotNull(inquiry.id),
+                senderUserId = 31L,
+                body = "운영자 답변",
+                createdAt = Instant.parse("2026-03-06T00:12:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/inquiries/${inquiry.id}")
+                .header("X-Actor-User-Id", "902")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(requireNotNull(inquiry.id).toInt()))
+            .andExpect(jsonPath("$.lastMessageAt").value("2026-03-06T00:12:00Z"))
+    }
+
+    @Test
+    fun `my inquiry list supports status filter and cursor pagination`() {
+        val first = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7501L,
+                bookingId = 8501L,
+                createdByUserId = 903L,
+                subject = "첫 문의",
+                status = InquiryStatus.OPEN,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7502L,
+                bookingId = 8502L,
+                createdByUserId = 903L,
+                subject = "둘째 문의",
+                status = InquiryStatus.CLOSED,
+                createdAt = Instant.parse("2026-03-06T01:00:00Z")
+            )
+        )
+        val third = inquiryRepository.save(
+            Inquiry(
+                organizationId = 31L,
+                occurrenceId = 7503L,
+                bookingId = 8503L,
+                createdByUserId = 903L,
+                subject = "셋째 문의",
+                status = InquiryStatus.OPEN,
+                createdAt = Instant.parse("2026-03-06T02:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/me/inquiries")
+                .header("X-Actor-User-Id", "903")
+                .param("status", "OPEN")
+                .param("limit", "1")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items[0].id").value(requireNotNull(third.id).toInt()))
+            .andExpect(jsonPath("$.nextCursor").value(requireNotNull(first.id).toString()))
+
+        mockMvc.perform(
+            get("/me/inquiries")
+                .header("X-Actor-User-Id", "903")
+                .param("status", "OPEN")
+                .param("cursor", requireNotNull(first.id).toString())
+                .param("limit", "1")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items").isEmpty)
+    }
+
+    @Test
+    fun `operator can manually promote and skip waitlist bookings`() {
+        occurrenceRepository.save(Occurrence(id = 7601L, organizationId = 31L, capacity = 4))
+        val first = bookingRepository.save(
+            Booking(
+                occurrenceId = 7601L,
+                organizationId = 31L,
+                leaderUserId = 904L,
+                partySize = 2,
+                status = BookingStatus.WAITLISTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val second = bookingRepository.save(
+            Booking(
+                occurrenceId = 7601L,
+                organizationId = 31L,
+                leaderUserId = 905L,
+                partySize = 2,
+                status = BookingStatus.WAITLISTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:01:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${first.id}/waitlist/skip")
+                .header("X-Actor-User-Id", "990")
+                .header("X-Actor-Org-Role", "ORG_ADMIN")
+                .header("X-Actor-Org-Id", "31")
+                .header("X-Request-Id", "waitlist-skip-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"note":"큰 그룹이라 뒤로"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.waitlistSkipCount").value(1))
+            .andExpect(jsonPath("$.status").value("WAITLISTED"))
+
+        mockMvc.perform(
+            post("/bookings/${second.id}/waitlist/promote")
+                .header("X-Actor-User-Id", "990")
+                .header("X-Actor-Org-Role", "ORG_ADMIN")
+                .header("X-Actor-Org-Id", "31")
+                .header("X-Request-Id", "waitlist-promote-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"note":"빈자리 발생"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("OFFERED"))
+
+        val actions = auditEventAdapter.all().takeLast(2)
+        kotlin.test.assertEquals("WAITLIST_SKIPPED_MANUALLY", actions[0].action)
+        kotlin.test.assertEquals("큰 그룹이라 뒤로", actions[0].details["note"])
+        kotlin.test.assertEquals("WAITLIST_PROMOTED_MANUALLY", actions[1].action)
+        kotlin.test.assertEquals("빈자리 발생", actions[1].details["note"])
+    }
+
+    @Test
+    fun `manual waitlist controls reject non operator access`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7602L,
+                organizationId = 31L,
+                leaderUserId = 906L,
+                partySize = 2,
+                status = BookingStatus.WAITLISTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/waitlist/promote")
+                .header("X-Actor-User-Id", "906")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"note":"self promote"}""")
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))
+    }
+
+    @Test
+    fun `operator can query and export participant roster`() {
+        occurrenceRepository.save(Occurrence(id = 7701L, organizationId = 31L, capacity = 10))
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7701L,
+                organizationId = 31L,
+                leaderUserId = 907L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 907L,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/occurrences/7701/participants/roster")
+                .header("X-Actor-User-Id", "990")
+                .header("X-Actor-Org-Role", "ORG_ADMIN")
+                .header("X-Actor-Org-Id", "31")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.occurrenceId").value(7701))
+            .andExpect(jsonPath("$.items[0].participantUserId").value(907))
+
+        mockMvc.perform(
+            get("/occurrences/7701/participants/roster/export")
+                .header("X-Actor-User-Id", "990")
+                .header("X-Actor-Org-Role", "ORG_ADMIN")
+                .header("X-Actor-Org-Id", "31")
+        )
+            .andExpect(status().isOk)
+            .andExpect { result ->
+                kotlin.test.assertTrue(result.response.contentAsString.contains("participantUserId"))
+                kotlin.test.assertTrue(result.response.contentAsString.contains("907"))
+            }
     }
 
     @Test

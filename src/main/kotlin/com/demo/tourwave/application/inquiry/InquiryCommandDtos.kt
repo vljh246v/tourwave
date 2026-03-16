@@ -34,6 +34,18 @@ data class ListInquiryMessagesQuery(
     val limit: Int? = null
 )
 
+data class GetInquiryDetailQuery(
+    val inquiryId: Long,
+    val actor: InquiryActorContext
+)
+
+data class ListMyInquiriesQuery(
+    val actorUserId: Long,
+    val status: InquiryStatus? = null,
+    val cursor: String? = null,
+    val limit: Int? = null
+)
+
 data class InquiryCreated(
     val id: Long,
     val organizationId: Long,
@@ -43,6 +55,18 @@ data class InquiryCreated(
     val subject: String? = null,
     val status: InquiryStatus,
     val createdAt: Instant
+)
+
+data class InquiryDetailView(
+    val id: Long,
+    val organizationId: Long,
+    val occurrenceId: Long,
+    val bookingId: Long,
+    val createdByUserId: Long,
+    val subject: String? = null,
+    val status: InquiryStatus,
+    val createdAt: Instant,
+    val lastMessageAt: Instant? = null
 )
 
 data class InquiryMessageView(
@@ -66,6 +90,11 @@ data class PostInquiryMessageResult(
 
 data class InquiryMessageListResult(
     val items: List<InquiryMessageView>,
+    val nextCursor: String? = null
+)
+
+data class InquiryListResult(
+    val items: List<InquiryDetailView>,
     val nextCursor: String? = null
 )
 

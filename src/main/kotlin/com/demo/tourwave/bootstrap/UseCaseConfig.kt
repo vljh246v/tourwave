@@ -1,6 +1,8 @@
 package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.booking.BookingCommandService
+import com.demo.tourwave.application.booking.WaitlistOperatorService
+import com.demo.tourwave.application.booking.BookingQueryService
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.AuditEventPort
@@ -13,6 +15,7 @@ import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.participant.ParticipantCommandService
 import com.demo.tourwave.application.participant.ParticipantInvitationLifecycleService
 import com.demo.tourwave.application.participant.ParticipantQueryService
+import com.demo.tourwave.application.participant.ParticipantRosterQueryService
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
@@ -39,6 +42,36 @@ class UseCaseConfig {
             occurrenceRepository = occurrenceRepository,
             bookingParticipantRepository = bookingParticipantRepository,
             idempotencyStore = idempotencyStore,
+            auditEventPort = auditEventPort,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun bookingQueryService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        participantAccessPolicy: ParticipantAccessPolicy,
+        participantInvitationLifecycleService: ParticipantInvitationLifecycleService
+    ): BookingQueryService {
+        return BookingQueryService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            participantAccessPolicy = participantAccessPolicy,
+            participantInvitationLifecycleService = participantInvitationLifecycleService
+        )
+    }
+
+    @Bean
+    fun waitlistOperatorService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        auditEventPort: AuditEventPort,
+        clock: Clock
+    ): WaitlistOperatorService {
+        return WaitlistOperatorService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
             auditEventPort = auditEventPort,
             clock = clock
         )
@@ -124,6 +157,19 @@ class UseCaseConfig {
         return ParticipantQueryService(
             participantAccessPolicy = participantAccessPolicy,
             participantInvitationLifecycleService = participantInvitationLifecycleService
+        )
+    }
+
+    @Bean
+    fun participantRosterQueryService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        bookingParticipantRepository: BookingParticipantRepository
+    ): ParticipantRosterQueryService {
+        return ParticipantRosterQueryService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository
         )
     }
 

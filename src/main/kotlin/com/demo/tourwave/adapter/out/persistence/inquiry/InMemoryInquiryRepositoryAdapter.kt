@@ -32,6 +32,12 @@ class InMemoryInquiryRepositoryAdapter : InquiryRepository {
         return inquiries[inquiryId]
     }
 
+    override fun findByCreatedByUserId(createdByUserId: Long): List<Inquiry> {
+        return inquiries.values
+            .filter { it.createdByUserId == createdByUserId }
+            .sortedWith(compareByDescending<Inquiry> { it.createdAt }.thenByDescending { it.id ?: Long.MIN_VALUE })
+    }
+
     override fun saveMessage(message: InquiryMessage): InquiryMessage {
         val messageId = message.id ?: messageSequence.incrementAndGet()
         val saved = message.copy(id = messageId)

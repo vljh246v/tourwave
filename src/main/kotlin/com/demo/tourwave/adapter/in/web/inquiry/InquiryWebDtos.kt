@@ -38,3 +38,20 @@ data class InquiryWebResponse(
     val status: InquiryStatus,
     val createdAt: Instant
 )
+
+data class InquiryDetailWebResponse(
+    val id: Long,
+    val organizationId: Long,
+    val occurrenceId: Long,
+    val bookingId: Long,
+    val createdByUserId: Long,
+    val subject: String? = null,
+    val status: InquiryStatus,
+    val createdAt: Instant,
+    val lastMessageAt: Instant? = null
+)
+
+data class InquiryListWebResponse(
+    val items: List<InquiryDetailWebResponse>,
+    val nextCursor: String? = null
+)

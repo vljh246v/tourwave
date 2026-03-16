@@ -7,6 +7,7 @@ interface InquiryRepository {
     fun save(inquiry: Inquiry): Inquiry
     fun findById(inquiryId: Long): Inquiry?
     fun findByBookingId(bookingId: Long): Inquiry?
+    fun findByCreatedByUserId(createdByUserId: Long): List<Inquiry>
     fun saveMessage(message: InquiryMessage): InquiryMessage
     fun findMessagesByInquiryId(inquiryId: Long): List<InquiryMessage>
     fun clear()
