@@ -1,15 +1,21 @@
 package com.demo.tourwave.application.user
 
-import com.demo.tourwave.application.user.port.UserQueryPort
+import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
 
 class UserCommandService(
-    private val userQueryPort: UserQueryPort
+    private val userRepository: UserRepository
 ): UserCommandHandler {
     override fun registerUser(name: String, email: String): User {
-        if (userQueryPort.findByEmail(email) != null) {
+        if (userRepository.findByEmail(email) != null) {
             throw IllegalArgumentException("User with email $email already exists")
         }
-        return User.create(name, email)
+
+        return userRepository.save(
+            User.create(
+                name = name,
+                email = email
+            )
+        )
     }
 }

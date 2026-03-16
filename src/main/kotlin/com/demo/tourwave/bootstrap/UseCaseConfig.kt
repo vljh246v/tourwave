@@ -25,7 +25,7 @@ import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.user.UserCommandService
-import com.demo.tourwave.application.user.port.UserQueryPort
+import com.demo.tourwave.application.user.port.UserRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
@@ -222,9 +222,9 @@ class UseCaseConfig {
 
     @Bean
     fun userCommandService(
-        userQueryPort: UserQueryPort
+        userRepository: UserRepository
     ): UserCommandService {
-        return UserCommandService(userQueryPort)
+        return UserCommandService(userRepository)
     }
 
     @Bean

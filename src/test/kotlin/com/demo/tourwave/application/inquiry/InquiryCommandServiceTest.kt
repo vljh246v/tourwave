@@ -33,42 +33,44 @@ class InquiryCommandServiceTest {
     private val auditEventPort = mock(AuditEventPort::class.java)
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
 
-    private val inquiryCommandService = InquiryCommandService(
-        bookingRepository = bookingRepository,
-        inquiryRepository = inquiryRepository,
-        inquiryAccessPolicy = inquiryAccessPolicy,
-        idempotencyStore = idempotencyStore,
-        auditEventPort = auditEventPort,
-        clock = clock
-    )
+    private val inquiryCommandService =
+        InquiryCommandService(
+            bookingRepository = bookingRepository,
+            inquiryRepository = inquiryRepository,
+            inquiryAccessPolicy = inquiryAccessPolicy,
+            idempotencyStore = idempotencyStore,
+            auditEventPort = auditEventPort,
+            clock = clock,
+        )
 
     @Test
     fun `create inquiry persists initial message when inquiry is created`() {
-        val booking = Booking(
-            id = 71L,
-            occurrenceId = 901L,
-            organizationId = 31L,
-            leaderUserId = 101L,
-            partySize = 2,
-            status = BookingStatus.CONFIRMED,
-            paymentStatus = PaymentStatus.PAID,
-            createdAt = Instant.parse("2026-03-10T00:00:00Z")
-        )
+        val booking =
+            Booking(
+                id = 71L,
+                occurrenceId = 901L,
+                organizationId = 31L,
+                leaderUserId = 101L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+            )
         whenever(
             idempotencyStore.reserveOrReplay(
                 any(),
                 any(),
                 any(),
                 any(),
-                any()
-            )
+                any(),
+            ),
         ).thenReturn(IdempotencyDecision.Reserved)
         whenever(bookingRepository.findById(71L)).thenReturn(booking)
         whenever(inquiryRepository.findByBookingId(71L)).thenReturn(null)
-        whenever(inquiryRepository.save(org.mockito.kotlin.any<Inquiry>())).thenAnswer {
+        whenever(inquiryRepository.save(any<Inquiry>())).thenAnswer {
             it.getArgument<Inquiry>(0).copy(id = 501L)
         }
-        whenever(inquiryRepository.saveMessage(org.mockito.kotlin.any<InquiryMessage>())).thenAnswer {
+        whenever(inquiryRepository.saveMessage(any<InquiryMessage>())).thenAnswer {
             it.getArgument(0)
         }
 
@@ -79,8 +81,8 @@ class InquiryCommandServiceTest {
                 idempotencyKey = "inq-create-1",
                 bookingId = 71L,
                 subject = "좌석 문의",
-                message = "  첫 메시지입니다.  "
-            )
+                message = "  첫 메시지입니다.  ",
+            ),
         )
 
         val messageCaptor = argumentCaptor<InquiryMessage>()
@@ -92,18 +94,19 @@ class InquiryCommandServiceTest {
 
     @Test
     fun `create inquiry rejects blank initial message`() {
-        val exception = assertThrows<DomainException> {
-            inquiryCommandService.createInquiry(
-                CreateInquiryCommand(
-                    occurrenceId = 901L,
-                    actorUserId = 101L,
-                    idempotencyKey = "inq-create-2",
-                    bookingId = 71L,
-                    subject = "좌석 문의",
-                    message = "   "
+        val exception =
+            assertThrows<DomainException> {
+                inquiryCommandService.createInquiry(
+                    CreateInquiryCommand(
+                        occurrenceId = 901L,
+                        actorUserId = 101L,
+                        idempotencyKey = "inq-create-2",
+                        bookingId = 71L,
+                        subject = "좌석 문의",
+                        message = "   ",
+                    ),
                 )
-            )
-        }
+            }
 
         assertEquals(422, exception.status)
         verify(idempotencyStore, never()).reserveOrReplay(
@@ -111,7 +114,7 @@ class InquiryCommandServiceTest {
             any(),
             any(),
             any(),
-            any()
+            any(),
         )
     }
 }
