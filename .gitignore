@@ -42,7 +42,6 @@ out/
 # Overnight automation logs/runtime
 .agent-runs/
 
-agent
 .codex
 scripts/overnight-autopilot.sh
 scripts/overnight-status.sh

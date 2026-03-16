@@ -1,0 +1,3934 @@
+openapi: 3.0.3
+info:
+  title: Tour Booking Platform API (MVP)
+  version: 0.1.0
+  description: REST API contract for the Tour Booking Platform MVP.
+servers:
+  - url: https://api.example.com
+security:
+  - bearerAuth: []
+
+# =========================
+# 1) Auth + Me + Notifications
+# Paste under: paths:
+# =========================
+paths:
+# =========================
+# Assets read/delete endpoints (Paste under: paths:)
+# =========================
+
+  /assets/{assetId}:
+    get:
+      tags: [Assets]
+      summary: Get asset
+      description: |
+        Returns asset metadata and (if READY) URL.
+        Auth required. Access limited to asset owner (and optionally org operators if linked).
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Asset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Asset' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    delete:
+      tags: [Assets]
+      summary: Delete asset (soft)
+      description: |
+        Soft-delete asset. If already attached to tour/inquiry, server may forbid (409) or detach first.
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+# =========================
+# Assets upload endpoints (Paste under: paths:)
+# =========================
+
+  /assets/upload-url:
+    post:
+      tags: [Assets]
+      summary: Create signed upload URL
+      description: |
+        Step 1) Request upload URL (server creates Asset in PENDING).
+        Client uploads file to storage using returned uploadUrl.
+        Step 2) Call /assets/complete to finalize.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssetUploadUrlRequest' }
+      responses:
+        '201':
+          description: Upload URL created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssetUploadUrlResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /assets/complete:
+    post:
+      tags: [Assets]
+      summary: Complete upload (finalize asset)
+      description: |
+        Marks asset READY if upload is valid.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssetCompleteRequest' }
+      responses:
+        '200':
+          description: Completed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssetCompleteResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /auth/signup:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Sign up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignupRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      responses:
+        '204': { description: Logged out }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /auth/password/reset-request:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Request password reset email
+      description: |
+        Always returns 204 to avoid user enumeration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetRequest' }
+      responses:
+        '204': { description: Sent if account exists }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /auth/password/reset-confirm:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Confirm password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetConfirmRequest' }
+      responses:
+        '204': { description: Reset successful }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /auth/email/verify-request:
+    post:
+      tags: [Auth]
+      summary: Request email verification
+      responses:
+        '204': { description: Sent }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/email/verify-confirm:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Confirm email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailVerifyConfirmRequest' }
+      responses:
+        '204': { description: Verified }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /me:
+    get:
+      tags: [Me]
+      summary: Get current user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MeResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [Me]
+      summary: Update current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MeUpdateRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /me/deactivate:
+    post:
+      tags: [Me]
+      summary: Deactivate account (soft)
+      responses:
+        '204': { description: Deactivated }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/delete:
+    post:
+      tags: [Me]
+      summary: Delete account (soft delete)
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/bookings:
+    get:
+      tags: [Bookings]
+      summary: List my bookings
+      parameters:
+        - $ref: '#/components/parameters/bookingStatus'
+        - $ref: '#/components/parameters/dateFromOptional'
+        - $ref: '#/components/parameters/dateToOptional'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookingListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/inquiries:
+    get:
+      tags: [Inquiries]
+      summary: List my inquiries
+      parameters:
+        - $ref: '#/components/parameters/inquiryStatus'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InquiryListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/favorites:
+    get:
+      tags: [Favorites]
+      summary: List my favorite tours
+      parameters:
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FavoriteListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/notifications:
+    get:
+      tags: [Notifications]
+      summary: List my notifications
+      parameters:
+        - $ref: '#/components/parameters/onlyUnread'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notification read
+      parameters:
+        - $ref: '#/components/parameters/notificationId'
+      responses:
+        '204': { description: Read }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /me/notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications read
+      responses:
+        '204': { description: Read all }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /organizations:
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      description: Creator becomes ORG_OWNER
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreateRequest'
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /organizations/{orgId}:
+    get:
+      tags: [Organizations]
+      security: []
+      summary: Get organization
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      responses:
+        '200':
+          description: Organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /organizations/{orgId}/members:
+    get:
+      tags: [Organizations]
+      summary: List organization members
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      responses:
+        '200':
+          description: Member list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMemberList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Organizations]
+      summary: Add organization member
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationMemberUpsertRequest'
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMember'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /organizations/{orgId}/members/{userId}:
+    patch:
+      tags: [Organizations]
+      summary: Update organization member
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationMemberPatchRequest'
+      responses:
+        '200':
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMember'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{orgId}/members/{userId}/remove:
+    post:
+      tags: [Organizations]
+      summary: Remove organization member
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '204':
+          description: Removed
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /instructor-registrations:
+    post:
+      tags: [Instructors]
+      summary: Request instructor registration
+      description: User applies to become instructor in an organization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorRegistrationCreateRequest'
+      responses:
+        '201':
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorRegistration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /organizations/{orgId}/instructor-registrations:
+    get:
+      tags: [Instructors]
+      summary: List instructor registrations
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Registration list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorRegistrationList'
+
+  /instructor-registrations/{registrationId}/approve:
+    post:
+      tags: [Instructors]
+      summary: Approve instructor registration
+      parameters:
+        - name: registrationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Approved
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /instructor-registrations/{registrationId}/reject:
+    post:
+      tags: [Instructors]
+      summary: Reject instructor registration
+      parameters:
+        - name: registrationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Rejected
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /me/instructor-profile:
+    post:
+      tags: [Instructors]
+      summary: Create instructor profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorProfileCreateRequest'
+      responses:
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorProfile'
+
+    patch:
+      tags: [Instructors]
+      summary: Update instructor profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorProfileUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorProfile'
+
+  /instructors/{instructorProfileId}:
+    get:
+      tags: [Instructors]
+      security: []
+      summary: Get instructor profile
+      parameters:
+        - name: instructorProfileId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Instructor profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /instructors/{instructorProfileId}/rating-summary:
+    get:
+      tags: [Instructors]
+      security: []
+      summary: Get instructor rating summary
+      parameters:
+        - name: instructorProfileId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Rating summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingSummary'
+# =========================
+# 3) Tours + Content + Assets(Tour images) + Favorites
+# Paste under: paths:
+# =========================
+
+  /organizations/{orgId}/tours:
+    get:
+      tags: [Tours]
+      summary: List tours for org (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/tourStatus'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+    post:
+      tags: [Tours]
+      summary: Create tour (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tour' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /tours:
+    get:
+      tags: [Tours]
+      security: []
+      summary: Public tour list (published only)
+      parameters:
+        - $ref: '#/components/parameters/categoryId'
+        - $ref: '#/components/parameters/formatId'
+        - $ref: '#/components/parameters/locationText'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicTourListResponse' }
+
+  /tours/{tourId}:
+    get:
+      tags: [Tours]
+      security: []
+      summary: Get tour detail (public if published; operator if same org)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    patch:
+      tags: [Tours]
+      summary: Update tour (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourPatchRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tour' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /tours/{tourId}/publish:
+    post:
+      tags: [Tours]
+      summary: Publish tour (DRAFT -> PUBLISHED) (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '200':
+          description: Published
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tour' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /tours/{tourId}/archive:
+    post:
+      tags: [Tours]
+      summary: Archive tour (PUBLISHED -> ARCHIVED) (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '200':
+          description: Archived
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tour' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /tours/{tourId}/instructors:
+    get:
+      tags: [Tours]
+      security: []
+      summary: Get tour instructors (public)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InstructorPublicProfileList' }
+
+    put:
+      tags: [Tours]
+      summary: Set tour instructors (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourInstructorSetRequest' }
+      responses:
+        '204': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /tours/{tourId}/content:
+    get:
+      tags: [Tours]
+      security: []
+      summary: Get tour rich content (public if published; operator if same org)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourContentResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    put:
+      tags: [Tours]
+      summary: Upsert tour rich content (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourContentUpsertRequest' }
+      responses:
+        '200':
+          description: Upserted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourContentResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /tours/{tourId}/assets:
+    post:
+      tags: [Assets]
+      summary: Attach asset to tour (ORG_ADMIN/ORG_OWNER)
+      description: |
+        Use assets/upload-url + assets/complete first, then attach the asset here.
+        Asset type: COVER or GALLERY.
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourAssetCreateRequest' }
+      responses:
+        '201':
+          description: Attached
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourAsset' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /tours/{tourId}/assets/reorder:
+    patch:
+      tags: [Assets]
+      summary: Reorder tour assets (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourAssetReorderRequest' }
+      responses:
+        '204': { description: Reordered }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /tours/{tourId}/assets/{tourAssetId}:
+    delete:
+      tags: [Assets]
+      summary: Remove asset from tour (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+        - $ref: '#/components/parameters/tourAssetId'
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /tours/{tourId}/rating-summary:
+    get:
+      tags: [Reviews]
+      security: []
+      summary: Tour rating summary (public)
+      description: Public summary only (average + count). Review content is not public.
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RatingSummary' }
+
+  /tours/{tourId}/favorite:
+    post:
+      tags: [Favorites]
+      summary: Favorite a tour
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '204': { description: Favorited }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    delete:
+      tags: [Favorites]
+      summary: Unfavorite a tour
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      responses:
+        '204': { description: Unfavorited }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+# =========================
+# 4) Occurrences + Search + Quote/Availability + Calendar + Announcements
+# Paste under: paths:
+# =========================
+
+  /tours/{tourId}/occurrences:
+    get:
+      tags: [Occurrences]
+      security: []
+      summary: List occurrences for a tour (public if published)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+        - $ref: '#/components/parameters/dateFromOptional'
+        - $ref: '#/components/parameters/dateToOptional'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OccurrenceListResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    post:
+      tags: [Occurrences]
+      summary: Create occurrence (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/tourId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OccurrenceCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourOccurrence' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /occurrences/{occurrenceId}:
+    get:
+      tags: [Occurrences]
+      security: []
+      summary: Get occurrence detail
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OccurrenceDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    patch:
+      tags: [Occurrences]
+      summary: Update occurrence (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OccurrencePatchRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourOccurrence' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /occurrences/{occurrenceId}/cancel:
+    post:
+      tags: [Occurrences]
+      summary: Cancel occurrence (ORG_ADMIN/ORG_OWNER)
+      description: |
+        When occurrence becomes CANCELED:
+        - all bookings become CANCELED
+        - full refund (virtual) applies
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204': { description: Canceled }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /occurrences/{occurrenceId}/finish:
+    post:
+      tags: [Occurrences]
+      summary: Mark occurrence finished (ORG_ADMIN/ORG_OWNER)
+      description: Marks occurrence FINISHED (used for enabling reviews and closing ops)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204': { description: Finished }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (invalid occurrence state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidOccurrenceState:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /occurrences/{occurrenceId}/reschedule:
+    post:
+      tags: [Occurrences]
+      summary: Reschedule occurrence (ORG_ADMIN/ORG_OWNER)
+      description: |
+        Reschedule keeps bookings:
+        - if price unchanged: keep payment as-is
+        - if price change is needed: in MVP we forbid changing price after bookings exist (409)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OccurrenceRescheduleRequest' }
+      responses:
+        '200':
+          description: Rescheduled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TourOccurrence' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /occurrences/{occurrenceId}/notify:
+    post:
+      tags: [Occurrences]
+      summary: Notify participants (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OccurrenceNotifyRequest' }
+      responses:
+        '204': { description: Notified }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /occurrences/{occurrenceId}/availability:
+    get:
+      tags: [Occurrences]
+      security: []
+      summary: Check availability for party size
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+        - $ref: '#/components/parameters/partySizeRequired'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvailabilityResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /occurrences/{occurrenceId}/quote:
+    get:
+      tags: [Occurrences]
+      security: []
+      summary: Quote expected total amount and status for party size
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+        - $ref: '#/components/parameters/partySizeRequired'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuoteResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /occurrences/{occurrenceId}/calendar.ics:
+    get:
+      tags: [Calendar]
+      summary: Download occurrence ICS
+      description: |
+        MVP: requires auth (participant or operator). 
+        Future: could be public for published tours.
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      responses:
+        '200':
+          description: ICS content
+          content:
+            text/calendar:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /search/occurrences:
+    get:
+      tags: [Search]
+      security: []
+      summary: Search occurrences
+      parameters:
+        - $ref: '#/components/parameters/dateFrom'
+        - $ref: '#/components/parameters/dateTo'
+        - $ref: '#/components/parameters/timezone'
+        - $ref: '#/components/parameters/locationText'
+        - $ref: '#/components/parameters/categoryId'
+        - $ref: '#/components/parameters/formatId'
+        - $ref: '#/components/parameters/priceMin'
+        - $ref: '#/components/parameters/priceMax'
+        - $ref: '#/components/parameters/onlyAvailable'
+        - $ref: '#/components/parameters/partySize'
+        - $ref: '#/components/parameters/includeRating'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OccurrenceSearchResponse' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /public/announcements:
+    get:
+      tags: [Announcements]
+      security: []
+      summary: List public announcements
+      parameters:
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnnouncementListResponse' }
+
+  /organizations/{orgId}/announcements:
+    post:
+      tags: [Announcements]
+      summary: Create announcement (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnnouncementCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /announcements/{announcementId}:
+    patch:
+      tags: [Announcements]
+      summary: Update announcement (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/announcementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnnouncementPatchRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+    delete:
+      tags: [Announcements]
+      summary: Delete announcement (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/announcementId'
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+# =========================
+# 5) Bookings + Waitlist + Participants + Notes + Policies
+# =========================
+
+  /occurrences/{occurrenceId}/bookings:
+    post:
+      tags: [Bookings]
+      summary: Create booking request
+      description: |
+        Booking flow:
+        - if seats available → REQUESTED
+        - if full → WAITLISTED
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreateRequest'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '409':
+          description: Conflict (state/idempotency in progress)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Unprocessable Entity (validation error)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /bookings/{bookingId}/reject:
+    post:
+      tags: [Bookings]
+      summary: Reject booking request
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204':
+          description: Booking rejected
+        '409':
+          description: Conflict (invalid transition/terminal/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidStateTransition:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                bookingTerminalState:
+                  $ref: '#/components/examples/BookingTerminalStateConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (validation/idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+  /bookings/{bookingId}/approve:
+    post:
+      tags: [Bookings]
+      summary: Approve booking request
+      description: |
+        Only ORG_ADMIN or ORG_OWNER can approve.
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204':
+          description: Booking approved
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflict (invalid transition/capacity/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidStateTransition:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                bookingTerminalState:
+                  $ref: '#/components/examples/BookingTerminalStateConflict'
+                capacityExceeded:
+                  $ref: '#/components/examples/CapacityExceededConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (validation/idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /bookings/{bookingId}:
+    get:
+      tags: [Bookings]
+      summary: Get booking detail
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      responses:
+        '200':
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings/{bookingId}/cancel:
+    post:
+      tags: [Bookings]
+      summary: Cancel booking
+      description: |
+        Refund rules based on cancellation policy.
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204':
+          description: Canceled
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflict (invalid state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                bookingTerminalState:
+                  $ref: '#/components/examples/BookingTerminalStateConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (validation/idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /bookings/{bookingId}/offer/accept:
+    post:
+      tags: [Bookings]
+      summary: Accept waitlist offer (leader)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204': { description: Accepted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (offer state/capacity/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                bookingTerminalState:
+                  $ref: '#/components/examples/BookingTerminalStateConflict'
+                offerExpired:
+                  $ref: '#/components/examples/OfferExpiredConflict'
+                offerNotActive:
+                  $ref: '#/components/examples/OfferNotActiveConflict'
+                capacityExceeded:
+                  $ref: '#/components/examples/CapacityExceededConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (validation/idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /bookings/{bookingId}/offer/decline:
+    post:
+      tags: [Bookings]
+      summary: Decline waitlist offer (leader)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204': { description: Declined }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (offer state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                bookingTerminalState:
+                  $ref: '#/components/examples/BookingTerminalStateConflict'
+                offerExpired:
+                  $ref: '#/components/examples/OfferExpiredConflict'
+                offerNotActive:
+                  $ref: '#/components/examples/OfferNotActiveConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (validation/idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /bookings/{bookingId}/party-size:
+    patch:
+      tags: [Bookings]
+      summary: Reduce booking party size (leader only)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingPartySizeUpdateRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Booking' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (invalid booking state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidBookingState:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (invalid party size mutation/idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                partySizeIncreaseNotAllowed:
+                  $ref: '#/components/examples/PartySizeIncreaseNotAllowed'
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /bookings/{bookingId}/complete:
+    post:
+      tags: [Bookings]
+      summary: Complete booking (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204': { description: Completed }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (invalid booking state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidBookingState:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /bookings/{bookingId}/attendance:
+    put:
+      tags: [Bookings]
+      summary: Update participant attendance (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttendanceUpdateRequest' }
+      responses:
+        '204': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /bookings/{bookingId}/extend-offer:
+    post:
+      tags: [Bookings]
+      summary: Extend offer expiration (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OfferExtendRequest' }
+      responses:
+        '204': { description: Extended }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /bookings/{bookingId}/force-expire:
+    post:
+      tags: [Bookings]
+      summary: Force expire offered booking (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      responses:
+        '204': { description: Expired }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /bookings/{bookingId}/explain:
+    get:
+      tags: [Bookings]
+      summary: Explain booking status and constraints
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      responses:
+        '200':
+          description: Explain booking state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookingExplainResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /bookings/{bookingId}/calendar.ics:
+    get:
+      tags: [Calendar]
+      summary: Booking calendar ICS
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      responses:
+        '200':
+          description: ICS file
+          content:
+            text/calendar:
+              schema:
+                type: string
+                format: binary
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /bookings/{bookingId}/participants:
+    get:
+      tags: [Participants]
+      summary: List booking participants
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      responses:
+        '200':
+          description: Participant list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantListResponse'
+
+    post:
+      tags: [Participants]
+      summary: Add participant (invite)
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipantInviteRequest'
+      responses:
+        '201':
+          description: Participant invited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingParticipant'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /participants/{participantId}/accept:
+    post:
+      tags: [Participants]
+      summary: Accept invitation
+      parameters:
+        - $ref: '#/components/parameters/participantId'
+      responses:
+        '204':
+          description: Accepted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /participants/{participantId}/decline:
+    post:
+      tags: [Participants]
+      summary: Decline invitation
+      description: |
+        Party size remains unchanged.
+        Organizer keeps the reserved seat.
+      parameters:
+        - $ref: '#/components/parameters/participantId'
+      responses:
+        '204':
+          description: Declined
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /occurrences/{occurrenceId}/waitlist:
+    get:
+      tags: [Waitlist]
+      summary: List waitlist (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      responses:
+        '200':
+          description: Waitlist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaitlistResponse'
+
+  /waitlist/{waitlistId}/promote:
+    post:
+      tags: [Waitlist]
+      summary: Promote waitlist manually
+      description: |
+        Used when operator manages waitlist manually.
+      parameters:
+        - $ref: '#/components/parameters/waitlistId'
+      responses:
+        '204':
+          description: Promoted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /occurrences/{occurrenceId}/notes:
+    post:
+      tags: [Notes]
+      summary: Add operator note
+      description: |
+        Internal note visible only to org operators.
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OccurrenceNoteCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OccurrenceNote'
+
+  /occurrences/{occurrenceId}/policies:
+    get:
+      tags: [Policies]
+      security: []
+      summary: Get cancellation policy
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      responses:
+        '200':
+          description: Policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancellationPolicy'
+
+    put:
+      tags: [Policies]
+      summary: Set cancellation policy
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancellationPolicyUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancellationPolicy'
+# =========================
+# 6) Inquiries + Reviews + Reports + Moderation
+# Paste under: paths:
+# =========================
+
+  # ---------
+  # Inquiries (Tour 상담 티켓: 동행자도 조회 가능)
+  # ---------
+
+  /occurrences/{occurrenceId}/inquiries:
+    post:
+      tags: [Inquiries]
+      summary: Create tour inquiry ticket
+      description: |
+        Creates a "tour 상담 티켓".
+        Request body must include `bookingId` linked to the caller.
+        Visible to booking organizer + participants (once booking exists),
+        and org operators (ORG_ADMIN/ORG_OWNER).
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InquiryCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Inquiry' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: Conflict (idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (booking scope / required fields / idempotency key mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                bookingScopeMismatch:
+                  $ref: '#/components/examples/BookingScopeMismatch'
+                requiredFieldMissing:
+                  $ref: '#/components/examples/RequiredFieldMissingInquiryMessageBody'
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /inquiries/{inquiryId}:
+    get:
+      tags: [Inquiries]
+      summary: Get inquiry ticket
+      parameters:
+        - $ref: '#/components/parameters/inquiryId'
+      responses:
+        '200':
+          description: Inquiry
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InquiryDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /inquiries/{inquiryId}/messages:
+    get:
+      tags: [Inquiries]
+      summary: List inquiry messages
+      parameters:
+        - $ref: '#/components/parameters/inquiryId'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InquiryMessageListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+    post:
+      tags: [Inquiries]
+      summary: Post inquiry message (with optional attachments)
+      parameters:
+        - $ref: '#/components/parameters/inquiryId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InquiryMessageCreateRequest' }
+      responses:
+        '201':
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InquiryMessage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (invalid inquiry state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidStateTransition:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (required fields / idempotency key mismatch / scope mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                requiredFieldMissing:
+                  $ref: '#/components/examples/RequiredFieldMissingBookingId'
+                bookingScopeMismatch:
+                  $ref: '#/components/examples/BookingScopeMismatch'
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  /inquiries/{inquiryId}/close:
+    post:
+      tags: [Inquiries]
+      summary: Close inquiry ticket
+      description: |
+        Can be closed by:
+        - requester side (organizer/participant)
+        - org operator (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/inquiryId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204': { description: Closed }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflict (invalid inquiry state/idempotency)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalidStateTransition:
+                  $ref: '#/components/examples/InvalidStateTransitionConflict'
+                idempotencyInProgress:
+                  $ref: '#/components/examples/IdempotencyInProgressConflict'
+        '422':
+          description: Unprocessable Entity (idempotency key mismatch / scope mismatch)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                bookingScopeMismatch:
+                  $ref: '#/components/examples/BookingScopeMismatch'
+                idempotencyKeyReusedDifferentPayload:
+                  $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
+
+  # ---------
+  # Reviews (내용 비공개, 평점/건수만 공개)
+  # - Tour review & Instructor review are separate
+  # - 작성 가능 조건: ATTENDED
+  # - booking_participants도 작성 가능
+  # ---------
+
+  /occurrences/{occurrenceId}/reviews/tour:
+    post:
+      tags: [Reviews]
+      summary: Create tour review (ATTENDED only)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourReviewCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /occurrences/{occurrenceId}/reviews/instructor:
+    post:
+      tags: [Reviews]
+      summary: Create instructor review (ATTENDED only)
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InstructorReviewCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /reviews/{reviewId}:
+    get:
+      tags: [Reviews]
+      summary: Get review (restricted)
+      description: |
+        Review content is visible only to:
+        - author
+        - reviewed instructor (for instructor review)
+        - org operators of the occurrence org
+      parameters:
+        - $ref: '#/components/parameters/reviewId'
+      responses:
+        '200':
+          description: Review
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /organizations/{orgId}/reviews:
+    get:
+      tags: [Reviews]
+      summary: List reviews for org (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/reviewType'
+        - $ref: '#/components/parameters/reviewVisibility'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReviewListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /instructors/{instructorProfileId}/reviews/summary:
+    get:
+      tags: [Reviews]
+      security: []
+      summary: Instructor rating summary (public)
+      description: Public summary only (average + count). Content is restricted.
+      parameters:
+        - name: instructorProfileId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RatingSummary' }
+
+  # ---------
+  # Reports
+  # ---------
+
+  /organizations/{orgId}/reports/occurrences:
+    get:
+      tags: [Reports]
+      summary: Occurrence ops report (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/dateFromOptional'
+        - $ref: '#/components/parameters/dateToOptional'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OccurrenceReportResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /organizations/{orgId}/reports/bookings:
+    get:
+      tags: [Reports]
+      summary: Booking report (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/dateFromOptional'
+        - $ref: '#/components/parameters/dateToOptional'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookingReportResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ---------
+  # Moderation (Admin-only, optional in MVP)
+  # ---------
+
+  /moderation/users/{userId}/suspend:
+    post:
+      tags: [Moderation]
+      summary: Suspend a user (ADMIN only)
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserSuspendRequest' }
+      responses:
+        '204': { description: Suspended }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /moderation/users/{userId}/unsuspend:
+    post:
+      tags: [Moderation]
+      summary: Unsuspend a user (ADMIN only)
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '204': { description: Unsuspended }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /moderation/content/reviews/{reviewId}/hide:
+    post:
+      tags: [Moderation]
+      summary: Hide a review (ADMIN only)
+      parameters:
+        - $ref: '#/components/parameters/reviewId'
+      responses:
+        '204': { description: Hidden }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    # -----------------------------
+    # Tour
+    # -----------------------------
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+          description: Minor unit (e.g., KRW)
+        currency:
+          type: string
+          example: KRW
+
+    TourStatus:
+      type: string
+      enum: [DRAFT, PUBLISHED, ARCHIVED]
+
+    Tour:
+      type: object
+      required: [id, organizationId, status, title, categoryId, formatId, locationText, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        status: { $ref: '#/components/schemas/TourStatus' }
+        title: { type: string, maxLength: 200 }
+        subtitle: { type: string, nullable: true, maxLength: 200 }
+        categoryId: { $ref: '#/components/schemas/Id64' }
+        formatId: { $ref: '#/components/schemas/Id64' }
+        locationText: { type: string, maxLength: 200 }
+        coverImageUrl: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    TourDetail:
+      allOf:
+        - $ref: '#/components/schemas/Tour'
+        - type: object
+          properties:
+            instructors:
+              type: array
+              items: { $ref: '#/components/schemas/InstructorPublicProfile' }
+            ratingSummary:
+              $ref: '#/components/schemas/RatingSummary'
+
+    TourCreateRequest:
+      type: object
+      required: [title, categoryId, formatId, locationText]
+      properties:
+        title: { type: string, maxLength: 200 }
+        subtitle: { type: string, nullable: true, maxLength: 200 }
+        categoryId: { $ref: '#/components/schemas/Id64' }
+        formatId: { $ref: '#/components/schemas/Id64' }
+        locationText: { type: string, maxLength: 200 }
+
+    TourPatchRequest:
+      type: object
+      properties:
+        title: { type: string, maxLength: 200 }
+        subtitle: { type: string, nullable: true, maxLength: 200 }
+        categoryId: { $ref: '#/components/schemas/Id64' }
+        formatId: { $ref: '#/components/schemas/Id64' }
+        locationText: { type: string, maxLength: 200 }
+
+    TourListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Tour' }
+        nextCursor: { type: string, nullable: true }
+
+    PublicTourListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Tour' }
+        nextCursor: { type: string, nullable: true }
+
+    TourInstructorSetRequest:
+      type: object
+      required: [instructorProfileIds]
+      properties:
+        instructorProfileIds:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/Id64' }
+
+    # -----------------------------
+    # Tour Rich Content (Text editor content)
+    # -----------------------------
+
+    TourContentResponse:
+      type: object
+      required: [tourId, contentJson, updatedAt]
+      properties:
+        tourId: { $ref: '#/components/schemas/Id64' }
+        contentJson:
+          type: object
+          description: Editor JSON (e.g., TipTap/Slate/Quill delta)
+          additionalProperties: true
+        updatedAt: { type: string, format: date-time }
+
+    TourContentUpsertRequest:
+      type: object
+      required: [contentJson]
+      properties:
+        contentJson:
+          type: object
+          additionalProperties: true
+
+    # -----------------------------
+    # Assets (generic) + Tour Assets
+    # -----------------------------
+
+    AssetStatus:
+      type: string
+      enum: [PENDING, READY, FAILED]
+
+    Asset:
+      type: object
+      required: [id, status, mimeType, sizeBytes, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        status: { $ref: '#/components/schemas/AssetStatus' }
+        mimeType: { type: string }
+        sizeBytes: { type: integer, minimum: 0 }
+        url: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    AssetUploadUrlRequest:
+      type: object
+      required: [fileName, mimeType, sizeBytes]
+      properties:
+        fileName: { type: string }
+        mimeType: { type: string }
+        sizeBytes: { type: integer, minimum: 1 }
+
+    AssetUploadUrlResponse:
+      type: object
+      required: [assetId, uploadUrl, method]
+      properties:
+        assetId: { $ref: '#/components/schemas/Id64' }
+        uploadUrl: { type: string }
+        method: { type: string, enum: [PUT, POST], default: PUT }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+          nullable: true
+
+    AssetCompleteRequest:
+      type: object
+      required: [assetId]
+      properties:
+        assetId: { $ref: '#/components/schemas/Id64' }
+
+    AssetCompleteResponse:
+      type: object
+      required: [asset]
+      properties:
+        asset: { $ref: '#/components/schemas/Asset' }
+
+    TourAssetType:
+      type: string
+      enum: [COVER, GALLERY]
+
+    TourAsset:
+      type: object
+      required: [id, tourId, assetId, type, sortOrder, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        tourId: { $ref: '#/components/schemas/Id64' }
+        assetId: { $ref: '#/components/schemas/Id64' }
+        type: { $ref: '#/components/schemas/TourAssetType' }
+        sortOrder: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        asset:
+          $ref: '#/components/schemas/Asset'
+
+    TourAssetCreateRequest:
+      type: object
+      required: [assetId, type]
+      properties:
+        assetId: { $ref: '#/components/schemas/Id64' }
+        type: { $ref: '#/components/schemas/TourAssetType' }
+
+    TourAssetReorderRequest:
+      type: object
+      required: [orderedTourAssetIds]
+      properties:
+        orderedTourAssetIds:
+          type: array
+          items: { $ref: '#/components/schemas/Id64' }
+
+    # -----------------------------
+    # Occurrence (TourOccurrence)
+    # -----------------------------
+
+    OccurrenceStatus:
+      type: string
+      enum: [SCHEDULED, CANCELED, FINISHED]
+
+    TourOccurrence:
+      type: object
+      required: [id, tourId, organizationId, status, timezone, startAtUtc, endAtUtc, capacity, price, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        tourId: { $ref: '#/components/schemas/Id64' }
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        status: { $ref: '#/components/schemas/OccurrenceStatus' }
+        timezone:
+          type: string
+          example: Asia/Seoul
+        startAtUtc: { type: string, format: date-time }
+        endAtUtc: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1, maximum: 500 }
+        price: { $ref: '#/components/schemas/Money' }
+        createdAt: { type: string, format: date-time }
+
+    OccurrenceDetail:
+      allOf:
+        - $ref: '#/components/schemas/TourOccurrence'
+        - type: object
+          properties:
+            tour:
+              $ref: '#/components/schemas/Tour'
+            ratingSummary:
+              $ref: '#/components/schemas/RatingSummary'
+            availability:
+              $ref: '#/components/schemas/AvailabilityResponse'
+
+    OccurrenceCreateRequest:
+      type: object
+      required: [timezone, startAtUtc, endAtUtc, capacity, price]
+      properties:
+        timezone: { type: string, example: Asia/Seoul }
+        startAtUtc: { type: string, format: date-time }
+        endAtUtc: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1, maximum: 500 }
+        price: { $ref: '#/components/schemas/Money' }
+
+    OccurrencePatchRequest:
+      type: object
+      description: |
+        MVP: price change is forbidden when any booking exists.
+      properties:
+        timezone: { type: string }
+        startAtUtc: { type: string, format: date-time }
+        endAtUtc: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1, maximum: 500 }
+
+    OccurrenceRescheduleRequest:
+      type: object
+      required: [timezone, startAtUtc, endAtUtc]
+      properties:
+        timezone: { type: string }
+        startAtUtc: { type: string, format: date-time }
+        endAtUtc: { type: string, format: date-time }
+        reason: { type: string, nullable: true }
+
+    OccurrenceNotifyRequest:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string, maxLength: 200 }
+        body: { type: string, maxLength: 2000 }
+
+    OccurrenceListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TourOccurrence' }
+
+    # -----------------------------
+    # Availability / Quote
+    # -----------------------------
+
+    AvailabilityResponse:
+      type: object
+      required: [partySize, capacity, confirmedCount, heldCount, available, canConfirm]
+      properties:
+        partySize: { type: integer, minimum: 1 }
+        capacity: { type: integer, minimum: 1 }
+        confirmedCount:
+          type: integer
+          minimum: 0
+          description: Seats taken by CONFIRMED bookings (party sizes)
+        heldCount:
+          type: integer
+          minimum: 0
+          description: Seats temporarily held for waitlist offers (optional; 0 in MVP if not implemented)
+        available:
+          type: integer
+          minimum: 0
+          description: Remaining seats (capacity - confirmedCount - heldCount)
+        canConfirm:
+          type: boolean
+          description: If true, a new booking for partySize can be confirmed immediately
+        willWaitlist:
+          type: boolean
+          nullable: true
+          description: If true, booking would be waitlisted
+
+    QuoteResponse:
+      type: object
+      required: [partySize, unitPrice, totalPrice, currency, canConfirm, willWaitlist]
+      properties:
+        partySize: { type: integer, minimum: 1 }
+        unitPrice: { type: integer, minimum: 0 }
+        totalPrice: { type: integer, minimum: 0 }
+        currency: { type: string, example: KRW }
+        canConfirm: { type: boolean }
+        willWaitlist: { type: boolean }
+
+    # -----------------------------
+    # Search
+    # -----------------------------
+
+    RatingSummary:
+      type: object
+      required: [avgRating, reviewCount]
+      properties:
+        avgRating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        reviewCount:
+          type: integer
+          minimum: 0
+
+    OccurrenceSearchItem:
+      type: object
+      required: [occurrence, tour]
+      properties:
+        occurrence: { $ref: '#/components/schemas/TourOccurrence' }
+        tour: { $ref: '#/components/schemas/Tour' }
+        ratingSummary: { $ref: '#/components/schemas/RatingSummary' }
+
+    OccurrenceSearchResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OccurrenceSearchItem' }
+        nextCursor: { type: string, nullable: true }
+
+    # -----------------------------
+    # Booking
+    # -----------------------------
+
+    BookingStatus:
+      type: string
+      enum:
+        - REQUESTED
+        - WAITLISTED
+        - OFFERED
+        - CONFIRMED
+        - REJECTED
+        - CANCELED
+        - EXPIRED
+        - COMPLETED
+
+    PaymentStatus:
+      type: string
+      enum:
+        - AUTHORIZED
+        - PAID
+        - REFUND_PENDING
+        - REFUNDED
+
+    AttendanceStatus:
+      type: string
+      enum: [UNKNOWN, ATTENDED, NO_SHOW]
+
+    Booking:
+      type: object
+      required: [id, organizationId, occurrenceId, userId, partySize, status, paymentStatus, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        organizationId:
+          $ref: '#/components/schemas/Id64'
+          description: Denormalized for authz checks
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        userId:
+          $ref: '#/components/schemas/Id64'
+          description: Organizer user id
+        partySize: { type: integer, minimum: 1, maximum: 50 }
+        status: { $ref: '#/components/schemas/BookingStatus' }
+        paymentStatus: { $ref: '#/components/schemas/PaymentStatus' }
+        currency: { type: string, example: KRW, nullable: true }
+        amountPaid: { type: integer, nullable: true, description: "Minor unit. Virtual in MVP." }
+        createdAt: { type: string, format: date-time }
+
+    BookingDetail:
+      allOf:
+        - $ref: '#/components/schemas/Booking'
+        - type: object
+          properties:
+            occurrence: { $ref: '#/components/schemas/TourOccurrence' }
+            participants:
+              type: array
+              items: { $ref: '#/components/schemas/BookingParticipant' }
+            cancellation:
+              $ref: '#/components/schemas/BookingCancellationInfo'
+
+    BookingCreateRequest:
+      type: object
+      required: [partySize]
+      properties:
+        partySize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        noteToOperator:
+          type: string
+          nullable: true
+
+    BookingPartySizeUpdateRequest:
+      type: object
+      required: [partySize]
+      properties:
+        partySize:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Must be less than or equal to current party size
+
+    AttendanceParticipant:
+      type: object
+      required: [participantId, attendanceStatus]
+      properties:
+        participantId: { $ref: '#/components/schemas/Id64' }
+        attendanceStatus: { $ref: '#/components/schemas/AttendanceStatus' }
+
+    AttendanceUpdateRequest:
+      type: object
+      required: [participants]
+      properties:
+        participants:
+          type: array
+          items: { $ref: '#/components/schemas/AttendanceParticipant' }
+          minItems: 1
+
+    OfferExtendRequest:
+      type: object
+      required: [expiresAtUtc]
+      properties:
+        expiresAtUtc:
+          type: string
+          format: date-time
+
+    BookingExplainResponse:
+      type: object
+      required: [bookingId, status, canCancel, canAcceptOffer, canDeclineOffer]
+      properties:
+        bookingId: { $ref: '#/components/schemas/Id64' }
+        status: { $ref: '#/components/schemas/BookingStatus' }
+        canCancel: { type: boolean }
+        canAcceptOffer: { type: boolean }
+        canDeclineOffer: { type: boolean }
+        message: { type: string, nullable: true }
+
+    BookingCancellationInfo:
+      type: object
+      properties:
+        policyId: { $ref: '#/components/schemas/Id64', nullable: true }
+        refundable:
+          type: boolean
+          nullable: true
+        refundAmount:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        canceledAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # -----------------------------
+    # Waitlist
+    # -----------------------------
+
+    WaitlistStatus:
+      type: string
+      enum: [WAITING, OFFERED, ACCEPTED, DECLINED, EXPIRED, PROMOTED]
+
+    WaitlistItem:
+      type: object
+      required: [id, occurrenceId, bookingId, userId, partySize, status, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        bookingId: { $ref: '#/components/schemas/Id64' }
+        userId: { $ref: '#/components/schemas/Id64' }
+        partySize: { type: integer, minimum: 1, maximum: 50 }
+        status: { $ref: '#/components/schemas/WaitlistStatus' }
+        offerExpiresAtUtc:
+          type: string
+          format: date-time
+          nullable: true
+          description: "When status=OFFERED, user must respond within 24h unless overridden by operator"
+        createdAt: { type: string, format: date-time }
+
+    WaitlistResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/WaitlistItem' }
+
+    # -----------------------------
+    # Participants (booking_participants)
+    # -----------------------------
+
+    ParticipantStatus:
+      type: string
+      enum: [INVITED, ACCEPTED, DECLINED, EXPIRED]
+
+    BookingParticipant:
+      type: object
+      required: [id, bookingId, userId, status, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        bookingId: { $ref: '#/components/schemas/Id64' }
+        userId:
+          $ref: '#/components/schemas/Id64'
+          nullable: true
+          description: "If invite by email/phone without account, can be null in MVP"
+        invitedEmail:
+          type: string
+          format: email
+          nullable: true
+        status: { $ref: '#/components/schemas/ParticipantStatus' }
+        expiresAtUtc:
+          type: string
+          format: date-time
+          nullable: true
+          description: Invitation expiry (e.g., 48h), blocked within 6h before start
+        createdAt: { type: string, format: date-time }
+
+    ParticipantInviteRequest:
+      type: object
+      required: [invitedEmail]
+      properties:
+        invitedEmail: { type: string, format: email }
+        message: { type: string, nullable: true }
+
+    ParticipantListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/BookingParticipant' }
+
+    # -----------------------------
+    # Notes (operator internal)
+    # -----------------------------
+
+    OccurrenceNote:
+      type: object
+      required: [id, occurrenceId, authorUserId, body, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        authorUserId: { $ref: '#/components/schemas/Id64' }
+        body: { type: string, maxLength: 5000 }
+        createdAt: { type: string, format: date-time }
+
+    OccurrenceNoteCreateRequest:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, maxLength: 5000 }
+
+    # -----------------------------
+    # Inquiry (tour 상담 티켓)
+    # -----------------------------
+
+    InquiryStatus:
+      type: string
+      enum: [OPEN, CLOSED]
+
+    Inquiry:
+      type: object
+      required: [id, organizationId, occurrenceId, bookingId, createdByUserId, status, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        bookingId: { $ref: '#/components/schemas/Id64' }
+        createdByUserId: { $ref: '#/components/schemas/Id64' }
+        subject: { type: string, maxLength: 200, nullable: true }
+        status: { $ref: '#/components/schemas/InquiryStatus' }
+        createdAt: { type: string, format: date-time }
+
+    InquiryDetail:
+      allOf:
+        - $ref: '#/components/schemas/Inquiry'
+        - type: object
+          properties:
+            lastMessageAt: { type: string, format: date-time, nullable: true }
+
+    InquiryCreateRequest:
+      type: object
+      required: [bookingId, message]
+      properties:
+        bookingId: { $ref: '#/components/schemas/Id64' }
+        subject: { type: string, maxLength: 200, nullable: true }
+        message: { type: string, maxLength: 5000 }
+        attachmentAssetIds:
+          type: array
+          items: { $ref: '#/components/schemas/Id64' }
+          nullable: true
+
+    InquiryMessage:
+      type: object
+      required: [id, inquiryId, senderUserId, body, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        inquiryId: { $ref: '#/components/schemas/Id64' }
+        senderUserId: { $ref: '#/components/schemas/Id64' }
+        body: { type: string, maxLength: 5000 }
+        attachmentAssetIds:
+          type: array
+          items: { $ref: '#/components/schemas/Id64' }
+          nullable: true
+        createdAt: { type: string, format: date-time }
+
+    InquiryMessageCreateRequest:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, maxLength: 5000 }
+        attachmentAssetIds:
+          type: array
+          items: { $ref: '#/components/schemas/Id64' }
+          nullable: true
+
+    InquiryMessageListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/InquiryMessage' }
+        nextCursor: { type: string, nullable: true }
+
+    # -----------------------------
+    # Reviews (content restricted)
+    # -----------------------------
+
+    ReviewType:
+      type: string
+      enum: [TOUR, INSTRUCTOR]
+
+    Review:
+      type: object
+      required: [id, type, organizationId, occurrenceId, authorUserId, rating, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        type: { $ref: '#/components/schemas/ReviewType' }
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        tourId: { $ref: '#/components/schemas/Id64', nullable: true }
+        instructorProfileId: { $ref: '#/components/schemas/Id64', nullable: true }
+        authorUserId: { $ref: '#/components/schemas/Id64' }
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: string
+          nullable: true
+          description: "Content is private; only authorized viewers can access"
+        createdAt: { type: string, format: date-time }
+
+    TourReviewCreateRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string, nullable: true, maxLength: 5000 }
+
+    InstructorReviewCreateRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string, nullable: true, maxLength: 5000 }
+        instructorProfileId:
+          $ref: '#/components/schemas/Id64'
+          nullable: true
+          description: "If multiple instructors exist, choose one; otherwise server can infer"
+
+    ReviewListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Review' }
+        nextCursor: { type: string, nullable: true }
+
+    # -----------------------------
+    # Announcements
+    # -----------------------------
+
+    Announcement:
+      type: object
+      required: [id, organizationId, title, body, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        title: { type: string, maxLength: 200 }
+        body: { type: string, maxLength: 5000 }
+        createdAt: { type: string, format: date-time }
+
+    AnnouncementCreateRequest:
+      type: object
+      required: [title, body]
+      properties:
+        title: { type: string, maxLength: 200 }
+        body: { type: string, maxLength: 5000 }
+
+    AnnouncementPatchRequest:
+      type: object
+      properties:
+        title: { type: string, maxLength: 200 }
+        body: { type: string, maxLength: 5000 }
+
+    AnnouncementListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Announcement' }
+        nextCursor: { type: string, nullable: true }
+
+    # -----------------------------
+    # Reports
+    # -----------------------------
+
+    OccurrenceReportItem:
+      type: object
+      properties:
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        tourId: { $ref: '#/components/schemas/Id64' }
+        startAtUtc: { type: string, format: date-time }
+        status: { $ref: '#/components/schemas/OccurrenceStatus' }
+        confirmedSeats: { type: integer, minimum: 0 }
+        waitlistCount: { type: integer, minimum: 0 }
+
+    OccurrenceReportResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OccurrenceReportItem' }
+        nextCursor: { type: string, nullable: true }
+
+    BookingReportItem:
+      type: object
+      properties:
+        bookingId: { $ref: '#/components/schemas/Id64' }
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        organizerUserId: { $ref: '#/components/schemas/Id64' }
+        partySize: { type: integer, minimum: 1 }
+        status: { $ref: '#/components/schemas/BookingStatus' }
+        paymentStatus: { $ref: '#/components/schemas/PaymentStatus' }
+        createdAt: { type: string, format: date-time }
+
+    BookingReportResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/BookingReportItem' }
+        nextCursor: { type: string, nullable: true }
+
+    # -----------------------------
+    # Policies (Cancellation rules)
+    # -----------------------------
+
+    RefundRuleType:
+      type: string
+      enum: [FULL_REFUND, NO_REFUND]
+
+    CancellationRule:
+      type: object
+      required: [ruleType, cutoffHours]
+      properties:
+        ruleType: { $ref: '#/components/schemas/RefundRuleType' }
+        cutoffHours:
+          type: integer
+          minimum: 0
+          description: "Hours before startAtUtc. If cancel happens earlier than cutoff => apply rule."
+
+    CancellationPolicy:
+      type: object
+      required: [occurrenceId, rules]
+      properties:
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        rules:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/CancellationRule' }
+
+    CancellationPolicyUpdateRequest:
+      type: object
+      required: [rules]
+      properties:
+        rules:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/CancellationRule' }
+
+    # -----------------------------
+    # Moderation
+    # -----------------------------
+
+    UserSuspendRequest:
+      type: object
+      properties:
+        reason: { type: string, nullable: true, maxLength: 500 }
+    # -----------------------------
+    # Organization
+    # -----------------------------
+
+    Organization:
+      type: object
+      required: [id, name, ownerUserId, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id64'
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        ownerUserId:
+          $ref: '#/components/schemas/Id64'
+        createdAt:
+          type: string
+          format: date-time
+
+    OrganizationCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+
+    # -----------------------------
+    # Organization Members
+    # -----------------------------
+
+    OrganizationRole:
+      type: string
+      enum:
+        - ORG_MEMBER
+        - ORG_ADMIN
+        - ORG_OWNER
+
+    OrganizationMember:
+      type: object
+      required: [organizationId, userId, roles, status]
+      properties:
+        organizationId:
+          $ref: '#/components/schemas/Id64'
+        userId:
+          $ref: '#/components/schemas/Id64'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationRole'
+        status:
+          type: string
+          enum: [ACTIVE, REMOVED]
+
+    OrganizationMemberList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationMember'
+
+    OrganizationMemberUpsertRequest:
+      type: object
+      required: [userId, roles]
+      properties:
+        userId:
+          $ref: '#/components/schemas/Id64'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationRole'
+
+    OrganizationMemberPatchRequest:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationRole'
+        status:
+          type: string
+          enum: [ACTIVE, REMOVED]
+
+    # -----------------------------
+    # Instructor Registration
+    # -----------------------------
+
+    InstructorRegistrationStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+
+    InstructorRegistration:
+      type: object
+      required: [id, organizationId, userId, status, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id64'
+        organizationId:
+          $ref: '#/components/schemas/Id64'
+        userId:
+          $ref: '#/components/schemas/Id64'
+        message:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InstructorRegistrationStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    InstructorRegistrationCreateRequest:
+      type: object
+      required: [organizationId]
+      properties:
+        organizationId:
+          $ref: '#/components/schemas/Id64'
+        message:
+          type: string
+          nullable: true
+
+    InstructorRegistrationList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstructorRegistration'
+        nextCursor:
+          type: string
+          nullable: true
+
+    # -----------------------------
+    # Instructor Profile
+    # -----------------------------
+
+    InstructorProfile:
+      type: object
+      required: [id, userId, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id64'
+        userId:
+          $ref: '#/components/schemas/Id64'
+        bio:
+          type: string
+          nullable: true
+        certifications:
+          type: string
+          nullable: true
+        languages:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    InstructorProfileCreateRequest:
+      type: object
+      properties:
+        bio:
+          type: string
+        certifications:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+
+    InstructorProfileUpdateRequest:
+      type: object
+      properties:
+        bio:
+          type: string
+        certifications:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+
+    InstructorPublicProfile:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id64'
+        displayName:
+          type: string
+        bio:
+          type: string
+          nullable: true
+
+    InstructorPublicProfileList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstructorPublicProfile'
+
+    # -----------------------------
+    # Taxonomy
+    # -----------------------------
+
+    ActivityCategory:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id64'
+        name:
+          type: string
+
+    ActivityFormat:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/Id64'
+        name:
+          type: string
+
+    # ---- Common ----
+    Id64:
+      type: integer
+      format: int64
+
+    CursorPage:
+      type: object
+      properties:
+        nextCursor: { type: string, nullable: true }
+
+    # ---- Error ----
+    ErrorCode:
+      type: string
+      description: Domain/application error code used in `error.code`
+      enum:
+        - VALIDATION_ERROR
+        - REQUIRED_FIELD_MISSING
+        - PARTY_SIZE_OUT_OF_RANGE
+        - BOOKING_SCOPE_MISMATCH
+        - INVITE_WINDOW_CLOSED
+        - ATTENDANCE_NOT_ELIGIBLE
+        - INVALID_PARTICIPANT_STATUS
+        - OFFER_EXPIRY_INVALID
+        - INVALID_STATE_TRANSITION
+        - BOOKING_TERMINAL_STATE
+        - OFFER_NOT_ACTIVE
+        - OFFER_EXPIRED
+        - OCCURRENCE_ALREADY_CANCELED
+        - CAPACITY_EXCEEDED
+        - PARTY_SIZE_INCREASE_NOT_ALLOWED
+        - WAITLIST_PROMOTION_NOT_POSSIBLE
+        - DUPLICATE_REVIEW
+        - INQUIRY_ALREADY_EXISTS
+        - IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD
+        - IDEMPOTENCY_IN_PROGRESS
+        - PAYMENT_ALREADY_REFUNDED
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid request
+            details:
+              type: object
+              additionalProperties: true
+              nullable: true
+
+  x-error-code-map:
+    conflict_409:
+      - code: INVALID_STATE_TRANSITION
+        when: Transition is not allowed from current booking state
+        example_endpoints:
+          - POST /bookings/{bookingId}/approve
+          - POST /bookings/{bookingId}/offer/accept
+      - code: BOOKING_TERMINAL_STATE
+        when: Command targets terminal booking (REJECTED/EXPIRED/CANCELED/COMPLETED)
+        example_endpoints:
+          - POST /bookings/{bookingId}/cancel
+          - POST /bookings/{bookingId}/complete
+      - code: OFFER_NOT_ACTIVE
+        when: Offer command requested while booking is not in OFFERED
+        example_endpoints:
+          - POST /bookings/{bookingId}/offer/accept
+          - POST /bookings/{bookingId}/offer/decline
+      - code: OFFER_EXPIRED
+        when: Offer exists but now is later than offerExpiresAtUtc
+        example_endpoints:
+          - POST /bookings/{bookingId}/offer/accept
+      - code: OCCURRENCE_ALREADY_CANCELED
+        when: Occurrence-level command called after occurrence canceled
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/bookings
+      - code: CAPACITY_EXCEEDED
+        when: Requested seat allocation exceeds available seats
+        example_endpoints:
+          - POST /bookings/{bookingId}/approve
+          - POST /bookings/{bookingId}/offer/accept
+      - code: PARTY_SIZE_INCREASE_NOT_ALLOWED
+        when: Party-size patch attempts to increase current value
+        example_endpoints:
+          - PATCH /bookings/{bookingId}/party-size
+      - code: WAITLIST_PROMOTION_NOT_POSSIBLE
+        when: Waitlist item cannot be promoted due to seat/eligibility constraints
+        example_endpoints:
+          - POST /waitlist/{waitlistId}/promote
+      - code: DUPLICATE_REVIEW
+        when: Same author submits duplicate review for same target scope
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/reviews/tour
+          - POST /occurrences/{occurrenceId}/reviews/instructor
+      - code: INQUIRY_ALREADY_EXISTS
+        when: Inquiry uniqueness rule violated (e.g., one inquiry per booking)
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/inquiries
+      - code: IDEMPOTENCY_IN_PROGRESS
+        when: Same idempotency key is currently being processed
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/bookings
+          - POST /bookings/{bookingId}/offer/accept
+      - code: PAYMENT_ALREADY_REFUNDED
+        when: Refund already completed and duplicate refund attempt detected
+        example_endpoints:
+          - POST /bookings/{bookingId}/cancel
+
+    unprocessable_422:
+      - code: VALIDATION_ERROR
+        when: Generic request payload validation failed
+      - code: REQUIRED_FIELD_MISSING
+        when: Mandatory input field is missing
+      - code: PARTY_SIZE_OUT_OF_RANGE
+        when: partySize is below 1 or above configured maximum
+      - code: BOOKING_SCOPE_MISMATCH
+        when: bookingId does not belong to occurrence/org scope in request
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/inquiries
+      - code: INVITE_WINDOW_CLOSED
+        when: Participant invite requested within blocked time window before start
+        example_endpoints:
+          - POST /bookings/{bookingId}/participants
+      - code: ATTENDANCE_NOT_ELIGIBLE
+        when: Review attempted without ATTENDED status
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/reviews/tour
+      - code: INVALID_PARTICIPANT_STATUS
+        when: Participant state update violates invitation lifecycle
+        example_endpoints:
+          - POST /participants/{participantId}/accept
+          - POST /participants/{participantId}/decline
+      - code: OFFER_EXPIRY_INVALID
+        when: Offer extension payload has invalid expiresAtUtc
+        example_endpoints:
+          - POST /bookings/{bookingId}/extend-offer
+      - code: IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD
+        when: Same idempotency key is reused with a different request payload
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/bookings
+          - POST /occurrences/{occurrenceId}/inquiries
+
+    # ---- Auth ----
+    SignupRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        displayName: { type: string, maxLength: 100 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+
+    PasswordResetConfirmRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string }
+        newPassword: { type: string, minLength: 8 }
+
+    EmailVerifyConfirmRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    AuthUserSummary:
+      type: object
+      required: [id, email, displayName]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        email: { type: string, format: email }
+        displayName: { type: string }
+
+    AuthResponse:
+      type: object
+      required: [accessToken, user]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string, nullable: true, description: "Optional depending on auth strategy" }
+        user: { $ref: '#/components/schemas/AuthUserSummary' }
+
+    # ---- User / Me ----
+    UserStatus:
+      type: string
+      enum: [ACTIVE, SUSPENDED, DELETED]
+
+    User:
+      type: object
+      required: [id, email, displayName, status, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        email: { type: string, format: email }
+        displayName: { type: string }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        createdAt: { type: string, format: date-time }
+
+    MeUpdateRequest:
+      type: object
+      properties:
+        displayName: { type: string, maxLength: 100 }
+
+    Membership:
+      type: object
+      required: [organizationId, roles, status]
+      properties:
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        roles:
+          type: array
+          items:
+            type: string
+            description: Set of roles in organization (ORG_MEMBER/ORG_ADMIN/ORG_OWNER)
+        status:
+          type: string
+          enum: [ACTIVE, REMOVED]
+
+    MeResponse:
+      type: object
+      required: [user, memberships]
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        memberships:
+          type: array
+          items: { $ref: '#/components/schemas/Membership' }
+
+    # ---- Notifications ----
+    NotificationType:
+      type: string
+      enum:
+        - BOOKING_CONFIRMED
+        - BOOKING_CANCELED
+        - WAITLIST_PROMOTED
+        - WAITLIST_EXPIRED
+        - PARTICIPANT_INVITED
+        - PARTICIPANT_ACCEPTED
+        - PARTICIPANT_DECLINED
+        - INQUIRY_MESSAGE
+        - OCCURRENCE_CHANGED
+        - OCCURRENCE_CANCELED
+        - ANNOUNCEMENT
+
+    Notification:
+      type: object
+      required: [id, userId, type, title, body, isRead, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id64' }
+        userId: { $ref: '#/components/schemas/Id64' }
+        type: { $ref: '#/components/schemas/NotificationType' }
+        title: { type: string, maxLength: 200 }
+        body: { type: string, maxLength: 2000 }
+        isRead: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        deepLink: { type: string, nullable: true, description: "app deep link" }
+
+    NotificationListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Notification' }
+        nextCursor: { type: string, nullable: true }
+
+    # ---- Lightweight list responses used in /me ----
+    BookingListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { type: object, additionalProperties: true }
+        nextCursor: { type: string, nullable: true }
+
+    InquiryListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { type: object, additionalProperties: true }
+        nextCursor: { type: string, nullable: true }
+
+    FavoriteListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { type: object, additionalProperties: true }
+        nextCursor: { type: string, nullable: true }
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    Unauthorized:
+      description: Unauthorized (missing/invalid token)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    Forbidden:
+      description: Forbidden (insufficient permission)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    Conflict:
+      description: Conflict (invalid state transition / duplicate / business rule)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    Unprocessable:
+      description: Unprocessable Entity (validation error)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  examples:
+    OfferExpiredConflict:
+      summary: Offer expired after deadline
+      value:
+        error:
+          code: OFFER_EXPIRED
+          message: Offer is already expired
+          details:
+            bookingId: 12001
+            offerExpiresAtUtc: '2026-03-06T14:00:00Z'
+
+    OfferNotActiveConflict:
+      summary: Booking is not in OFFERED state
+      value:
+        error:
+          code: OFFER_NOT_ACTIVE
+          message: Offer action is allowed only when booking is OFFERED
+          details:
+            bookingId: 12001
+            currentStatus: CONFIRMED
+
+    CapacityExceededConflict:
+      summary: Seats no longer available
+      value:
+        error:
+          code: CAPACITY_EXCEEDED
+          message: Available seats are insufficient
+          details:
+            occurrenceId: 3301
+            requestedSeats: 3
+            availableSeats: 1
+
+    InvalidStateTransitionConflict:
+      summary: Invalid booking state transition
+      value:
+        error:
+          code: INVALID_STATE_TRANSITION
+          message: Transition is not allowed from current state
+          details:
+            bookingId: 12001
+            from: CANCELED
+            to: CONFIRMED
+
+    BookingTerminalStateConflict:
+      summary: Booking is already terminal
+      value:
+        error:
+          code: BOOKING_TERMINAL_STATE
+          message: Booking is in terminal state
+          details:
+            bookingId: 12001
+            status: CANCELED
+
+    PartySizeIncreaseNotAllowed:
+      summary: Party size increase rejected
+      value:
+        error:
+          code: PARTY_SIZE_INCREASE_NOT_ALLOWED
+          message: partySize can only be decreased
+          details:
+            bookingId: 12001
+            currentPartySize: 2
+            requestedPartySize: 3
+
+    BookingScopeMismatch:
+      summary: bookingId does not belong to occurrence scope
+      value:
+        error:
+          code: BOOKING_SCOPE_MISMATCH
+          message: bookingId does not match occurrence or organization scope
+          details:
+            occurrenceId: 3301
+            bookingId: 12001
+
+    RequiredFieldMissingBookingId:
+      summary: bookingId missing in inquiry create payload
+      value:
+        error:
+          code: REQUIRED_FIELD_MISSING
+          message: bookingId is required
+          details:
+            field: bookingId
+
+    RequiredFieldMissingInquiryMessageBody:
+      summary: body missing in inquiry message payload
+      value:
+        error:
+          code: REQUIRED_FIELD_MISSING
+          message: body is required
+          details:
+            field: body
+
+    IdempotencyKeyReusedDifferentPayload:
+      summary: Same idempotency key, different payload
+      value:
+        error:
+          code: IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD
+          message: Idempotency key cannot be reused with different payload
+          details:
+            idempotencyKey: 0f5f40d8-4c89-4c8e-a7f3-1b3919a4f9d7
+
+    IdempotencyInProgressConflict:
+      summary: Duplicate request still processing
+      value:
+        error:
+          code: IDEMPOTENCY_IN_PROGRESS
+          message: Same idempotency key request is in progress
+          details:
+            retryAfterSeconds: 3
+  parameters:
+    # ---- Common paging ----
+    cursor:
+      name: cursor
+      in: query
+      required: false
+      schema: { type: string, nullable: true }
+      description: Opaque cursor for pagination
+
+    limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      description: Page size
+
+    idempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+      description: Client-provided deduplication key for mutation safety
+
+    # ---- IDs (path) ----
+    orgId:
+      name: orgId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    tourId:
+      name: tourId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    occurrenceId:
+      name: occurrenceId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    bookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    participantId:
+      name: participantId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    waitlistId:
+      name: waitlistId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    inquiryId:
+      name: inquiryId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    reviewId:
+      name: reviewId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    announcementId:
+      name: announcementId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    notificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    tourAssetId:
+      name: tourAssetId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+    # ---- Date/time search ----
+    dateFrom:
+      name: dateFrom
+      in: query
+      required: true
+      schema: { type: string, format: date-time }
+      description: Inclusive start in UTC (ISO-8601)
+
+    dateTo:
+      name: dateTo
+      in: query
+      required: true
+      schema: { type: string, format: date-time }
+      description: Exclusive end in UTC (ISO-8601)
+
+    dateFromOptional:
+      name: dateFrom
+      in: query
+      required: false
+      schema: { type: string, format: date-time }
+      description: Inclusive start in UTC
+
+    dateToOptional:
+      name: dateTo
+      in: query
+      required: false
+      schema: { type: string, format: date-time }
+      description: Exclusive end in UTC
+
+    timezone:
+      name: timezone
+      in: query
+      required: false
+      schema: { type: string, example: Asia/Seoul }
+      description: IANA timezone for client display/hints
+
+    # ---- Filters ----
+    locationText:
+      name: location
+      in: query
+      required: false
+      schema: { type: string, maxLength: 200 }
+      description: Location free text (MVP)
+
+    categoryId:
+      name: categoryId
+      in: query
+      required: false
+      schema: { type: integer, format: int64 }
+      description: Activity category id (e.g., scuba, skydiving)
+
+    formatId:
+      name: formatId
+      in: query
+      required: false
+      schema: { type: integer, format: int64 }
+      description: Activity format id (e.g., lesson, tour)
+
+    priceMin:
+      name: priceMin
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0 }
+      description: Minimum price (minor currency unit, e.g., KRW)
+
+    priceMax:
+      name: priceMax
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0 }
+      description: Maximum price (minor currency unit)
+
+    onlyAvailable:
+      name: onlyAvailable
+      in: query
+      required: false
+      schema: { type: boolean, default: false }
+      description: Only include occurrences with seats for the given partySize (or 1)
+
+    includeRating:
+      name: includeRating
+      in: query
+      required: false
+      schema: { type: boolean, default: true }
+      description: Include rating summary in search results
+
+    sort:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [START_AT_ASC, PRICE_ASC, PRICE_DESC, RATING_DESC]
+        default: START_AT_ASC
+
+    # ---- Party size ----
+    partySize:
+      name: partySize
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 1 }
+
+    partySizeRequired:
+      name: partySize
+      in: query
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 50 }
+
+    # ---- Status filters ----
+    bookingStatus:
+      name: bookingStatus
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - REQUESTED
+          - WAITLISTED
+          - OFFERED
+          - CONFIRMED
+          - REJECTED
+          - CANCELED
+          - EXPIRED
+          - COMPLETED
+
+    inquiryStatus:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [OPEN, CLOSED]
+
+    tourStatus:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [DRAFT, PUBLISHED, ARCHIVED]
+
+    reviewType:
+      name: type
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [TOUR, INSTRUCTOR]
+
+    reviewVisibility:
+      name: visibility
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [PRIVATE]  # content is private in MVP
+
+    # ---- Notifications ----
+    onlyUnread:
+      name: onlyUnread
+      in: query
+      required: false
+      schema: { type: boolean, default: false }
