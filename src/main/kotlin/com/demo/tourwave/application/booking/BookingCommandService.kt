@@ -11,14 +11,17 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.IdempotencyDecision
 import com.demo.tourwave.application.common.port.IdempotencyStore
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
+import com.demo.tourwave.domain.participant.BookingParticipant
 import java.security.MessageDigest
 import java.time.Clock
 
 class BookingCommandService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
+    private val bookingParticipantRepository: BookingParticipantRepository,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
     private val clock: Clock
@@ -82,6 +85,14 @@ class BookingCommandService(
                         partySize = command.partySize,
                         availableSeats = availableSeats
                     ).copy(createdAt = clock.instant())
+                )
+
+                bookingParticipantRepository.save(
+                    BookingParticipant.leader(
+                        bookingId = requireNotNull(created.id),
+                        userId = created.leaderUserId,
+                        createdAt = created.createdAt
+                    )
                 )
 
                 val response = BookingCreated(
@@ -214,6 +225,7 @@ class BookingCommandService(
                     val shouldRefund = booking.paymentStatus == PaymentStatus.AUTHORIZED || booking.paymentStatus == PaymentStatus.PAID
                     val canceled = booking.cancel(refund = shouldRefund)
                     bookingRepository.save(canceled)
+                    cancelParticipants(bookingId = requireNotNull(canceled.id), canceledAt = clock.instant())
                     appendBookingStatusAudit(
                         actorUserId = command.actorUserId,
                         booking = canceled,
@@ -283,6 +295,12 @@ class BookingCommandService(
                 }
 
                 bookingRepository.save(mutated)
+                if (command.mutationType == BookingMutationType.CANCEL) {
+                    cancelParticipants(
+                        bookingId = requireNotNull(mutated.id),
+                        canceledAt = clock.instant()
+                    )
+                }
                 promoteWaitlistIfSeatReleased(command, booking, mutated)
 
                 idempotencyStore.complete(
@@ -599,6 +617,20 @@ class BookingCommandService(
             )
         }
 
+        val activeParticipants = bookingParticipantRepository.findByBookingId(requireNotNull(booking.id)).count { it.isActive() }
+        if (targetPartySize < activeParticipants) {
+            throw DomainException(
+                errorCode = ErrorCode.VALIDATION_ERROR,
+                status = 422,
+                message = "partySize cannot be lower than active participant count",
+                details = mapOf(
+                    "bookingId" to booking.id,
+                    "activeParticipantCount" to activeParticipants,
+                    "requestedPartySize" to targetPartySize
+                )
+            )
+        }
+
         return booking.decreasePartySize(targetPartySize)
     }
 
@@ -731,5 +763,12 @@ class BookingCommandService(
 
             else -> false
         }
+    }
+
+    private fun cancelParticipants(bookingId: Long, canceledAt: java.time.Instant) {
+        bookingParticipantRepository.findByBookingId(bookingId)
+            .forEach { participant ->
+                bookingParticipantRepository.save(participant.cancel(canceledAt))
+            }
     }
 }

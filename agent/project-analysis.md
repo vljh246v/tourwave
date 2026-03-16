@@ -230,3 +230,186 @@
 - 코드 구조는 이후 확장을 고려해 나쁘지 않게 잡혀 있다.
 - 다만 데이터 저장, 인증, 조회 API, 운영 기능, 외부 연동이 비어 있어 서비스 완성도는 아직 낮다.
 - 그래서 현재 진척도는 대략 "핵심 command MVP는 성립, 전체 제품은 아직 확장 중" 수준으로 보는 것이 적절하다.
+
+## 10. 추가 분석: `01_domain_rules.md` 기준 구현 현황
+
+### 10.1 현재 개발된 부분
+
+- Booking 상태 모델 핵심 전이
+  - `REQUESTED -> CONFIRMED/REJECTED/CANCELED`
+  - `WAITLISTED -> OFFERED/CANCELED`
+  - `OFFERED -> CONFIRMED/EXPIRED/CANCELED`
+  - `CONFIRMED -> CANCELED/COMPLETED`
+- Terminal 상태 차단
+  - terminal booking에 대한 재전이는 대부분 차단된다.
+- occurrence lifecycle 일부
+  - `SCHEDULED -> FINISHED`
+  - `SCHEDULED -> CANCELED`
+  - `FINISHED` occurrence 신규 예약 차단
+  - occurrence cancel 시 non-terminal booking cascade cancel
+- capacity / waitlist / offer 일부
+  - 예약 생성 시 좌석 부족하면 `WAITLISTED`
+  - 좌석이 풀리면 fitting 가능한 waitlist 예약을 `OFFERED`로 승격
+  - offer 기본 만료 시간 24시간
+  - `partySize` 감소 가능, 증가 불가
+- inquiry 최소 규칙
+  - inquiry 생성 시 `bookingId` 필수
+  - booking과 occurrence 스코프 검증
+  - 참여자/운영자 메시지 작성 및 close 지원
+- review 최소 규칙
+  - review type 분리
+  - 중복 review 방지
+  - booking이 `COMPLETED`인 사용자만 작성 가능
+- idempotency 필수 규칙
+  - mutation endpoint 대부분에서 `Idempotency-Key` 강제
+  - 동일 key + 동일 payload replay
+  - 동일 key + 다른 payload는 422
+  - 처리 중 중복요청은 409
+
+### 10.2 개발이 덜된 부분
+
+- Role model 전체
+  - `USER/INSTRUCTOR/ORG_MEMBER/ORG_ADMIN/ORG_OWNER` 개념은 문서에 있으나 실제 권한 모델은 헤더 검증 수준이다.
+- instructor/tour/organization 모델
+  - 도메인 규칙에는 있으나 실제 엔티티/관계/서비스는 거의 없다.
+- attendance 분리 모델
+  - `AttendanceStatus` enum은 있지만, participant 단위 출석 기록 로직과 API는 없다.
+- participant invitation
+  - 초대 생성, 수락/거절, 48시간 만료, 6시간 윈도우 차단 모두 미구현이다.
+- inquiry 참여자 범위
+  - 문서상 "all booking participants" 기준인데, 현재 코드는 booking leader + org operator 중심이며 participant 모델 자체가 없다.
+- review eligibility 완전판
+  - 문서는 participant attendance 기반인데, 현재는 `COMPLETED booking의 leader` 기준으로 단순화되어 있다.
+- cancellation/refund policy rule engine
+  - 48시간 경계, 환불 preview endpoint, FULL_REFUND/NO_REFUND 정책 계산은 없다.
+- calendar ICS
+  - 전혀 없다.
+- operator manual waitlist control
+  - 특정 booking 강제 offer, skip, admin note 기록 기능이 없다.
+
+### 10.3 해석
+
+- `01_domain_rules.md` 기준으로 보면 핵심 booking command 규칙은 상당 부분 들어왔다.
+- 하지만 participant, attendance, payment policy, manual operations, calendar 쪽은 거의 설계 문서 단계에 머물러 있다.
+
+## 11. 추가 분석: `08_operational_policy_tables.md` 기준 구현 현황
+
+### 11.1 현재 개발된 부분
+
+- idempotency policy의 핵심 골격
+  - scope를 `(actor_user_id, method, path_template, key)`로 관리
+  - replay 시 원본 status/body 반환
+  - in-progress duplicate는 `IDEMPOTENCY_IN_PROGRESS`
+- audit log 최소 구현
+  - append-only 성격의 `InMemoryAuditEventAdapter` 존재
+  - booking/inquiry/review mutation마다 audit append 수행
+- time handling 일부
+  - `Clock` abstraction 사용
+  - offer expiry 비교를 application service에서 처리
+- refund 정책의 일부 단순형
+  - occurrence cancel, reject, offer decline, 일부 cancel에서 `REFUNDED` 처리
+
+### 11.2 개발이 덜된 부분
+
+- Refund Policy Matrix 대부분
+  - 48시간 경계 기반 leader cancellation 정책 없음
+  - `FULL_REFUND` vs `NO_REFUND` 계산 없음
+  - `REFUND_PENDING` 재시도 플로우 없음
+- Payment Failure & Compensation Matrix 전체
+  - 실제 gateway 호출 자체가 없고, timeout/retry/rollback/operator queue가 없다.
+- Idempotency Policy Matrix 세부 에러코드
+  - 문서의 `INVALID_BOOKING_STATE`, `PAYMENT_ALREADY_REFUNDED`, `CAPACITY_INSUFFICIENT` 등은 코드와 불일치하거나 미구현이다.
+  - 현재 코드는 `INVALID_STATE_TRANSITION`, `BOOKING_TERMINAL_STATE`, `CAPACITY_EXCEEDED` 등 자체 코드 중심이다.
+- Time & Timezone Policy 대부분
+  - occurrence timezone 저장 없음
+  - local time 기준 N시간 경계 계산 없음
+  - DST 테스트 없음
+- Waitlist Fairness Policy 확장 규칙
+  - 현재는 사실상 FIFO+fit이다.
+  - `skip_count`, priority boost, starvation 완화 정책은 없다.
+- Audit Log Policy 완전판
+  - `before_json`, `after_json`, `reason_code`, append-only 보장 저장소는 없다.
+  - in-memory이므로 영속 감사 로그가 아니다.
+- rollout checklist 항목
+  - retry job, TTL purge job, dashboard, distributed lock 등은 없다.
+
+### 11.3 해석
+
+- `08_operational_policy_tables.md`는 운영 가능한 서비스 기준 정책표에 가깝다.
+- 현재 구현은 그중 idempotency와 audit의 "형태"만 일부 반영한 상태이고, 결제/환불/배치/운영관제는 사실상 미착수다.
+
+## 12. 추가 분석: `07_test_scenarios.md` 기준 구현 현황
+
+### 12.1 현재 테스트 또는 구현으로 커버되는 부분
+
+- Scenario 1 `Basic Booking Approval`
+- Scenario 2 `Booking Rejection`
+- Scenario 3 `Waitlist Creation`
+- Scenario 5 `Offer Acceptance`
+- Scenario 9 `Party Size Reduction`
+- Scenario 11 `Review Eligibility`
+- Scenario 12 `Occurrence Cancellation`
+- Scenario 14 `Invalid Transition Rejected`
+- Scenario 15 `Offer Accept After Expiration`
+- Scenario 16 `Occurrence Cancellation Precedence`
+- Scenario 17 `Inquiry Booking Scope Validation`
+- Scenario 18 `Booking Creation Status Decision`
+- Scenario 19 `Idempotent Booking Create`
+- Scenario 20 `Idempotency Key Reused With Different Payload`
+
+위 항목들은 `BookingControllerIntegrationTest`, `BookingTest` 및 review/inquiry 관련 로직으로 대체로 확인 가능하다.
+
+### 12.2 일부만 구현된 부분
+
+- Scenario 4 `Waitlist Promotion`
+  - 좌석 해제 후 fitting 가능한 waitlist 승격 로직은 있다.
+  - 다만 문서 수준의 "A skip, B promote" 공정성 시나리오가 테스트에서 명시적으로 충분히 드러나지는 않는다.
+- Scenario 10 `Inquiry Messaging`
+  - 메시지 저장은 구현돼 있다.
+  - 하지만 "notifications sent"는 미구현이다.
+- Scenario 24 `Offer Expiration Boundary`
+  - 만료 비교 로직은 있지만, 경계값 테스트가 별도 시나리오로 정교하게 정리돼 있지는 않다.
+
+### 12.3 대부분 미구현인 부분
+
+- Scenario 6 `Offer Expiration`
+  - background job 기반 자동 만료가 없다.
+- Scenario 7 `Participant Invitation`
+- Scenario 8 `Invitation Expiration`
+- Scenario 13 `Participant Roster Export`
+- Scenario 21 `Leader Cancellation Refund Boundary (48h)`
+- Scenario 22 `Refund API Failure Compensation`
+- Scenario 23 `Invitation Window Boundary (6h)`
+
+### 12.4 테스트 관점 종합 평가
+
+- 현재 테스트는 booking command 규칙에 강하게 집중돼 있다.
+- 문서에 있는 E2E 시나리오 전체 대비로 보면 절반 이상이 아직 테스트로 옮겨지지 않았다.
+- 특히 배치 작업, 외부 결제 실패 보상, 초대/참여자 흐름, export 기능은 테스트 대상 자체가 아직 구현되지 않았다.
+
+## 13. 세 문서 기준 최종 정리
+
+### 13.1 현재 개발이 많이 된 부분
+
+- booking command 플로우
+- idempotency 처리
+- occurrence cancel/finish와 booking 상태 전이
+- inquiry 최소 생성/메시지/close
+- review 생성/요약
+- 헤더 기반 actor 검증
+- 일부 통합 테스트 자동화
+
+### 13.2 현재 개발이 덜된 부분
+
+- participant / invitation / attendance
+- payment gateway / refund compensation / retry jobs
+- 운영 정책 세부 구현(timezone, fairness, reason code, manual controls)
+- export / calendar / search / report API
+- 실제 인증/권한 시스템
+- persistent DB / lock / transactional consistency
+- 문서에 정의된 전체 E2E 시나리오 구현 및 테스트
+
+### 13.3 결론 보정
+
+- 처음 분석보다 더 분명한 점은, 현재 프로젝트는 "예약/문의/후기의 일부 핵심 command 규칙"은 구현됐지만 "운영정책과 확장 시나리오"는 대부분 아직 비어 있다는 것이다.
+- 즉, 제품 스펙 전체 기준 진척도는 문서가 암시하는 범위보다 낮고, 현재 구현 범위는 명확히 좁은 MVP 프로토타입으로 보는 것이 맞다.

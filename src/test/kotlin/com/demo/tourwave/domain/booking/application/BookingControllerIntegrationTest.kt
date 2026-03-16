@@ -5,6 +5,7 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -13,6 +14,8 @@ import com.demo.tourwave.domain.inquiry.Inquiry
 import com.demo.tourwave.domain.inquiry.InquiryStatus
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
+import com.demo.tourwave.domain.participant.BookingParticipant
+import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,6 +30,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.security.MessageDigest
 import java.time.Instant
+import kotlin.test.assertEquals
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -48,6 +52,9 @@ class BookingControllerIntegrationTest {
     private lateinit var inquiryRepository: InquiryRepository
 
     @Autowired
+    private lateinit var bookingParticipantRepository: BookingParticipantRepository
+
+    @Autowired
     private lateinit var reviewRepository: ReviewRepository
 
     @Autowired
@@ -59,6 +66,7 @@ class BookingControllerIntegrationTest {
         occurrenceRepository.clear()
         idempotencyStore.clear()
         inquiryRepository.clear()
+        bookingParticipantRepository.clear()
         reviewRepository.clear()
         auditEventAdapter.clear()
     }
@@ -79,6 +87,11 @@ class BookingControllerIntegrationTest {
             .andExpect(jsonPath("$.paymentStatus").value("AUTHORIZED"))
             .andExpect(jsonPath("$.organizationId").value(31))
             .andExpect(jsonPath("$.userId").value(101))
+
+        val participants = bookingParticipantRepository.findByBookingId(1L)
+        kotlin.test.assertEquals(1, participants.size)
+        kotlin.test.assertEquals(101L, participants.single().userId)
+        kotlin.test.assertEquals("LEADER", participants.single().status.name)
     }
 
     @Test
@@ -1606,7 +1619,7 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `tour review create returns 201 when attendee completed booking`() {
-        bookingRepository.save(
+        val booking = bookingRepository.save(
             Booking(
                 occurrenceId = 7401L,
                 organizationId = 31L,
@@ -1616,6 +1629,13 @@ class BookingControllerIntegrationTest {
                 paymentStatus = PaymentStatus.PAID,
                 createdAt = Instant.parse("2026-03-06T04:00:00Z")
             )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 901L,
+                createdAt = booking.createdAt
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
         )
 
         mockMvc.perform(
@@ -1632,7 +1652,7 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `review create requires actor user header`() {
-        bookingRepository.save(
+        val booking = bookingRepository.save(
             Booking(
                 occurrenceId = 74011L,
                 organizationId = 31L,
@@ -1642,6 +1662,13 @@ class BookingControllerIntegrationTest {
                 paymentStatus = PaymentStatus.PAID,
                 createdAt = Instant.parse("2026-03-06T04:00:00Z")
             )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 901L,
+                createdAt = booking.createdAt
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
         )
 
         mockMvc.perform(
@@ -1656,7 +1683,7 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `duplicate tour review returns 409 DUPLICATE_REVIEW`() {
-        bookingRepository.save(
+        val booking = bookingRepository.save(
             Booking(
                 occurrenceId = 7402L,
                 organizationId = 31L,
@@ -1666,6 +1693,13 @@ class BookingControllerIntegrationTest {
                 paymentStatus = PaymentStatus.PAID,
                 createdAt = Instant.parse("2026-03-06T04:10:00Z")
             )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 902L,
+                createdAt = booking.createdAt
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
         )
 
         mockMvc.perform(
@@ -1690,7 +1724,7 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `review create returns 422 ATTENDANCE_NOT_ELIGIBLE for non attendee`() {
-        bookingRepository.save(
+        val booking = bookingRepository.save(
             Booking(
                 occurrenceId = 7403L,
                 organizationId = 31L,
@@ -1699,6 +1733,13 @@ class BookingControllerIntegrationTest {
                 status = BookingStatus.CONFIRMED,
                 paymentStatus = PaymentStatus.PAID,
                 createdAt = Instant.parse("2026-03-06T04:20:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 903L,
+                createdAt = booking.createdAt
             )
         )
 
@@ -1715,7 +1756,7 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `review create follows idempotency replay and in progress policy`() {
-        bookingRepository.save(
+        val booking = bookingRepository.save(
             Booking(
                 occurrenceId = 7404L,
                 organizationId = 31L,
@@ -1725,6 +1766,13 @@ class BookingControllerIntegrationTest {
                 paymentStatus = PaymentStatus.PAID,
                 createdAt = Instant.parse("2026-03-06T04:30:00Z")
             )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 904L,
+                createdAt = booking.createdAt
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
         )
 
         val firstBody = mockMvc.perform(
@@ -1768,7 +1816,7 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `review summary endpoint returns aggregated minimal snapshot`() {
-        bookingRepository.save(
+        val booking1 = bookingRepository.save(
             Booking(
                 occurrenceId = 7405L,
                 organizationId = 31L,
@@ -1779,7 +1827,7 @@ class BookingControllerIntegrationTest {
                 createdAt = Instant.parse("2026-03-06T04:40:00Z")
             )
         )
-        bookingRepository.save(
+        val booking2 = bookingRepository.save(
             Booking(
                 occurrenceId = 7405L,
                 organizationId = 31L,
@@ -1789,6 +1837,20 @@ class BookingControllerIntegrationTest {
                 paymentStatus = PaymentStatus.PAID,
                 createdAt = Instant.parse("2026-03-06T04:41:00Z")
             )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking1.id),
+                userId = 905L,
+                createdAt = booking1.createdAt
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking2.id),
+                userId = 906L,
+                createdAt = booking2.createdAt
+            ).recordAttendance(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED)
         )
 
         mockMvc.perform(
@@ -1826,8 +1888,624 @@ class BookingControllerIntegrationTest {
             .andExpect(jsonPath("$.instructor.averageRating").value(5.0))
     }
 
+    @Test
+    fun `accepted attendee can create review even when not booking leader`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 7406L,
+                organizationId = 31L,
+                leaderUserId = 907L,
+                partySize = 2,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T04:50:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 907L,
+                createdAt = booking.createdAt
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 908L,
+                status = BookingParticipantStatus.ACCEPTED,
+                attendanceStatus = com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                respondedAt = Instant.parse("2026-03-05T01:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/7406/reviews/tour")
+                .header("Idempotency-Key", "review-tour-k-4")
+                .header("X-Actor-User-Id", "908")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"rating":5,"comment":"participant review"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.reviewerUserId").value(908))
+    }
+
     private fun hash(raw: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    @Test
+    fun `partySize patch rejects value lower than active participant count`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9901L,
+                organizationId = 31L,
+                leaderUserId = 901L,
+                partySize = 3,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 901L,
+                createdAt = booking.createdAt
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 902L,
+                status = BookingParticipantStatus.ACCEPTED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                respondedAt = Instant.parse("2026-03-05T01:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            patch("/bookings/${booking.id}/party-size")
+                .header("Idempotency-Key", "party-size-participant-limit-k-1")
+                .header("X-Actor-User-Id", "901")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"partySize":1}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.details.activeParticipantCount").value(2))
+    }
+
+    @Test
+    fun `cancel booking cascades participant status to canceled`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9902L,
+                organizationId = 31L,
+                leaderUserId = 911L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 911L,
+                createdAt = booking.createdAt
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 912L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/cancel")
+                .header("Idempotency-Key", "cancel-booking-participants-k-1")
+                .header("X-Actor-User-Id", "911")
+        )
+            .andExpect(status().isNoContent)
+
+        val participants = bookingParticipantRepository.findByBookingId(requireNotNull(booking.id))
+        assertEquals(setOf(BookingParticipantStatus.CANCELED), participants.map { it.status }.toSet())
+    }
+
+    @Test
+    fun `cancel occurrence cascades participant status to canceled`() {
+        occurrenceRepository.save(Occurrence(id = 9903L, organizationId = 31L, capacity = 10))
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9903L,
+                organizationId = 31L,
+                leaderUserId = 921L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 921L,
+                createdAt = booking.createdAt
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 922L,
+                status = BookingParticipantStatus.ACCEPTED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                respondedAt = Instant.parse("2026-03-05T01:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/occurrences/9903/cancel")
+                .header("Idempotency-Key", "cancel-occurrence-participants-k-1")
+                .header("X-Actor-User-Id", "921")
+        )
+            .andExpect(status().isNoContent)
+
+        val participants = bookingParticipantRepository.findByBookingId(requireNotNull(booking.id))
+        assertEquals(setOf(BookingParticipantStatus.CANCELED), participants.map { it.status }.toSet())
+    }
+
+    @Test
+    fun `create participant invitation returns invited participant`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9904L,
+                organizationId = 31L,
+                leaderUserId = 931L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 931L,
+                createdAt = booking.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations")
+                .header("Idempotency-Key", "participant-invite-k-1")
+                .header("X-Actor-User-Id", "931")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"inviteeUserId":932}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.bookingId").value(requireNotNull(booking.id)))
+            .andExpect(jsonPath("$.userId").value(932))
+            .andExpect(jsonPath("$.status").value("INVITED"))
+
+        val participants = bookingParticipantRepository.findByBookingId(requireNotNull(booking.id))
+        assertEquals(setOf(931L, 932L), participants.map { it.userId }.toSet())
+    }
+
+    @Test
+    fun `create participant invitation rejects duplicate invite`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9905L,
+                organizationId = 31L,
+                leaderUserId = 941L,
+                partySize = 3,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 941L,
+                createdAt = booking.createdAt
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 942L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations")
+                .header("Idempotency-Key", "participant-invite-k-2")
+                .header("X-Actor-User-Id", "941")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"inviteeUserId":942}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }
+
+    @Test
+    fun `create participant invitation rejects non leader actor`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9906L,
+                organizationId = 31L,
+                leaderUserId = 951L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 951L,
+                createdAt = booking.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations")
+                .header("Idempotency-Key", "participant-invite-k-3")
+                .header("X-Actor-User-Id", "952")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"inviteeUserId":953}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }
+
+    @Test
+    fun `create participant invitation rejects terminal booking`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9907L,
+                organizationId = 31L,
+                leaderUserId = 961L,
+                partySize = 2,
+                status = BookingStatus.CANCELED,
+                paymentStatus = PaymentStatus.REFUNDED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 961L,
+                createdAt = booking.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations")
+                .header("Idempotency-Key", "participant-invite-k-4")
+                .header("X-Actor-User-Id", "961")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"inviteeUserId":962}""")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("BOOKING_TERMINAL_STATE"))
+    }
+
+    @Test
+    fun `accept participant invitation updates status to accepted`() {
+        val now = Instant.now()
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9908L,
+                organizationId = 31L,
+                leaderUserId = 971L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val invitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 972L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = now.minusSeconds(60),
+                createdAt = now.minusSeconds(60)
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations/${invitation.id}/accept")
+                .header("Idempotency-Key", "participant-invite-accept-k-1")
+                .header("X-Actor-User-Id", "972")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("ACCEPTED"))
+
+        val saved = bookingParticipantRepository.findById(requireNotNull(invitation.id))
+        assertEquals(BookingParticipantStatus.ACCEPTED, saved?.status)
+    }
+
+    @Test
+    fun `decline participant invitation updates status to declined`() {
+        val now = Instant.now()
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9909L,
+                organizationId = 31L,
+                leaderUserId = 981L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val invitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 982L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = now.minusSeconds(60),
+                createdAt = now.minusSeconds(60)
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations/${invitation.id}/decline")
+                .header("Idempotency-Key", "participant-invite-decline-k-1")
+                .header("X-Actor-User-Id", "982")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("DECLINED"))
+
+        val saved = bookingParticipantRepository.findById(requireNotNull(invitation.id))
+        assertEquals(BookingParticipantStatus.DECLINED, saved?.status)
+    }
+
+    @Test
+    fun `respond participant invitation rejects non invited actor`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9910L,
+                organizationId = 31L,
+                leaderUserId = 991L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val invitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 992L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations/${invitation.id}/accept")
+                .header("Idempotency-Key", "participant-invite-accept-k-2")
+                .header("X-Actor-User-Id", "993")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }
+
+    @Test
+    fun `respond participant invitation rejects already responded invitation`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9911L,
+                organizationId = 31L,
+                leaderUserId = 994L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val invitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 995L,
+                status = BookingParticipantStatus.ACCEPTED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                respondedAt = Instant.parse("2026-03-05T01:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations/${invitation.id}/decline")
+                .header("Idempotency-Key", "participant-invite-decline-k-2")
+                .header("X-Actor-User-Id", "995")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("INVALID_STATE_TRANSITION"))
+    }
+
+    @Test
+    fun `respond participant invitation expires after 48 hours`() {
+        val now = Instant.now()
+        occurrenceRepository.save(
+            Occurrence(
+                id = 9912L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = now.plusSeconds(24 * 60 * 60L)
+            )
+        )
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9912L,
+                organizationId = 31L,
+                leaderUserId = 996L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val invitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 997L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = now.minusSeconds(49 * 60 * 60L),
+                createdAt = now.minusSeconds(49 * 60 * 60L)
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations/${invitation.id}/accept")
+                .header("Idempotency-Key", "participant-invite-accept-k-3")
+                .header("X-Actor-User-Id", "997")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("INVITATION_EXPIRED"))
+
+        val saved = bookingParticipantRepository.findById(requireNotNull(invitation.id))
+        assertEquals(BookingParticipantStatus.EXPIRED, saved?.status)
+    }
+
+    @Test
+    fun `create participant invitation expires pending invite at 6 hours before occurrence`() {
+        val now = Instant.now()
+        occurrenceRepository.save(
+            Occurrence(
+                id = 9913L,
+                organizationId = 31L,
+                capacity = 10,
+                startsAtUtc = now.plusSeconds(5 * 60 * 60L)
+            )
+        )
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9913L,
+                organizationId = 31L,
+                leaderUserId = 998L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val staleInvitation = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 999L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = now.minusSeconds(2 * 60 * 60L),
+                createdAt = now.minusSeconds(2 * 60 * 60L)
+            )
+        )
+        bookingParticipantRepository.save(
+            BookingParticipant.leader(
+                bookingId = requireNotNull(booking.id),
+                userId = 998L,
+                createdAt = booking.createdAt
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/invitations")
+                .header("Idempotency-Key", "participant-invite-k-5")
+                .header("X-Actor-User-Id", "998")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"inviteeUserId":1000}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.userId").value(1000))
+
+        val expiredInvitation = bookingParticipantRepository.findById(requireNotNull(staleInvitation.id))
+        assertEquals(BookingParticipantStatus.EXPIRED, expiredInvitation?.status)
+    }
+
+    @Test
+    fun `record participant attendance updates attendance status`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9914L,
+                organizationId = 31L,
+                leaderUserId = 1001L,
+                partySize = 2,
+                status = BookingStatus.COMPLETED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val participant = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 1002L,
+                status = BookingParticipantStatus.ACCEPTED,
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/${participant.id}/attendance")
+                .header("Idempotency-Key", "participant-attendance-k-1")
+                .header("X-Actor-User-Id", "1001")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"attendanceStatus":"ATTENDED"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.attendanceStatus").value("ATTENDED"))
+
+        val saved = bookingParticipantRepository.findById(requireNotNull(participant.id))
+        assertEquals(com.demo.tourwave.domain.booking.AttendanceStatus.ATTENDED, saved?.attendanceStatus)
+    }
+
+    @Test
+    fun `record participant attendance rejects non attending participant`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 9915L,
+                organizationId = 31L,
+                leaderUserId = 1003L,
+                partySize = 2,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-06T00:00:00Z")
+            )
+        )
+        val participant = bookingParticipantRepository.save(
+            BookingParticipant(
+                bookingId = requireNotNull(booking.id),
+                userId = 1004L,
+                status = BookingParticipantStatus.INVITED,
+                invitedAt = Instant.parse("2026-03-05T00:00:00Z"),
+                createdAt = Instant.parse("2026-03-05T00:00:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            post("/bookings/${booking.id}/participants/${participant.id}/attendance")
+                .header("Idempotency-Key", "participant-attendance-k-2")
+                .header("X-Actor-User-Id", "1003")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"attendanceStatus":"NO_SHOW"}""")
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
     }
 }

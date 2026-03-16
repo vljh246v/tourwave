@@ -9,6 +9,8 @@ import com.demo.tourwave.application.inquiry.InquiryAccessPolicy
 import com.demo.tourwave.application.inquiry.InquiryCommandService
 import com.demo.tourwave.application.inquiry.InquiryQueryService
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
+import com.demo.tourwave.application.participant.ParticipantCommandService
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
 import com.demo.tourwave.application.review.port.ReviewRepository
@@ -24,6 +26,7 @@ class UseCaseConfig {
     fun bookingCommandService(
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
+        bookingParticipantRepository: BookingParticipantRepository,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
         clock: Clock
@@ -31,6 +34,7 @@ class UseCaseConfig {
         return BookingCommandService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
             clock = clock
@@ -64,6 +68,25 @@ class UseCaseConfig {
     }
 
     @Bean
+    fun participantCommandService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        bookingParticipantRepository: BookingParticipantRepository,
+        idempotencyStore: IdempotencyStore,
+        auditEventPort: AuditEventPort,
+        clock: Clock
+    ): ParticipantCommandService {
+        return ParticipantCommandService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
+            idempotencyStore = idempotencyStore,
+            auditEventPort = auditEventPort,
+            clock = clock
+        )
+    }
+
+    @Bean
     fun inquiryQueryService(
         inquiryRepository: InquiryRepository,
         inquiryAccessPolicy: InquiryAccessPolicy
@@ -84,6 +107,7 @@ class UseCaseConfig {
     @Bean
     fun reviewCommandService(
         bookingRepository: BookingRepository,
+        bookingParticipantRepository: BookingParticipantRepository,
         reviewRepository: ReviewRepository,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
@@ -91,6 +115,7 @@ class UseCaseConfig {
     ): ReviewCommandService {
         return ReviewCommandService(
             bookingRepository = bookingRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
             reviewRepository = reviewRepository,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,

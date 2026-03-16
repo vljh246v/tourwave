@@ -5,7 +5,9 @@ import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyDecision
 import com.demo.tourwave.application.common.port.IdempotencyStore
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
+import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
@@ -16,6 +18,7 @@ import java.time.Clock
 
 class ReviewCommandService(
     private val bookingRepository: BookingRepository,
+    private val bookingParticipantRepository: BookingParticipantRepository,
     private val reviewRepository: ReviewRepository,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
@@ -112,10 +115,15 @@ class ReviewCommandService(
     }
 
     private fun ensureAttendanceEligible(command: CreateReviewCommand) {
-        val eligible = bookingRepository.findByOccurrenceAndStatuses(
+        val completedBookings = bookingRepository.findByOccurrenceAndStatuses(
             occurrenceId = command.occurrenceId,
             statuses = setOf(BookingStatus.COMPLETED)
-        ).any { it.leaderUserId == command.actorUserId }
+        )
+        val eligible = completedBookings.any { booking ->
+            val bookingId = booking.id ?: return@any false
+            bookingParticipantRepository.findByBookingIdAndUserId(bookingId, command.actorUserId)
+                ?.attendanceStatus == AttendanceStatus.ATTENDED
+        }
 
         if (!eligible) {
             throw DomainException(
@@ -155,4 +163,3 @@ class ReviewCommandService(
         return bytes.joinToString("") { "%02x".format(it) }
     }
 }
-
