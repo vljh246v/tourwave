@@ -16,6 +16,8 @@ class JpaUserRepositoryAdapter(
 
     override fun findByEmail(email: String): User? = userJpaRepository.findByEmail(email.trim().lowercase())?.toDomain()
 
+    override fun findAll(): List<User> = userJpaRepository.findAll().map { it.toDomain() }
+
     override fun clear() {
         userJpaRepository.deleteAllInBatch()
     }
@@ -24,13 +26,23 @@ class JpaUserRepositoryAdapter(
 private fun User.toEntity(): UserJpaEntity =
     UserJpaEntity(
         id = id,
-        name = name,
-        email = email.trim().lowercase()
+        name = displayName,
+        email = email.trim().lowercase(),
+        passwordHash = passwordHash,
+        status = status,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        emailVerifiedAt = emailVerifiedAt
     )
 
 private fun UserJpaEntity.toDomain(): User =
     User(
         id = id,
-        name = name,
-        email = email
+        displayName = name,
+        email = email,
+        passwordHash = passwordHash,
+        status = status,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        emailVerifiedAt = emailVerifiedAt
     )

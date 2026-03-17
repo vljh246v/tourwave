@@ -8,7 +8,9 @@ import org.mockito.kotlin.whenever
 import com.demo.tourwave.application.user.UserCommandService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
+import com.demo.tourwave.domain.user.UserStatus
 import org.mockito.kotlin.verify
+import java.time.Instant
 
 class UserCommandServiceTest {
 
@@ -18,7 +20,13 @@ class UserCommandServiceTest {
     @Test
     fun `registerUser should throw exception when user with email already exists`() {
         val existingEmail = "old@test.com"
-        whenever(userRepository.findByEmail(existingEmail)).thenReturn(User.create("old user", existingEmail))
+        whenever(userRepository.findByEmail(existingEmail)).thenReturn(
+            User.create(
+                displayName = "old user",
+                email = existingEmail,
+                passwordHash = "hashed"
+            )
+        )
 
         val exception = assertThrows<IllegalArgumentException> {
             userCommandService.registerUser("new user", existingEmail)
@@ -30,15 +38,29 @@ class UserCommandServiceTest {
     fun `registerUser should create new user when email does not exist`() {
         val newEmail = "new@test.com"
         whenever(userRepository.findByEmail(newEmail)).thenReturn(null)
-        whenever(userRepository.save(User.create("new user", newEmail)))
-            .thenReturn(User(id = 1L, name = "new user", email = newEmail))
+        whenever(userRepository.save(org.mockito.kotlin.any()))
+            .thenReturn(
+                User(
+                    id = 1L,
+                    displayName = "new user",
+                    email = newEmail,
+                    passwordHash = "hashed",
+                    status = UserStatus.ACTIVE,
+                    createdAt = Instant.parse("2026-03-17T00:00:00Z"),
+                    updatedAt = Instant.parse("2026-03-17T00:00:00Z")
+                )
+            )
 
         val user = userCommandService.registerUser("new user", newEmail)
 
         assertNotNull(user)
         assertEquals(1L, user.id)
-        assertEquals("new user", user.name)
+        assertEquals("new user", user.displayName)
         assertEquals(newEmail, user.email)
-        verify(userRepository).save(User.create("new user", newEmail))
+        verify(userRepository).save(org.mockito.kotlin.check {
+            assertEquals("new user", it.displayName)
+            assertEquals(newEmail, it.email)
+            assertTrue(it.passwordHash.isNotBlank())
+        })
     }
 }

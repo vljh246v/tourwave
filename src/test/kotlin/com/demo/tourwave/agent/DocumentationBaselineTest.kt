@@ -22,7 +22,9 @@ class DocumentationBaselineTest {
         assertContains(doc, "POST /bookings/{bookingId}/waitlist/skip")
         assertContains(doc, "GET /inquiries/{inquiryId}/messages")
         assertContains(doc, "GET /occurrences/{occurrenceId}/participants/roster/export")
-        assertContains(doc, "현재 인증은 JWT가 아니라 request header actor context다.")
+        assertContains(doc, "현재 인증은 JWT access token 기반이고, local/test 런타임에서는 request header actor context fallback이 허용된다.")
+        assertContains(doc, "POST /auth/signup")
+        assertContains(doc, "GET /me")
         assertContains(doc, "DocumentationBaselineTest")
     }
 
@@ -37,7 +39,7 @@ class DocumentationBaselineTest {
         assertContains(specIndex, "13_api_status_matrix.md")
         assertContains(specIndex, "실무 순서:")
         assertContains(apiCatalog, "Target Product Auth: Bearer JWT")
-        assertContains(apiCatalog, "Current Runtime Auth: request header actor context for internal/testing flows")
+        assertContains(apiCatalog, "Current Runtime Auth: Bearer JWT, with request header actor context fallback only in local/test flows")
         assertContains(apiCatalog, "1차 확인: controller + integration test")
         assertContains(traceability, "DocumentationBaselineTest")
         assertContains(gapArchive, "Historical Archive")

@@ -9,6 +9,8 @@ import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
+import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
+import com.demo.tourwave.application.auth.port.UserActionTokenRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.Booking
@@ -60,6 +62,12 @@ class MysqlPersistenceIntegrationTest {
     @Autowired
     private lateinit var idempotencyStore: IdempotencyStore
 
+    @Autowired
+    private lateinit var authRefreshTokenRepository: AuthRefreshTokenRepository
+
+    @Autowired
+    private lateinit var userActionTokenRepository: UserActionTokenRepository
+
     @BeforeEach
     fun setUp() {
         reviewRepository.clear()
@@ -69,6 +77,8 @@ class MysqlPersistenceIntegrationTest {
         bookingRepository.clear()
         occurrenceRepository.clear()
         userRepository.clear()
+        authRefreshTokenRepository.clear()
+        userActionTokenRepository.clear()
         idempotencyStore.clear()
     }
 
@@ -138,7 +148,7 @@ class MysqlPersistenceIntegrationTest {
 
     @Test
     fun `mysql adapters persist inquiry messages users and idempotency replay`() {
-        val user = userRepository.save(User.create(name = "Jae", email = "JAE@EXAMPLE.COM"))
+        val user = userRepository.save(User.create(displayName = "Jae", email = "JAE@EXAMPLE.COM", passwordHash = "hashed"))
         assertEquals("jae@example.com", user.email)
 
         val inquiry =

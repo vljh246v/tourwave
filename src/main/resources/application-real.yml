@@ -10,6 +10,9 @@ spring:
 tourwave:
   environment: real
   runtime-mode: production
+  auth:
+    jwt-secret: ${TOURWAVE_JWT_SECRET:tourwave-real-secret-change-me}
+    allow-header-auth-fallback: false
 
 integration:
   payment:

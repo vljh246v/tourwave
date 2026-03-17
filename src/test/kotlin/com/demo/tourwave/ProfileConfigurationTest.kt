@@ -30,6 +30,8 @@ class ProfileConfigurationTest {
     fun `local profile loads with localhost defaults`() {
         runWithProfile("local") { context ->
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("local")
+            assertThat(context.environment.getProperty("tourwave.auth.allow-header-auth-fallback"))
+                .isEqualTo("true")
             assertThat(context.environment.getProperty("integration.payment.base-url"))
                 .isEqualTo("http://localhost:18080/mock-payment")
             assertThat(context.environment.getProperty("integration.notification.base-url"))
@@ -102,6 +104,8 @@ class ProfileConfigurationTest {
                 "REAL_ASSET_ACCESS_TOKEN=real-asset-token"
         ) { context ->
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("real")
+            assertThat(context.environment.getProperty("tourwave.auth.allow-header-auth-fallback"))
+                .isEqualTo("false")
             assertThat(context.environment.getProperty("integration.payment.api-key"))
                 .isEqualTo("real-payment-key")
             assertThat(context.environment.getProperty("integration.notification.api-key"))

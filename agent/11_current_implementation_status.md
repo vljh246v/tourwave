@@ -38,7 +38,8 @@
 
 ### Authz / Topology
 
-- header 기반 actor context
+- JWT access token runtime auth
+- local/test header auth fallback
 - role enum / organization scoped access checks
 - minimal organization / tour / instructor topology
 
@@ -65,9 +66,8 @@
 
 ### Product Surface Missing
 
-- auth signup/login/jwt/refresh/logout
 - email verification / password reset
-- me profile / notification / favorite flow
+- me notification / favorite flow
 - organization/member management full CRUD
 - instructor registration/profile management full flow
 - tour/occurrence authoring and publish/search APIs
@@ -91,7 +91,7 @@
 - 현재 저장소는 단일 Gradle 모듈이다.
 - 실행 진입점은 API와 worker로 분리되어 있다.
 - `mysql-test`는 현재 환경에서 H2 MySQL compatibility mode로 테스트된다.
-- 인증은 JWT가 아니라 request header 기반 actor context다.
+- 인증은 JWT access token 기준이며, local/test 런타임만 request header fallback을 허용한다.
 - organization, tour, instructor는 도메인 개념은 있으나 persistence/product API가 아직 얇다.
 
 ## 4. Current Code Structure Snapshot

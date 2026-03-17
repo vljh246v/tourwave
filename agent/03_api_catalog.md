@@ -5,7 +5,7 @@
 
 ## Conventions
 - Target Product Auth: Bearer JWT (except public)
-- Current Runtime Auth: request header actor context for internal/testing flows
+- Current Runtime Auth: Bearer JWT, with request header actor context fallback only in local/test flows
 - Pagination: cursor + limit
 - Time: UTC timestamps in API; occurrence includes timezone(IANA)
 - Error: { error: { code, message, details? } }

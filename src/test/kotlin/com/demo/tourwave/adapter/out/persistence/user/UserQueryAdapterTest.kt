@@ -17,7 +17,7 @@ class UserQueryAdapterTest {
 
     @Test
     fun `save persists user and normalizes email for lookup`() {
-        val saved = adapter.save(User.create(name = "Jae", email = "User@Test.com"))
+        val saved = adapter.save(User.create(displayName = "Jae", email = "User@Test.com", passwordHash = "hashed"))
 
         assertNotNull(saved.id)
         assertEquals(saved, adapter.findById(requireNotNull(saved.id)))

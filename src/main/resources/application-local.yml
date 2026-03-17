@@ -10,6 +10,8 @@ spring:
 tourwave:
   environment: local
   runtime-mode: local-system
+  auth:
+    allow-header-auth-fallback: true
 
 integration:
   payment:

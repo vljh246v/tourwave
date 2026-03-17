@@ -1,21 +1,53 @@
 package com.demo.tourwave.domain.user
 
+import java.time.Instant
+
+enum class UserStatus {
+    ACTIVE,
+    SUSPENDED,
+    DELETED
+}
+
 data class User(
     val id: Long? = null,
-    val name: String,
-    val email: String
+    val displayName: String,
+    val email: String,
+    val passwordHash: String,
+    val status: UserStatus = UserStatus.ACTIVE,
+    val createdAt: Instant = Instant.now(),
+    val updatedAt: Instant = createdAt,
+    val emailVerifiedAt: Instant? = null
 ) {
     companion object {
-        fun create(name: String, email: String): User {
+        fun create(
+            displayName: String,
+            email: String,
+            passwordHash: String,
+            now: Instant = Instant.now()
+        ): User {
             return User(
                 id = null,
-                name = name,
-                email = email
+                displayName = displayName,
+                email = email,
+                passwordHash = passwordHash,
+                status = UserStatus.ACTIVE,
+                createdAt = now,
+                updatedAt = now
             )
         }
     }
 
     fun persisted(userId: Long): User {
         return copy(id = userId)
+    }
+
+    fun updateProfile(
+        displayName: String,
+        now: Instant
+    ): User {
+        return copy(
+            displayName = displayName,
+            updatedAt = now
+        )
     }
 }
