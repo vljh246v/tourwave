@@ -1,6 +1,8 @@
 package com.demo.tourwave.application.participant
 
 import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyDecision
@@ -15,8 +17,10 @@ import java.time.Clock
 
 class ParticipantCommandService(
     private val bookingRepository: BookingRepository,
+    private val occurrenceRepository: OccurrenceRepository,
     private val bookingParticipantRepository: BookingParticipantRepository,
     private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
+    private val timeWindowPolicyService: TimeWindowPolicyService,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
     private val clock: Clock
@@ -67,6 +71,15 @@ class ParticipantCommandService(
                 }
 
                 val participants = participantInvitationLifecycleService.refreshBookingParticipants(command.bookingId)
+                val occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId)
+                if (timeWindowPolicyService.isInvitationWindowClosed(occurrence, clock.instant())) {
+                    throw DomainException(
+                        errorCode = ErrorCode.INVALID_STATE_TRANSITION,
+                        status = 409,
+                        message = "Invitation window is closed",
+                        details = mapOf("bookingId" to booking.id, "occurrenceId" to booking.occurrenceId)
+                    )
+                }
                 if (participants.any { it.userId == command.inviteeUserId }) {
                     throw DomainException(
                         errorCode = ErrorCode.VALIDATION_ERROR,
@@ -124,7 +137,9 @@ class ParticipantCommandService(
                         resourceType = "BOOKING_PARTICIPANT",
                         resourceId = response.id,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
+                        requestId = command.requestId,
+                        reasonCode = "PARTICIPANT_INVITATION_CREATED",
+                        afterJson = participantSnapshot(created)
                     )
                 )
 
@@ -168,6 +183,19 @@ class ParticipantCommandService(
                         details = mapOf("bookingId" to booking.id, "status" to booking.status)
                     )
                 }
+                val refreshedParticipant = participantInvitationLifecycleService.refreshParticipant(
+                    bookingId = command.bookingId,
+                    participantId = command.participantId
+                )
+                val occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId)
+                if (timeWindowPolicyService.isInvitationWindowClosed(occurrence, clock.instant())) {
+                    throw DomainException(
+                        errorCode = ErrorCode.INVITATION_EXPIRED,
+                        status = 409,
+                        message = "Invitation response window is closed",
+                        details = mapOf("participantId" to command.participantId, "bookingId" to booking.id)
+                    )
+                }
 
                 val participant = bookingParticipantRepository.findById(command.participantId)
                     ?: throw DomainException(
@@ -176,13 +204,9 @@ class ParticipantCommandService(
                         message = "Participant invitation not found",
                         details = mapOf("participantId" to command.participantId)
                     )
-                val refreshedParticipant = participantInvitationLifecycleService.refreshParticipant(
-                    bookingId = command.bookingId,
-                    participantId = command.participantId
-                )
-                    ?: participant
+                val effectiveParticipant = refreshedParticipant ?: participant
 
-                if (refreshedParticipant.bookingId != command.bookingId) {
+                if (effectiveParticipant.bookingId != command.bookingId) {
                     throw DomainException(
                         errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
                         status = 422,
@@ -191,7 +215,7 @@ class ParticipantCommandService(
                     )
                 }
 
-                if (refreshedParticipant.userId != command.actorUserId) {
+                if (effectiveParticipant.userId != command.actorUserId) {
                     throw DomainException(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
@@ -200,7 +224,7 @@ class ParticipantCommandService(
                     )
                 }
 
-                if (refreshedParticipant.status == com.demo.tourwave.domain.participant.BookingParticipantStatus.EXPIRED) {
+                if (effectiveParticipant.status == com.demo.tourwave.domain.participant.BookingParticipantStatus.EXPIRED) {
                     throw DomainException(
                         errorCode = ErrorCode.INVITATION_EXPIRED,
                         status = 409,
@@ -209,18 +233,18 @@ class ParticipantCommandService(
                     )
                 }
 
-                if (refreshedParticipant.status != com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED) {
+                if (effectiveParticipant.status != com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED) {
                     throw DomainException(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Invitation is not pending",
-                        details = mapOf("participantId" to command.participantId, "status" to refreshedParticipant.status)
+                        details = mapOf("participantId" to command.participantId, "status" to effectiveParticipant.status)
                     )
                 }
 
                 val updated = when (command.responseType) {
-                    ParticipantInvitationResponseType.ACCEPT -> refreshedParticipant.accept(clock.instant())
-                    ParticipantInvitationResponseType.DECLINE -> refreshedParticipant.decline(clock.instant())
+                    ParticipantInvitationResponseType.ACCEPT -> effectiveParticipant.accept(clock.instant())
+                    ParticipantInvitationResponseType.DECLINE -> effectiveParticipant.decline(clock.instant())
                 }
                 val saved = bookingParticipantRepository.save(updated)
 
@@ -248,7 +272,10 @@ class ParticipantCommandService(
                         resourceType = "BOOKING_PARTICIPANT",
                         resourceId = response.id,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
+                        requestId = command.requestId,
+                        reasonCode = "PARTICIPANT_INVITATION_${command.responseType.name}",
+                        beforeJson = participantSnapshot(effectiveParticipant),
+                        afterJson = participantSnapshot(saved)
                     )
                 )
 
@@ -337,7 +364,10 @@ class ParticipantCommandService(
                         resourceType = "BOOKING_PARTICIPANT",
                         resourceId = response.id,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
+                        requestId = command.requestId,
+                        reasonCode = "PARTICIPANT_ATTENDANCE_RECORDED",
+                        beforeJson = participantSnapshot(participant),
+                        afterJson = participantSnapshot(saved)
                     )
                 )
 
@@ -349,5 +379,16 @@ class ParticipantCommandService(
     private fun hash(raw: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    private fun participantSnapshot(participant: BookingParticipant): Map<String, Any?> {
+        return mapOf(
+            "bookingId" to participant.bookingId,
+            "userId" to participant.userId,
+            "status" to participant.status.name,
+            "attendanceStatus" to participant.attendanceStatus.name,
+            "invitedAt" to participant.invitedAt?.toString(),
+            "respondedAt" to participant.respondedAt?.toString()
+        )
     }
 }

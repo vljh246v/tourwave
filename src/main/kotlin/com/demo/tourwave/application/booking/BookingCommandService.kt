@@ -4,6 +4,7 @@ import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.booking.RefundPolicyAction
+import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.domain.common.DomainException
@@ -26,6 +27,7 @@ class BookingCommandService(
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
     private val paymentLedgerService: PaymentLedgerService,
+    private val timeWindowPolicyService: TimeWindowPolicyService,
     private val clock: Clock
 ) {
     companion object {
@@ -470,7 +472,7 @@ class BookingCommandService(
             )
 
         val now = clock.instant()
-        if (now.isAfter(offerExpiresAtUtc)) {
+        if (timeWindowPolicyService.isOfferExpired(now, offerExpiresAtUtc)) {
             val expired = bookingRepository.save(booking.expireOffer())
             val settled = bookingRepository.save(
                 paymentLedgerService.applyRefundPolicy(
@@ -736,14 +738,17 @@ class BookingCommandService(
 
         if (mutationType == BookingMutationType.CANCEL && before != settled && settled.paymentStatus == PaymentStatus.REFUND_PENDING) {
             auditEventPort.append(
-                AuditEventCommand(
-                    actor = "USER:$actorUserId",
-                    action = "REFUND_PENDING",
-                    resourceType = "BOOKING",
-                    resourceId = requireNotNull(after.id),
-                    occurredAtUtc = clock.instant(),
-                    requestId = requestId
-                )
+                    AuditEventCommand(
+                        actor = "USER:$actorUserId",
+                        action = "REFUND_PENDING",
+                        resourceType = "BOOKING",
+                        resourceId = requireNotNull(after.id),
+                        occurredAtUtc = clock.instant(),
+                        requestId = requestId,
+                        reasonCode = "REFUND_EXECUTION_PENDING",
+                        beforeJson = bookingSnapshot(before),
+                        afterJson = bookingSnapshot(settled)
+                    )
             )
         }
 
@@ -763,7 +768,9 @@ class BookingCommandService(
                 resourceType = "BOOKING",
                 resourceId = requireNotNull(booking.id),
                 occurredAtUtc = clock.instant(),
-                requestId = requestId
+                requestId = requestId,
+                reasonCode = action,
+                afterJson = bookingSnapshot(booking)
             )
         )
     }
@@ -855,7 +862,7 @@ class BookingCommandService(
             BookingStatus.CONFIRMED -> true
             BookingStatus.OFFERED -> {
                 val expiresAt = booking.offerExpiresAtUtc ?: return true
-                !now.isAfter(expiresAt)
+                !timeWindowPolicyService.isOfferExpired(now, expiresAt)
             }
 
             else -> false
@@ -867,5 +874,15 @@ class BookingCommandService(
             .forEach { participant ->
                 bookingParticipantRepository.save(participant.cancel(canceledAt))
             }
+    }
+
+    private fun bookingSnapshot(booking: Booking): Map<String, Any?> {
+        return mapOf(
+            "status" to booking.status.name,
+            "paymentStatus" to booking.paymentStatus.name,
+            "partySize" to booking.partySize,
+            "offerExpiresAtUtc" to booking.offerExpiresAtUtc?.toString(),
+            "waitlistSkipCount" to booking.waitlistSkipCount
+        )
     }
 }

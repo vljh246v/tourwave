@@ -138,7 +138,9 @@ class InquiryCommandService(
                         resourceType = "INQUIRY",
                         resourceId = requireNotNull(saved.id),
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
+                        requestId = command.requestId,
+                        reasonCode = "INQUIRY_CREATED",
+                        afterJson = inquirySnapshot(saved)
                     )
                 )
 
@@ -223,7 +225,9 @@ class InquiryCommandService(
                         resourceType = "INQUIRY_MESSAGE",
                         resourceId = requireNotNull(saved.id),
                         occurredAtUtc = clock.instant(),
-                        requestId = command.actor.requestId
+                        requestId = command.actor.requestId,
+                        reasonCode = "INQUIRY_MESSAGE_POSTED",
+                        afterJson = inquiryMessageSnapshot(saved)
                     )
                 )
 
@@ -279,7 +283,10 @@ class InquiryCommandService(
                         resourceType = "INQUIRY",
                         resourceId = command.inquiryId,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.actor.requestId
+                        requestId = command.actor.requestId,
+                        reasonCode = "INQUIRY_CLOSED",
+                        beforeJson = inquirySnapshot(inquiry),
+                        afterJson = inquirySnapshot(closed)
                     )
                 )
 
@@ -319,5 +326,25 @@ class InquiryCommandService(
         } else {
             "USER:${actor.actorUserId}"
         }
+    }
+
+    private fun inquirySnapshot(inquiry: Inquiry): Map<String, Any?> {
+        return mapOf(
+            "organizationId" to inquiry.organizationId,
+            "occurrenceId" to inquiry.occurrenceId,
+            "bookingId" to inquiry.bookingId,
+            "createdByUserId" to inquiry.createdByUserId,
+            "subject" to inquiry.subject,
+            "status" to inquiry.status.name
+        )
+    }
+
+    private fun inquiryMessageSnapshot(message: InquiryMessage): Map<String, Any?> {
+        return mapOf(
+            "inquiryId" to message.inquiryId,
+            "senderUserId" to message.senderUserId,
+            "body" to message.body,
+            "attachmentAssetIds" to message.attachmentAssetIds
+        )
     }
 }

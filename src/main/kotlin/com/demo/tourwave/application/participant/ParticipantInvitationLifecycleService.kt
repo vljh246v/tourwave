@@ -2,26 +2,26 @@ package com.demo.tourwave.application.participant
 
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.participant.BookingParticipant
-import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import java.time.Clock
-import java.time.Instant
 
 class ParticipantInvitationLifecycleService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
     private val bookingParticipantRepository: BookingParticipantRepository,
+    private val timeWindowPolicyService: TimeWindowPolicyService,
     private val clock: Clock
 ) {
     fun refreshBookingParticipants(bookingId: Long): List<BookingParticipant> {
-        val occurrenceStartsAtUtc = bookingRepository.findById(bookingId)
-            ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId).startsAtUtc }
+        val occurrence = bookingRepository.findById(bookingId)
+            ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId) }
         val now = clock.instant()
 
         return bookingParticipantRepository.findByBookingId(bookingId)
             .map { participant ->
-                if (shouldExpire(participant, occurrenceStartsAtUtc, now)) {
+                if (timeWindowPolicyService.isInvitationExpired(participant, occurrence, now)) {
                     bookingParticipantRepository.save(participant.expire(now))
                 } else {
                     participant
@@ -33,21 +33,16 @@ class ParticipantInvitationLifecycleService(
         return refreshBookingParticipants(bookingId).firstOrNull { it.id == participantId }
     }
 
-    private fun shouldExpire(
-        participant: BookingParticipant,
-        occurrenceStartsAtUtc: Instant?,
-        now: Instant
-    ): Boolean {
-        if (participant.status != BookingParticipantStatus.INVITED) {
-            return false
-        }
-
-        val invitedAt = participant.invitedAt ?: return false
-        if (!now.isBefore(invitedAt.plusSeconds(48 * 60 * 60L))) {
-            return true
-        }
-
-        val sixHoursBeforeStart = occurrenceStartsAtUtc?.minusSeconds(6 * 60 * 60L)
-        return sixHoursBeforeStart != null && !now.isBefore(sixHoursBeforeStart)
+    fun expirePendingInvitations(): List<BookingParticipant> {
+        val now = clock.instant()
+        return bookingParticipantRepository.findByStatus(com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED)
+            .mapNotNull { participant ->
+                val occurrence = bookingRepository.findById(participant.bookingId)
+                    ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId) }
+                if (!timeWindowPolicyService.isInvitationExpired(participant, occurrence, now)) {
+                    return@mapNotNull null
+                }
+                bookingParticipantRepository.save(participant.expire(now))
+            }
     }
 }

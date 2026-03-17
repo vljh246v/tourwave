@@ -1,5 +1,6 @@
 package com.demo.tourwave.domain.booking
 
+import java.time.ZoneId
 import java.time.Instant
 
 enum class RefundPolicyAction {
@@ -38,6 +39,7 @@ data class RefundPolicyContext(
     val bookingStatus: BookingStatus,
     val paymentStatus: PaymentStatus,
     val occurrenceStartsAtUtc: Instant?,
+    val occurrenceTimezone: String = "UTC",
     val evaluatedAtUtc: Instant
 )
 
@@ -74,7 +76,10 @@ object BookingRefundPolicy {
                 refundable = true
             )
 
-        val fullRefundDeadline = startsAtUtc.minusSeconds(FULL_REFUND_WINDOW_HOURS * 60 * 60)
+        val fullRefundDeadline = startsAtUtc
+            .atZone(ZoneId.of(context.occurrenceTimezone))
+            .minusHours(FULL_REFUND_WINDOW_HOURS)
+            .toInstant()
         return if (!context.evaluatedAtUtc.isAfter(fullRefundDeadline)) {
             fullRefund(RefundReasonCode.LEADER_CANCEL_BEFORE_48_HOURS)
         } else {

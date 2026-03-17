@@ -24,6 +24,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class InquiryCommandServiceTest {
     private val bookingRepository = mock(BookingRepository::class.java)
@@ -116,5 +117,47 @@ class InquiryCommandServiceTest {
             any(),
             any(),
         )
+    }
+
+    @Test
+    fun `create inquiry appends structured audit payload`() {
+        val booking =
+            Booking(
+                id = 72L,
+                occurrenceId = 901L,
+                organizationId = 31L,
+                leaderUserId = 101L,
+                partySize = 2,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+            )
+        whenever(idempotencyStore.reserveOrReplay(any(), any(), any(), any(), any()))
+            .thenReturn(IdempotencyDecision.Reserved)
+        whenever(bookingRepository.findById(72L)).thenReturn(booking)
+        whenever(inquiryRepository.findByBookingId(72L)).thenReturn(null)
+        whenever(inquiryRepository.save(any<Inquiry>())).thenAnswer {
+            it.getArgument<Inquiry>(0).copy(id = 502L)
+        }
+        whenever(inquiryRepository.saveMessage(any<InquiryMessage>())).thenAnswer {
+            it.getArgument(0)
+        }
+
+        inquiryCommandService.createInquiry(
+            CreateInquiryCommand(
+                occurrenceId = 901L,
+                actorUserId = 101L,
+                idempotencyKey = "inq-create-structured",
+                bookingId = 72L,
+                subject = "환불 문의",
+                message = "첫 질문"
+            )
+        )
+
+        val auditCaptor = argumentCaptor<com.demo.tourwave.application.common.port.AuditEventCommand>()
+        verify(auditEventPort).append(auditCaptor.capture())
+        assertEquals("INQUIRY_CREATED", auditCaptor.firstValue.reasonCode)
+        assertNotNull(auditCaptor.firstValue.afterJson)
+        assertEquals("OPEN", auditCaptor.firstValue.afterJson?.get("status"))
     }
 }

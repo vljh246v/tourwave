@@ -169,6 +169,12 @@ class WaitlistOperatorService(
                 resourceId = requireNotNull(booking.id),
                 occurredAtUtc = clock.instant(),
                 requestId = requestId,
+                reasonCode = action,
+                afterJson = mapOf(
+                    "bookingStatus" to booking.status.name,
+                    "waitlistSkipCount" to booking.waitlistSkipCount,
+                    "offerExpiresAtUtc" to booking.offerExpiresAtUtc?.toString()
+                ),
                 details = mapOf(
                     "bookingStatus" to booking.status.name,
                     "waitlistSkipCount" to booking.waitlistSkipCount,

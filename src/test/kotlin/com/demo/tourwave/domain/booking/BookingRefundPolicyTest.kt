@@ -73,4 +73,21 @@ class BookingRefundPolicyTest {
         assertEquals(RefundReasonCode.OCCURRENCE_START_TIME_MISSING, decision.reasonCode)
         assertTrue(decision.refundable)
     }
+
+    @Test
+    fun `leader cancel uses occurrence timezone for 48 hour boundary`() {
+        val decision = BookingRefundPolicy.evaluate(
+            RefundPolicyContext(
+                action = RefundPolicyAction.LEADER_CANCEL,
+                bookingStatus = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.PAID,
+                occurrenceStartsAtUtc = Instant.parse("2026-03-09T07:00:00Z"),
+                occurrenceTimezone = "America/Los_Angeles",
+                evaluatedAtUtc = Instant.parse("2026-03-07T07:00:00Z")
+            )
+        )
+
+        assertEquals(RefundDecisionType.FULL_REFUND, decision.type)
+        assertEquals(RefundReasonCode.LEADER_CANCEL_BEFORE_48_HOURS, decision.reasonCode)
+    }
 }

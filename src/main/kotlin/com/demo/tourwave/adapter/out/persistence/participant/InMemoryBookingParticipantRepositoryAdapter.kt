@@ -2,6 +2,7 @@ package com.demo.tourwave.adapter.out.persistence.participant
 
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.participant.BookingParticipant
+import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -30,6 +31,12 @@ class InMemoryBookingParticipantRepositoryAdapter : BookingParticipantRepository
 
     override fun findByBookingIdAndUserId(bookingId: Long, userId: Long): BookingParticipant? {
         return participants.values.firstOrNull { it.bookingId == bookingId && it.userId == userId }
+    }
+
+    override fun findByStatus(status: BookingParticipantStatus): List<BookingParticipant> {
+        return participants.values
+            .filter { it.status == status }
+            .sortedWith(compareBy<BookingParticipant> { it.createdAt }.thenBy { it.id ?: Long.MAX_VALUE })
     }
 
     override fun clear() {

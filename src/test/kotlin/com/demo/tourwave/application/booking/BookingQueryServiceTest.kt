@@ -2,6 +2,7 @@ package com.demo.tourwave.application.booking
 
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.participant.ParticipantAccessPolicy
 import com.demo.tourwave.application.participant.ParticipantInvitationLifecycleService
@@ -29,6 +30,7 @@ class BookingQueryServiceTest {
     private val occurrenceRepository = mock(OccurrenceRepository::class.java)
     private val bookingParticipantRepository = mock(BookingParticipantRepository::class.java)
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
+    private val timeWindowPolicyService = TimeWindowPolicyService()
 
     private val participantAccessPolicy = ParticipantAccessPolicy(
         bookingRepository = bookingRepository,
@@ -39,6 +41,7 @@ class BookingQueryServiceTest {
         bookingRepository = bookingRepository,
         occurrenceRepository = occurrenceRepository,
         bookingParticipantRepository = bookingParticipantRepository,
+        timeWindowPolicyService = timeWindowPolicyService,
         clock = clock
     )
 

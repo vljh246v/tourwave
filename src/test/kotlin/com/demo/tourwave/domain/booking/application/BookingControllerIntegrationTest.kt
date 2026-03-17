@@ -2982,11 +2982,11 @@ class BookingControllerIntegrationTest {
                     .header("X-Actor-User-Id", "998")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"inviteeUserId":1000}"""),
-            ).andExpect(status().isCreated)
-            .andExpect(jsonPath("$.userId").value(1000))
+            ).andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error.code").value("INVALID_STATE_TRANSITION"))
 
-        val expiredInvitation = bookingParticipantRepository.findById(requireNotNull(staleInvitation.id))
-        assertEquals(BookingParticipantStatus.EXPIRED, expiredInvitation?.status)
+        val refreshedInvitation = bookingParticipantRepository.findById(requireNotNull(staleInvitation.id))
+        assertEquals(BookingParticipantStatus.INVITED, refreshedInvitation?.status)
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -42,6 +43,13 @@ class InMemoryBookingRepositoryAdapter : BookingRepository {
                     .thenBy { it.createdAt }
                     .thenBy { it.id ?: Long.MAX_VALUE }
             )
+    }
+
+    override fun findExpiredOffers(now: Instant): List<Booking> {
+        return bookings.values
+            .filter { it.status == BookingStatus.OFFERED }
+            .filter { booking -> booking.offerExpiresAtUtc?.let(now::isAfter) == true }
+            .sortedWith(compareBy<Booking> { it.offerExpiresAtUtc }.thenBy { it.id ?: Long.MAX_VALUE })
     }
 
     override fun clear() {

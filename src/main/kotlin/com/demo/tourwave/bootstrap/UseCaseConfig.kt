@@ -2,6 +2,7 @@ package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.booking.BookingCommandService
 import com.demo.tourwave.application.booking.BookingRefundPreviewService
+import com.demo.tourwave.application.booking.OfferExpirationService
 import com.demo.tourwave.application.booking.PaymentLedgerService
 import com.demo.tourwave.application.booking.WaitlistOperatorService
 import com.demo.tourwave.application.booking.BookingQueryService
@@ -9,11 +10,13 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.booking.port.RefundExecutionPort
+import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.InquiryAccessPolicy
 import com.demo.tourwave.application.inquiry.InquiryCommandService
 import com.demo.tourwave.application.inquiry.InquiryQueryService
+import com.demo.tourwave.application.participant.InvitedParticipantExpirationService
 import com.demo.tourwave.application.participant.ParticipantAccessPolicy
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.participant.ParticipantCommandService
@@ -33,6 +36,9 @@ import java.time.Clock
 @Configuration
 class UseCaseConfig {
     @Bean
+    fun timeWindowPolicyService(): TimeWindowPolicyService = TimeWindowPolicyService()
+
+    @Bean
     fun bookingCommandService(
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
@@ -40,6 +46,7 @@ class UseCaseConfig {
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
         paymentLedgerService: PaymentLedgerService,
+        timeWindowPolicyService: TimeWindowPolicyService,
         clock: Clock
     ): BookingCommandService {
         return BookingCommandService(
@@ -49,6 +56,7 @@ class UseCaseConfig {
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
             paymentLedgerService = paymentLedgerService,
+            timeWindowPolicyService = timeWindowPolicyService,
             clock = clock
         )
     }
@@ -145,14 +153,17 @@ class UseCaseConfig {
         occurrenceRepository: OccurrenceRepository,
         bookingParticipantRepository: BookingParticipantRepository,
         participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
+        timeWindowPolicyService: TimeWindowPolicyService,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
         clock: Clock
     ): ParticipantCommandService {
         return ParticipantCommandService(
             bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
             bookingParticipantRepository = bookingParticipantRepository,
             participantInvitationLifecycleService = participantInvitationLifecycleService,
+            timeWindowPolicyService = timeWindowPolicyService,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
             clock = clock
@@ -164,12 +175,46 @@ class UseCaseConfig {
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
         bookingParticipantRepository: BookingParticipantRepository,
+        timeWindowPolicyService: TimeWindowPolicyService,
         clock: Clock
     ): ParticipantInvitationLifecycleService {
         return ParticipantInvitationLifecycleService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
             bookingParticipantRepository = bookingParticipantRepository,
+            timeWindowPolicyService = timeWindowPolicyService,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun offerExpirationService(
+        bookingRepository: BookingRepository,
+        occurrenceRepository: OccurrenceRepository,
+        auditEventPort: AuditEventPort,
+        paymentLedgerService: PaymentLedgerService,
+        timeWindowPolicyService: TimeWindowPolicyService,
+        clock: Clock
+    ): OfferExpirationService {
+        return OfferExpirationService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            auditEventPort = auditEventPort,
+            paymentLedgerService = paymentLedgerService,
+            timeWindowPolicyService = timeWindowPolicyService,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun invitedParticipantExpirationService(
+        participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
+        auditEventPort: AuditEventPort,
+        clock: Clock
+    ): InvitedParticipantExpirationService {
+        return InvitedParticipantExpirationService(
+            participantInvitationLifecycleService = participantInvitationLifecycleService,
+            auditEventPort = auditEventPort,
             clock = clock
         )
     }

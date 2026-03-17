@@ -52,6 +52,7 @@ class PaymentLedgerService(
                 bookingStatus = booking.status,
                 paymentStatus = booking.paymentStatus,
                 occurrenceStartsAtUtc = occurrence.startsAtUtc,
+                occurrenceTimezone = occurrence.timezone,
                 evaluatedAtUtc = clock.instant()
             )
         )
@@ -74,6 +75,7 @@ class PaymentLedgerService(
                 bookingStatus = booking.status,
                 paymentStatus = booking.paymentStatus,
                 occurrenceStartsAtUtc = occurrence.startsAtUtc,
+                occurrenceTimezone = occurrence.timezone,
                 evaluatedAtUtc = clock.instant()
             )
         )

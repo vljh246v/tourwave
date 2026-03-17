@@ -9,5 +9,6 @@ data class Occurrence(
     val instructorProfileId: Long? = null,
     val capacity: Int,
     val startsAtUtc: Instant? = null,
+    val timezone: String = "UTC",
     val status: OccurrenceStatus = OccurrenceStatus.SCHEDULED
 )
