@@ -2,7 +2,11 @@
 
 이 문서는 "지금 Tourwave 코드에 무엇이 구현되어 있고, 무엇이 아직 남았는가"를 handoff 용도로 정리한 문서다.
 
-## 1. Completed Through Sprint 6
+## 1. What Exists Today
+
+현재 저장소는 예약 핵심 엔진과 일부 운영 흐름이 구현된 상태다. 비즈니스적으로는 "운영 백오피스와 계정 체계가 빠진 예약 플랫폼 코어"로 보는 것이 정확하다.
+
+### Product Grade Areas Already Implemented
 
 ### Domain / Core Flow
 
@@ -55,15 +59,18 @@
 - mysql-test profile
 - occurrence lock 기반 capacity guard
 
-## 2. What Is Still Missing
+## 2. What Is Not Product-Ready Yet
+
+아래 항목은 실제 판매/운영 제품으로 가기 위해 필수인데 현재는 없거나 얇다.
 
 ### Product Surface Missing
 
-- auth signup/login/jwt/refresh
+- auth signup/login/jwt/refresh/logout
+- email verification / password reset
 - me profile / notification / favorite flow
 - organization/member management full CRUD
 - instructor registration/profile management full flow
-- tour/occurrence authoring APIs
+- tour/occurrence authoring and publish/search APIs
 - assets upload/complete/attach flow
 - announcements / moderation / report APIs
 - calendar export
@@ -78,7 +85,16 @@
 - metrics / alerting / dead-letter style operator queue
 - Gradle true multi-module split
 
-## 3. Current Code Structure Snapshot
+## 3. Current Runtime Truths
+
+- 프로덕션 기준 DB는 MySQL이다.
+- 현재 저장소는 단일 Gradle 모듈이다.
+- 실행 진입점은 API와 worker로 분리되어 있다.
+- `mysql-test`는 현재 환경에서 H2 MySQL compatibility mode로 테스트된다.
+- 인증은 JWT가 아니라 request header 기반 actor context다.
+- organization, tour, instructor는 도메인 개념은 있으나 persistence/product API가 아직 얇다.
+
+## 4. Current Code Structure Snapshot
 
 - `domain`
   - booking, participant, payment, inquiry, review, occurrence, organization, instructor, tour, user
@@ -95,19 +111,14 @@
 - `bootstrap`
   - `UseCaseConfig`, `MysqlPersistenceConfig`, `ClockConfig`
 
-## 4. Current Runtime Truths
-
-- 프로덕션 기준 DB는 MySQL이다.
-- 현재 저장소는 여전히 단일 Gradle 모듈이다.
-- 다만 실행 진입점은 API와 worker로 분리되어 있다.
-- `mysql-test`는 현재 환경에서는 H2 MySQL compatibility mode로 테스트된다.
-
 ## 5. Main Risks To Remember
 
 - `04_openapi.yaml`은 구현보다 앞서 있거나 일부 경로가 다를 수 있다.
 - 배치 작업은 구현되어 있지만 실제 다중 인스턴스 운영용 분산락은 아직 약하다.
 - auth/account 영역은 아직 제품 표면 대비 비어 있다.
 - true MySQL container 검증은 CI나 Docker 가능한 환경에서 다시 붙여야 한다.
+- 외부 결제 승인/취소 이벤트를 수신하는 경로가 아직 없다.
+- 조직/투어/강사 authoring이 없어 운영자가 실제 상품을 만들 수 없다.
 
 ## 6. If A New Agent Starts Today
 
@@ -116,5 +127,6 @@
 1. `09_spec_index.md`
 2. `12_runtime_topology_and_operations.md`
 3. `13_api_status_matrix.md`
-4. `14_test_traceability_matrix.md`
-5. 관련 controller / service / repository adapter 코드
+4. `16_product_delivery_roadmap.md`
+5. `14_test_traceability_matrix.md`
+6. 관련 controller / service / repository adapter 코드

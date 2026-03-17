@@ -25,6 +25,7 @@
 4. `13_api_status_matrix.md`
 5. `14_test_traceability_matrix.md`
 6. `15_next_development_backlog.md`
+7. `16_product_delivery_roadmap.md`
 
 ### Supporting Docs
 
@@ -50,6 +51,7 @@
 12. `11_current_implementation_status.md`
 13. `12_runtime_topology_and_operations.md`
 14. `15_next_development_backlog.md`
+15. `16_product_delivery_roadmap.md`
 
 규칙:
 
@@ -64,12 +66,13 @@
 1. `00_overview.md`
 2. `11_current_implementation_status.md`
 3. `12_runtime_topology_and_operations.md`
-4. `01_domain_rules.md`
-5. `10_architecture_hexagonal.md`
-6. `08_operational_policy_tables.md`
-7. `13_api_status_matrix.md`
-8. `14_test_traceability_matrix.md`
-9. `15_next_development_backlog.md`
+4. `13_api_status_matrix.md`
+5. `16_product_delivery_roadmap.md`
+6. `14_test_traceability_matrix.md`
+7. `01_domain_rules.md`
+8. `10_architecture_hexagonal.md`
+9. `08_operational_policy_tables.md`
+10. `15_next_development_backlog.md`
 
 ### B. API 계약 수정이 목적일 때
 
@@ -77,6 +80,13 @@
 2. `03_api_catalog.md`
 3. `04_openapi.yaml`
 4. 관련 controller / integration test
+
+실무 순서:
+
+1. controller / service / integration test로 실제 구현 상태를 확인한다.
+2. `13_api_status_matrix.md`를 먼저 current truth에 맞춘다.
+3. `04_openapi.yaml`을 target contract 기준으로 정리한다.
+4. `03_api_catalog.md`와 관련 handoff 문서를 업데이트한다.
 
 ### C. 저장소 / 동시성 / 배치 수정이 목적일 때
 

@@ -2,31 +2,50 @@
 
 ## Goal
 
-Tourwave는 투어/액티비티 예약 백엔드를 만드는 프로젝트다. 핵심 제품 흐름은 다음 4개다.
+Tourwave는 투어/액티비티 운영사가 실제로 판매하고 운영할 수 있는 예약 플랫폼 백엔드를 만드는 프로젝트다. 제품 관점의 핵심 흐름은 다음 3개다.
 
-- booking / waitlist / offer / refund
-- participant invitation / attendance / review eligibility
-- inquiry ticket conversation
-- operator workflow + worker jobs
+- 고객 예약: search, booking, waitlist, offer, refund
+- 운영 실행: organization, instructor, tour, occurrence, participant, inquiry
+- 사후 관리: attendance, review, payment reconciliation, worker automation
+
+## Business Positioning
+
+현재 코드는 "예약 엔진 MVP"에 가깝다. 예약/대기열/참가자/문의/리뷰/환불 계산의 핵심 도메인은 존재하지만, 실제 판매용 제품에 필요한 계정/운영 백오피스/결제 외부 연동/고객 표면은 아직 충분하지 않다.
+
+실제 프로덕트 출시까지 반드시 필요한 축:
+
+- auth/account: signup, login, refresh, `me`, email verification
+- operator console: organization member management, instructor onboarding, tour/occurrence authoring
+- customer surface: public catalog, availability, favorites, notifications, calendar
+- payment ops: external PG callback, refund failure handling, reconciliation
+- platform ops: metrics, alerting, distributed lock, contract verification
 
 ## Current Product Snapshot
 
-Sprint 1~6 범위까지 구현이 완료된 상태다.
+Sprint 1~6 범위에서 이미 확보된 것은 다음과 같다.
 
-- participant, invitation, attendance, review eligibility 구현됨
-- booking detail / inquiry detail-list / roster / waitlist operator flow 구현됨
-- refund policy, refund preview, payment ledger, refund retry 구현됨
-- role 기반 actor context, topology minimum model, worker jobs 구현됨
-- MySQL 기준 JPA/Flyway 영속 계층과 동시성 가드가 추가됨
+- booking lifecycle와 waitlist/offer 상태 전이
+- participant invitation, attendance, review eligibility
+- inquiry thread와 operator manual action
+- refund preview, refund retry, payment ledger model
+- MySQL/JPA/Flyway 기반 persistence와 concurrency guard
+- worker 진입점과 만료/재시도 계열 잡
 
-아직 제품 비전에 남아 있는 영역:
+아직 제품 비전에 남아 있는 것은 다음과 같다.
 
-- auth / JWT / me lifecycle
-- org/member management full CRUD
-- assets / favorites / announcements / reports
-- calendar export
-- public review aggregation by tour / instructor / organization
-- external payment webhook / callback
+- JWT 기반 인증과 사용자 계정 라이프사이클
+- organization, membership, instructor, tour authoring CRUD
+- public search/catalog와 고객용 조회 surface
+- asset upload/attach, notifications, favorites, announcements, reports
+- 실결제 webhook/callback 및 운영 모니터링
+
+## Delivery Principle
+
+이 저장소의 다음 단계 개발은 "도메인 완성"보다 "제품 전달 가능성"을 우선한다.
+
+- 먼저 문서와 실제 코드를 동기화한다.
+- 그 다음 계정/운영/결제/관측성처럼 출시 차단 항목을 해결한다.
+- 마지막으로 부가 기능을 확장한다.
 
 ## Key Concepts
 
@@ -47,7 +66,7 @@ Sprint 1~6 범위까지 구현이 완료된 상태다.
 - API: `TourwaveApplication`
 - Worker: `WorkerApplication`
 
-Gradle 멀티모듈로 아직 분리되지는 않았지만, 문서와 구현 모두 `같은 코드베이스, 다른 실행 모드`를 목표로 정리되어 있다.
+Gradle 멀티모듈로 아직 분리되지는 않았지만, 운영 관점에서는 이미 `API 서비스 + 백그라운드 워커` 형태로 생각해야 한다.
 
 ## Important Reading Rule
 
@@ -55,15 +74,15 @@ Gradle 멀티모듈로 아직 분리되지는 않았지만, 문서와 구현 모
 
 1. `09_spec_index.md`
 2. `11_current_implementation_status.md`
-3. `12_runtime_topology_and_operations.md`
-4. `01_domain_rules.md`
-5. `10_architecture_hexagonal.md`
-6. `08_operational_policy_tables.md`
-7. `13_api_status_matrix.md`
+3. `13_api_status_matrix.md`
+4. `16_product_delivery_roadmap.md`
+5. `12_runtime_topology_and_operations.md`
+6. `01_domain_rules.md`
+7. `10_architecture_hexagonal.md`
 8. `14_test_traceability_matrix.md`
 
 ## Notes
 
 - `04_openapi.yaml`은 목표 계약 문서다.
 - 현재 실제 구현 상태는 `13_api_status_matrix.md`가 더 정확하다.
-- 테스트 진실원은 `14_test_traceability_matrix.md`와 실제 `src/test` 코드다.
+- 비즈니스 기준 제품 개발 우선순위는 `16_product_delivery_roadmap.md`를 따른다.

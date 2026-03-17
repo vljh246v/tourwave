@@ -53,7 +53,14 @@
   - [ProfileConfigurationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/ProfileConfigurationTest.kt)
   - [TourwaveApplicationTests](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/TourwaveApplicationTests.kt)
 
-## 6. Known Coverage Gaps
+## 6. Documentation / Contract Baseline
+
+- current truth 문서 핵심 진술과 drift-prone endpoint baseline
+  - [DocumentationBaselineTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/agent/DocumentationBaselineTest.kt)
+- request header actor context parsing baseline
+  - [RequestHeaderActorContextResolverTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/authz/RequestHeaderActorContextResolverTest.kt)
+
+## 7. Known Coverage Gaps
 
 - real MySQL container execution
   - 현재 환경에는 Docker provider가 없어서 `mysql-test`는 H2 MySQL compatibility mode로 검증한다.
@@ -61,3 +68,5 @@
   - smoke/integration coverage는 있으나 spec parser 기반 자동 검증은 아직 없다.
 - auth/account/me 실제 JWT 플로우
   - 현재 헤더 기반 actor context 테스트만 존재한다.
+- public catalog / organization / instructor authoring 계약
+  - Sprint 8 이후 구현 전까지는 baseline 문서와 로드맵으로만 관리한다.

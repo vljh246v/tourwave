@@ -4,10 +4,21 @@
 > 이 문서는 제품 목표 API 카탈로그이며, 일부 항목은 아직 미구현 상태일 수 있다.
 
 ## Conventions
-- Auth: Bearer JWT (except public)
+- Target Product Auth: Bearer JWT (except public)
+- Current Runtime Auth: request header actor context for internal/testing flows
 - Pagination: cursor + limit
 - Time: UTC timestamps in API; occurrence includes timezone(IANA)
 - Error: { error: { code, message, details? } }
+
+이 문서는 제품 목표 API 카탈로그다. 현재 실제 구현 상태는 `13_api_status_matrix.md`를 우선한다.
+
+### Contract Update Order
+- 1차 확인: controller + integration test
+- 2차 반영: `13_api_status_matrix.md`
+- 3차 반영: `04_openapi.yaml`
+- 4차 반영: `03_api_catalog.md`와 handoff 문서
+
+즉, 현재 문서는 target catalog이고, current runtime truth를 직접 대체하지 않는다.
 
 ### Mutation Safety (OpenAPI Sync)
 - All domain state-changing endpoints MUST require `Idempotency-Key` header.
