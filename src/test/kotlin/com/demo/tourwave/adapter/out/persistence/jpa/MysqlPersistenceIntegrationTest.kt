@@ -18,7 +18,6 @@ import com.demo.tourwave.domain.inquiry.Inquiry
 import com.demo.tourwave.domain.inquiry.InquiryMessage
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.participant.BookingParticipant
-import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import com.demo.tourwave.domain.payment.PaymentRecord
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import com.demo.tourwave.domain.review.Review
@@ -81,35 +80,37 @@ class MysqlPersistenceIntegrationTest {
                 organizationId = 31L,
                 capacity = 10,
                 startsAtUtc = Instant.parse("2026-03-20T09:00:00Z"),
-                timezone = "Asia/Seoul"
-            )
+                timezone = "Asia/Seoul",
+            ),
         )
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 9101L,
-                organizationId = 31L,
-                leaderUserId = 501L,
-                partySize = 2,
-                status = BookingStatus.CONFIRMED,
-                paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 9101L,
+                    organizationId = 31L,
+                    leaderUserId = 501L,
+                    partySize = 2,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                    createdAt = Instant.parse("2026-03-12T00:00:00Z"),
+                ),
             )
-        )
         val bookingId = requireNotNull(booking.id)
         paymentRecordRepository.save(
             PaymentRecord(
                 bookingId = bookingId,
                 status = PaymentRecordStatus.CAPTURED,
                 createdAtUtc = Instant.parse("2026-03-12T00:00:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-12T00:05:00Z")
-            )
+                updatedAtUtc = Instant.parse("2026-03-12T00:05:00Z"),
+            ),
         )
         bookingParticipantRepository.save(
-            BookingParticipant.leader(
-                bookingId = bookingId,
-                userId = 501L,
-                createdAt = Instant.parse("2026-03-12T00:00:00Z")
-            ).recordAttendance(AttendanceStatus.ATTENDED)
+            BookingParticipant
+                .leader(
+                    bookingId = bookingId,
+                    userId = 501L,
+                    createdAt = Instant.parse("2026-03-12T00:00:00Z"),
+                ).recordAttendance(AttendanceStatus.ATTENDED),
         )
         reviewRepository.save(
             Review(
@@ -118,8 +119,8 @@ class MysqlPersistenceIntegrationTest {
                 type = ReviewType.TOUR,
                 rating = 5,
                 comment = "great",
-                createdAt = Instant.parse("2026-03-21T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-21T00:00:00Z"),
+            ),
         )
 
         val persisted = bookingRepository.findById(bookingId)
@@ -140,24 +141,25 @@ class MysqlPersistenceIntegrationTest {
         val user = userRepository.save(User.create(name = "Jae", email = "JAE@EXAMPLE.COM"))
         assertEquals("jae@example.com", user.email)
 
-        val inquiry = inquiryRepository.save(
-            Inquiry(
-                organizationId = 31L,
-                occurrenceId = 9102L,
-                bookingId = 9202L,
-                createdByUserId = requireNotNull(user.id),
-                subject = "Need pickup",
-                createdAt = Instant.parse("2026-03-10T10:00:00Z")
+        val inquiry =
+            inquiryRepository.save(
+                Inquiry(
+                    organizationId = 31L,
+                    occurrenceId = 9102L,
+                    bookingId = 9202L,
+                    createdByUserId = requireNotNull(user.id),
+                    subject = "Need pickup",
+                    createdAt = Instant.parse("2026-03-10T10:00:00Z"),
+                ),
             )
-        )
         inquiryRepository.saveMessage(
             InquiryMessage(
                 inquiryId = requireNotNull(inquiry.id),
                 senderUserId = requireNotNull(user.id),
                 body = "hello",
                 attachmentAssetIds = listOf(11L, 12L),
-                createdAt = Instant.parse("2026-03-10T10:01:00Z")
-            )
+                createdAt = Instant.parse("2026-03-10T10:01:00Z"),
+            ),
         )
 
         val reserved = idempotencyStore.reserveOrReplay(1L, "POST", "/bookings/{bookingId}/cancel", "idem-1", "abc123")
