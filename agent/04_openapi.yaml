@@ -2,7 +2,9 @@ openapi: 3.0.3
 info:
   title: Tour Booking Platform API (MVP)
   version: 0.1.0
-  description: REST API contract for the Tour Booking Platform MVP.
+  description: |
+    REST API target contract for the Tour Booking Platform MVP.
+    Current implementation status and known drift are tracked in `agent/13_api_status_matrix.md`.
 servers:
   - url: https://api.example.com
 security:

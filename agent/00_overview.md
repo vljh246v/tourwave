@@ -1,57 +1,69 @@
-# Tour Booking Platform (MVP) — Overview
+# Tourwave Overview
 
 ## Goal
-Build a mobile-first booking platform for **Tours/Activities** (e.g., scuba diving, skydiving) where:
-- Users search **TourOccurrences** (actual schedules) and submit **Bookings**.
-- Bookings are **approved by Organization operators** (ORG_ADMIN/ORG_OWNER).
-- Capacity limits exist; **Waitlist** is supported with **24h offer window** (operator can manage manually too).
-- A booking can include a **partySize** and **participant invitations**.
-- Users can create **Inquiry tickets** tied to a specific booking/tour.
-- After tour completion, **reviews** are allowed (content private, rating/count public).
 
-## Key Concepts (Glossary)
-- **Tour (Template)**: A reusable tour listing (title, locationText, category, format, pricing).
-- **TourOccurrence**: A scheduled instance of a Tour (startsAt/endsAt/timezone/capacity/status).
-- **Organization (Org)**: Entity that owns Tours/Occurrences and operates approvals.
-- **Roles (set)**: USER / INSTRUCTOR / ORG_MEMBER / ORG_ADMIN / ORG_OWNER.
-- **Booking**: A request to join a TourOccurrence with a partySize.
-- **Waitlist Offer**: When seats open, a WAITLISTED booking becomes OFFERED and the leader has 24h to accept/decline.
-- **BookingParticipant**: Leader + invited members; invitations expire and can be re-sent.
-- **Inquiry (투어 상담 티켓)**: Ticket-like conversation tied to a booking; participants + org operators can post messages; attachments supported.
-- **Attendance**: Check-in/attendance record; needed for review eligibility.
-- **Reviews**: Two types: TourReview and InstructorReview. **Content restricted** (author/instructor/org only). Public can see **rating/count summary only**.
+Tourwave는 투어/액티비티 예약 백엔드를 만드는 프로젝트다. 핵심 제품 흐름은 다음 4개다.
 
-## Time / Locale
-- Store all timestamps as **UTC**.
-- Keep an occurrence’s **timezone (IANA)** for local rendering.
-- Multi-day tours are supported via startsAtUtc/endsAtUtc on the occurrence.
-- i18n: MVP can be single-language; later add translations for content.
+- booking / waitlist / offer / refund
+- participant invitation / attendance / review eligibility
+- inquiry ticket conversation
+- operator workflow + worker jobs
 
-## Non-goals (MVP)
-- Real payment gateway integration (we use **payment stub states**).
-- Complex partial refunds / prorations (MVP: full refund or non-refundable).
-- Multi-organization ownership per tour (MVP: one org per tour).
-- Public review content (MVP: public summary only).
-- Webhooks / external integrations (deferred).
+## Current Product Snapshot
 
-## Core Deliverables
-- MySQL schema (FK minimized; business logic enforces constraints).
-- REST API + OpenAPI spec.
-- Authorization model and guards.
-- Background jobs (offer/invite expiry, reconcile).
-- Search (MVP: MySQL-based; upgrade path to ES/OpenSearch).
+Sprint 1~6 범위까지 구현이 완료된 상태다.
 
-## Spec Governance (for implementation)
-- Domain source of truth: `01_domain_rules.md`
-- Operational policy tables: `08_operational_policy_tables.md`
-- API contract source of truth: `04_openapi.yaml`
-- AuthZ source of truth: `05_authz_model.md`
+- participant, invitation, attendance, review eligibility 구현됨
+- booking detail / inquiry detail-list / roster / waitlist operator flow 구현됨
+- refund policy, refund preview, payment ledger, refund retry 구현됨
+- role 기반 actor context, topology minimum model, worker jobs 구현됨
+- MySQL 기준 JPA/Flyway 영속 계층과 동시성 가드가 추가됨
 
-Implementation teams should treat `08_operational_policy_tables.md` as required detail for:
-- refund/cancellation boundary behavior
-- idempotency and duplicate-request handling
-- timezone boundary rules (6h/48h/offer expiry)
-- audit/payment compensation operations
+아직 제품 비전에 남아 있는 영역:
 
-## Quick Entry
-- Spec governance and reading order: `09_spec_index.md`
+- auth / JWT / me lifecycle
+- org/member management full CRUD
+- assets / favorites / announcements / reports
+- calendar export
+- public review aggregation by tour / instructor / organization
+- external payment webhook / callback
+
+## Key Concepts
+
+- `Tour`: 판매용 템플릿
+- `Occurrence`: 실제 운영 회차
+- `Organization`: 투어 운영 주체
+- `Booking`: leader가 만든 예약
+- `BookingParticipant`: leader 포함 참가자 엔티티
+- `Waitlist Offer`: 좌석이 열렸을 때 제공되는 한시적 제안
+- `Inquiry`: booking 또는 occurrence 문맥의 상담 스레드
+- `Attendance`: participant 단위 출석 상태
+- `Review`: attendance 기반 후기 작성
+
+## Runtime Shape
+
+현재 코드는 같은 코드베이스 안에 두 개의 실행 진입점을 가진다.
+
+- API: `TourwaveApplication`
+- Worker: `WorkerApplication`
+
+Gradle 멀티모듈로 아직 분리되지는 않았지만, 문서와 구현 모두 `같은 코드베이스, 다른 실행 모드`를 목표로 정리되어 있다.
+
+## Important Reading Rule
+
+다른 에이전트가 바로 개발을 시작하려면 아래 순서가 가장 빠르다.
+
+1. `09_spec_index.md`
+2. `11_current_implementation_status.md`
+3. `12_runtime_topology_and_operations.md`
+4. `01_domain_rules.md`
+5. `10_architecture_hexagonal.md`
+6. `08_operational_policy_tables.md`
+7. `13_api_status_matrix.md`
+8. `14_test_traceability_matrix.md`
+
+## Notes
+
+- `04_openapi.yaml`은 목표 계약 문서다.
+- 현재 실제 구현 상태는 `13_api_status_matrix.md`가 더 정확하다.
+- 테스트 진실원은 `14_test_traceability_matrix.md`와 실제 `src/test` 코드다.

@@ -1,5 +1,8 @@
 # API Catalog (MVP) — Endpoints + Auth + Key Errors
 
+> 현재 구현 상태는 `13_api_status_matrix.md`를 먼저 확인한다.
+> 이 문서는 제품 목표 API 카탈로그이며, 일부 항목은 아직 미구현 상태일 수 있다.
+
 ## Conventions
 - Auth: Bearer JWT (except public)
 - Pagination: cursor + limit

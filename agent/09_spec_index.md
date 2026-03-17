@@ -1,130 +1,101 @@
-# Spec Index & Governance (MVP)
+# Spec Index & Governance
 
-이 문서는 `agent` 스펙 문서의 **읽는 순서, 우선순위, 충돌 해결 규칙**을 정의한다.
+이 문서는 `agent` 폴더를 읽는 다른 에이전트가 어디서부터 무엇을 읽어야 하는지, 어떤 문서가 규범이고 어떤 문서가 현재 상태 요약인지 정의한다.
 
----
+## 1. Document Groups
 
-## 1) Source of Truth 우선순위
+### Normative Specs
 
-구현/리뷰 시 아래 우선순위를 따른다.
+이 그룹은 구현 기준 문서다.
 
 1. `01_domain_rules.md`
 2. `10_architecture_hexagonal.md`
 3. `08_operational_policy_tables.md`
-4. `04_openapi.yaml`
-5. `05_authz_model.md`
-6. `02_schema_mysql.md`
-7. `06_implementation_notes.md`
-8. `07_test_scenarios.md`
-9. `03_api_catalog.md`
-10. `00_overview.md`
+4. `05_authz_model.md`
+5. `02_schema_mysql.md`
+6. `04_openapi.yaml`
 
-충돌 시 상위 문서가 하위 문서를 override 한다.
+### Current-State Handoff Docs
 
----
+이 그룹은 현재 구현과 운영 상태를 빠르게 이해하기 위한 문서다.
 
-## 2) 권장 읽기 순서
+1. `00_overview.md`
+2. `11_current_implementation_status.md`
+3. `12_runtime_topology_and_operations.md`
+4. `13_api_status_matrix.md`
+5. `14_test_traceability_matrix.md`
+6. `15_next_development_backlog.md`
 
-신규 개발자 온보딩 기준:
+### Supporting Docs
 
-1. `00_overview.md` (도메인 배경)
-2. `09_spec_index.md` (거버넌스)
-3. `01_domain_rules.md` (핵심 규칙)
-4. `10_architecture_hexagonal.md` (아키텍처 강제 규칙)
-5. `08_operational_policy_tables.md` (정책 매트릭스)
-6. `04_openapi.yaml` (API 계약)
-7. `05_authz_model.md` (권한 모델)
-8. `02_schema_mysql.md` (저장 모델)
-9. `06_implementation_notes.md` (가드레일)
-10. `07_test_scenarios.md` (검증 시나리오)
-11. `03_api_catalog.md` (빠른 레퍼런스)
+- `03_api_catalog.md`
+- `06_implementation_notes.md`
+- `07_test_scenarios.md`
 
----
+## 2. Source Of Truth Priority
 
-## 3) 핵심 합의 요약
+충돌이 나면 아래 우선순위를 따른다.
 
-- Booking 생성 상태 결정:
-  - seats available -> `REQUESTED`
-  - seats 부족 -> `WAITLISTED`
-- Inquiry 생성:
-  - `bookingId` 필수
-  - occurrence/org/booking 스코프 일치 필수
-- Attendance:
-  - booking 단위가 아니라 participant 단위
-- Invitation 만료:
-  - participant 상태에만 영향, booking 상태는 유지
-- Offer 만료:
-  - `OFFER_EXPIRED`는 waitlist offer 문맥으로 한정
+1. `01_domain_rules.md`
+2. `10_architecture_hexagonal.md`
+3. `08_operational_policy_tables.md`
+4. `05_authz_model.md`
+5. `02_schema_mysql.md`
+6. `04_openapi.yaml`
+7. `13_api_status_matrix.md`
+8. `14_test_traceability_matrix.md`
+9. `06_implementation_notes.md`
+10. `03_api_catalog.md`
+11. `00_overview.md`
+12. `11_current_implementation_status.md`
+13. `12_runtime_topology_and_operations.md`
+14. `15_next_development_backlog.md`
 
----
+규칙:
 
-## 4) Mutation Safety 표준
+- 규범 문서가 현재 상태 문서보다 우선한다.
+- 단, OpenAPI가 실제 구현보다 뒤처진 경우 현재 구현 확인은 `13_api_status_matrix.md`와 controller/test를 먼저 본다.
+- 현재 상태 문서는 규범을 대체하지 않는다. 규범과 구현 차이를 설명하는 역할만 한다.
 
-- 도메인 상태 변경 endpoint는 `Idempotency-Key` 필수
-- 동일 key + 동일 payload 재요청은 최초 응답 재반환
-- 동일 key + 다른 payload는 `422 IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD`
-- 처리 중 중복요청은 `409 IDEMPOTENCY_IN_PROGRESS` 허용
+## 3. Recommended Reading Order
 
-대표 대상:
+### A. 바로 개발 들어갈 때
 
-- `POST /occurrences/{occurrenceId}/bookings`
-- `POST /bookings/{bookingId}/cancel`
-- `POST /bookings/{bookingId}/offer/accept`
-- `POST /bookings/{bookingId}/offer/decline`
-- `PATCH /bookings/{bookingId}/party-size`
-- `POST /occurrences/{occurrenceId}/inquiries`
+1. `00_overview.md`
+2. `11_current_implementation_status.md`
+3. `12_runtime_topology_and_operations.md`
+4. `01_domain_rules.md`
+5. `10_architecture_hexagonal.md`
+6. `08_operational_policy_tables.md`
+7. `13_api_status_matrix.md`
+8. `14_test_traceability_matrix.md`
+9. `15_next_development_backlog.md`
 
----
+### B. API 계약 수정이 목적일 때
 
-## 5) 에러 코드 운영 원칙
+1. `13_api_status_matrix.md`
+2. `03_api_catalog.md`
+3. `04_openapi.yaml`
+4. 관련 controller / integration test
 
-- 공통 에러 포맷: `ErrorResponse`
-- 에러 코드 사전: `components.schemas.ErrorCode`
-- 정책 매핑: `x-error-code-map`
-- 재사용 예시 payload: `components.examples`
+### C. 저장소 / 동시성 / 배치 수정이 목적일 때
 
-검증 규칙:
+1. `12_runtime_topology_and_operations.md`
+2. `02_schema_mysql.md`
+3. `08_operational_policy_tables.md`
+4. `06_implementation_notes.md`
+5. 관련 `application`, `adapter.out`, `adapter.in.job` 코드
 
-- 카탈로그(`03`)와 OpenAPI(`04`)의 대표 에러코드 표가 일치해야 함
-- 신규 write endpoint 추가 시 409/422 대표 example 최소 1개 이상 추가
+## 4. Mandatory Working Agreements
 
----
+- 상태 변경 endpoint는 `Idempotency-Key` 정책을 따라야 한다.
+- participant/attendance는 booking 하위가 아니라 participant 단위 규칙을 따른다.
+- worker job은 `application` service를 호출하는 orchestration layer여야 한다.
+- 테스트 없는 기능 완료 처리는 금지한다.
+- `agent` 폴더에는 시점 종속 메모를 남기지 않고, 영구 문서에 흡수하거나 삭제한다.
 
-## 6) 데이터/운영 강제 항목
+## 5. Quick Commands
 
-- `inquiries.booking_id`는 `NOT NULL`
-- append-only `audit_events` 기록 필수
-- 결제/환불 시도는 `payment_transactions`로 추적
-- `REFUND_PENDING` 상태 재시도 job 운영
-- waitlist/offer/seat 변경 트랜잭션에서 occurrence row lock 필수
-
----
-
-## 7) 변경 관리 체크리스트
-
-스펙 변경 PR은 아래를 모두 충족해야 한다.
-
-- [ ] `01` 또는 `08`에 도메인 규칙/정책 변경 반영
-- [ ] `10` 아키텍처 규칙(의존 방향/패키지 경계) 준수 검토
-- [ ] `04` OpenAPI 계약 및 examples 반영
-- [ ] `05` 권한 영향 검토 및 반영
-- [ ] `02` 스키마 영향 검토 및 반영
-- [ ] `06` 구현 가드레일 반영
-- [ ] `07` 테스트 시나리오 추가/수정
-- [ ] `03` 카탈로그 요약 업데이트
-
-추가 검증 규칙:
-
-- [ ] 기능 구현 후 기존 코드 헥사고날 리팩터 단계(06 문서 Step A~D) 실행 여부 확인
-
----
-
-## 8) 빠른 점검 커맨드
-
-```bash
-# OpenAPI YAML 파싱 검증
-python3 -c "import yaml; yaml.safe_load(open('agent/04_openapi.yaml')); print('ok')"
-
-# 핵심 키워드 정합성 확인
-rg -n "Idempotency-Key|BOOKING_SCOPE_MISMATCH|OFFER_EXPIRED|REFUND_PENDING|audit_events" agent
-```
+- 전체 테스트: `./gradlew test`
+- 핵심 API 회귀: `./gradlew test --tests 'com.demo.tourwave.domain.booking.application.BookingControllerIntegrationTest'`
+- MySQL-compatible persistence 회귀: `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.MysqlPersistenceIntegrationTest'`
