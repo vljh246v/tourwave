@@ -6,6 +6,7 @@ import com.demo.tourwave.application.auth.JwtTokenService
 import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
 import com.demo.tourwave.application.auth.port.PasswordHasher
 import com.demo.tourwave.application.auth.port.UserActionTokenRepository
+import com.demo.tourwave.application.topology.OrganizationQueryService
 import com.demo.tourwave.application.user.MeService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -66,10 +67,12 @@ class AuthConfig {
     @Bean
     fun meService(
         userRepository: UserRepository,
+        organizationQueryService: OrganizationQueryService,
         clock: Clock
     ): MeService {
         return MeService(
             userRepository = userRepository,
+            organizationQueryService = organizationQueryService,
             clock = clock
         )
     }

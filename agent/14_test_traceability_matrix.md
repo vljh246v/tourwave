@@ -65,6 +65,9 @@
 - auth/me integration and runtime fallback policy
   - [AuthControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/auth/AuthControllerIntegrationTest.kt)
   - [RealModeSecurityIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/auth/RealModeSecurityIntegrationTest.kt)
+- organization create/update/membership lifecycle and operator authz
+  - [OrganizationCommandServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/topology/OrganizationCommandServiceTest.kt)
+  - [OrganizationControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/organization/OrganizationControllerIntegrationTest.kt)
 
 ## 7. Known Coverage Gaps
 
@@ -72,5 +75,5 @@
   - 현재 환경에는 Docker provider가 없어서 `mysql-test`는 H2 MySQL compatibility mode로 검증한다.
 - OpenAPI parser 기반 contract validation
   - smoke/integration coverage는 있으나 spec parser 기반 자동 검증은 아직 없다.
-- public catalog / organization / instructor authoring 계약
-  - Sprint 8 이후 구현 전까지는 baseline 문서와 로드맵으로만 관리한다.
+- public catalog / instructor authoring 계약
+  - organization operator/member API는 Sprint 9에서 구현됐고, catalog/instructor authoring은 아직 baseline 문서와 로드맵으로 관리한다.

@@ -11,6 +11,8 @@ import com.demo.tourwave.application.participant.port.BookingParticipantReposito
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
 import com.demo.tourwave.application.auth.port.UserActionTokenRepository
+import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.topology.port.OrganizationRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.Booking
@@ -22,6 +24,9 @@ import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.participant.BookingParticipant
 import com.demo.tourwave.domain.payment.PaymentRecord
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
+import com.demo.tourwave.domain.organization.Organization
+import com.demo.tourwave.domain.organization.OrganizationMembership
+import com.demo.tourwave.domain.organization.OrganizationRole
 import com.demo.tourwave.domain.review.Review
 import com.demo.tourwave.domain.review.ReviewType
 import com.demo.tourwave.domain.user.User
@@ -60,6 +65,12 @@ class MysqlPersistenceIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
+    private lateinit var organizationRepository: OrganizationRepository
+
+    @Autowired
+    private lateinit var organizationMembershipRepository: OrganizationMembershipRepository
+
+    @Autowired
     private lateinit var idempotencyStore: IdempotencyStore
 
     @Autowired
@@ -76,6 +87,8 @@ class MysqlPersistenceIntegrationTest {
         paymentRecordRepository.clear()
         bookingRepository.clear()
         occurrenceRepository.clear()
+        organizationMembershipRepository.clear()
+        organizationRepository.clear()
         userRepository.clear()
         authRefreshTokenRepository.clear()
         userActionTokenRepository.clear()
@@ -182,5 +195,41 @@ class MysqlPersistenceIntegrationTest {
         assertEquals(listOf(11L, 12L), messages.single().attachmentAssetIds)
         assertTrue(replay is IdempotencyDecision.Replay)
         assertEquals(204, replay.status)
+    }
+
+    @Test
+    fun `mysql adapters persist organizations and memberships`() {
+        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash"))
+        val organization = organizationRepository.save(
+            Organization.create(
+                slug = "seoul-jpa",
+                name = "Seoul JPA",
+                description = "operator profile",
+                publicDescription = "public profile",
+                contactEmail = "ops@seoul.test",
+                contactPhone = "+82 10 0000 0000",
+                websiteUrl = "https://seoul.test",
+                businessName = "Seoul JPA LLC",
+                businessRegistrationNumber = "123-45-67890",
+                timezone = "Asia/Seoul",
+                now = Instant.parse("2026-03-17T00:00:00Z")
+            )
+        )
+        organizationMembershipRepository.save(
+            OrganizationMembership.active(
+                organizationId = requireNotNull(organization.id),
+                userId = requireNotNull(owner.id),
+                role = OrganizationRole.OWNER,
+                now = Instant.parse("2026-03-17T00:00:00Z")
+            )
+        )
+
+        val persistedOrganization = organizationRepository.findBySlug("seoul-jpa")
+        val memberships = organizationMembershipRepository.findByOrganizationId(requireNotNull(organization.id))
+
+        assertNotNull(persistedOrganization)
+        assertEquals("Seoul JPA", persistedOrganization.name)
+        assertEquals(1, memberships.size)
+        assertEquals(OrganizationRole.OWNER, memberships.single().role)
     }
 }

@@ -3,6 +3,8 @@ package com.demo.tourwave.agent
 import com.demo.tourwave.adapter.`in`.web.booking.BookingRefundPreviewController
 import com.demo.tourwave.adapter.`in`.web.booking.WaitlistOperatorController
 import com.demo.tourwave.adapter.`in`.web.inquiry.InquiryQueryController
+import com.demo.tourwave.adapter.`in`.web.organization.OrganizationOperatorController
+import com.demo.tourwave.adapter.`in`.web.organization.OrganizationPublicController
 import com.demo.tourwave.adapter.`in`.web.participant.ParticipantRosterController
 import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,6 +27,9 @@ class DocumentationBaselineTest {
         assertContains(doc, "현재 인증은 JWT access token 기반이고, local/test 런타임에서는 request header actor context fallback이 허용된다.")
         assertContains(doc, "POST /auth/signup")
         assertContains(doc, "GET /me")
+        assertContains(doc, "POST /operator/organizations")
+        assertContains(doc, "POST /organizations/{organizationId}/memberships/accept")
+        assertContains(doc, "/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.")
         assertContains(doc, "DocumentationBaselineTest")
     }
 
@@ -40,8 +45,11 @@ class DocumentationBaselineTest {
         assertContains(specIndex, "실무 순서:")
         assertContains(apiCatalog, "Target Product Auth: Bearer JWT")
         assertContains(apiCatalog, "Current Runtime Auth: Bearer JWT, with request header actor context fallback only in local/test flows")
+        assertContains(apiCatalog, "POST /operator/organizations")
+        assertContains(apiCatalog, "POST /organizations/{orgId}/memberships/accept")
         assertContains(apiCatalog, "1차 확인: controller + integration test")
         assertContains(traceability, "DocumentationBaselineTest")
+        assertContains(traceability, "OrganizationControllerIntegrationTest")
         assertContains(gapArchive, "Historical Archive")
         assertContains(gapArchive, "현재 truth 확인 순서:")
     }
@@ -72,6 +80,21 @@ class DocumentationBaselineTest {
             controller = ParticipantRosterController::class.java,
             methodName = "exportRoster",
             expectedPath = "/occurrences/{occurrenceId}/participants/roster/export"
+        )
+        assertPostMapping(
+            controller = OrganizationOperatorController::class.java,
+            methodName = "createOrganization",
+            expectedPath = "/operator/organizations"
+        )
+        assertGetMapping(
+            controller = OrganizationPublicController::class.java,
+            methodName = "getPublicOrganization",
+            expectedPath = "/organizations/{organizationId}"
+        )
+        assertPostMapping(
+            controller = OrganizationPublicController::class.java,
+            methodName = "acceptInvitation",
+            expectedPath = "/organizations/{organizationId}/memberships/accept"
         )
     }
 

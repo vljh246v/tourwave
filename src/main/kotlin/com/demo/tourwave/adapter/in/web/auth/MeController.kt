@@ -2,6 +2,7 @@ package com.demo.tourwave.adapter.`in`.web.auth
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
 import com.demo.tourwave.application.user.MeService
+import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.user.User
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -21,7 +22,11 @@ class MeController(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
     ): ResponseEntity<MeResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        return ResponseEntity.ok(meService.getCurrentUser(requiredActorUserId).toMeResponse())
+        return ResponseEntity.ok(
+            meService.getCurrentUser(requiredActorUserId).toMeResponse(
+                meService.getCurrentUserMemberships(requiredActorUserId)
+            )
+        )
     }
 
     @PatchMapping("/me")
@@ -71,8 +76,14 @@ private fun User.toUserResponse(): UserResponse =
         createdAt = createdAt
     )
 
-private fun User.toMeResponse(): MeResponse =
+private fun User.toMeResponse(memberships: List<OrganizationMembership>): MeResponse =
     MeResponse(
         user = toUserResponse(),
-        memberships = emptyList()
+        memberships = memberships.map {
+            MembershipResponse(
+                organizationId = it.organizationId,
+                roles = listOf(it.role.name),
+                status = it.status.name
+            )
+        }
     )

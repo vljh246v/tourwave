@@ -82,11 +82,15 @@
 ---
 
 ## Organizations & Members
-- POST /organizations (auth) → creator becomes ORG_OWNER
+- POST /operator/organizations (auth) → creator becomes ORG_OWNER
 - GET /organizations/{orgId} (public)
-- GET /organizations/{orgId}/members (ORG_MEMBER+)
-- POST /organizations/{orgId}/members (ORG_ADMIN/OWNER)
-- PATCH /organizations/{orgId}/members/{userId} (ORG_ADMIN/OWNER)
+- GET /operator/organizations/{orgId} (ORG_MEMBER+)
+- PATCH /operator/organizations/{orgId} (ORG_ADMIN/OWNER)
+- GET /operator/organizations/{orgId}/members (ORG_ADMIN/OWNER)
+- POST /operator/organizations/{orgId}/members/invitations (ORG_ADMIN/OWNER)
+- POST /organizations/{orgId}/memberships/accept (invited user)
+- PATCH /operator/organizations/{orgId}/members/{userId}/role (ORG_ADMIN/OWNER, owner-only for OWNER assignment)
+- PATCH /operator/organizations/{orgId}/members/{userId}/deactivate (ORG_ADMIN/OWNER, owner-only for owner membership)
 
 ---
 

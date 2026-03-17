@@ -61,6 +61,18 @@
 - `GET /me`
 - `PATCH /me`
 
+### Organization / Operator
+
+- `POST /operator/organizations`
+- `GET /operator/organizations/{organizationId}`
+- `PATCH /operator/organizations/{organizationId}`
+- `GET /operator/organizations/{organizationId}/members`
+- `POST /operator/organizations/{organizationId}/members/invitations`
+- `PATCH /operator/organizations/{organizationId}/members/{memberUserId}/role`
+- `PATCH /operator/organizations/{organizationId}/members/{memberUserId}/deactivate`
+- `GET /organizations/{organizationId}`
+- `POST /organizations/{organizationId}/memberships/accept`
+
 ### Runtime / Worker
 
 - offer expiration job
@@ -77,13 +89,14 @@
 - refund preview는 `GET /bookings/{bookingId}/refund-preview`로 구현되어 있다.
 - waitlist manual operation API는 booking-scoped path로 구현되어 있다.
 - `real` 런타임에서는 header fallback 없이 Bearer JWT가 필요하다.
+- `/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.
+- organization operator API는 `/operator/organizations/...` 네임스페이스를 사용하고, 공개 조회는 `/organizations/{organizationId}`에 분리되어 있다.
 
 ## 3. Not Implemented Yet But Needed For Product
 
 다음 항목은 제품 비전에는 포함되지만 현재 코드에는 아직 없다.
 
 - `GET /me/bookings`, `GET /me/favorites`, `GET /me/notifications`
-- `POST /organizations`, `GET /organizations/{orgId}`, `GET/POST/PATCH /organizations/{orgId}/members`
 - instructor registration/profile API 전반
 - operator tour/occurrence authoring API 전반
 - public tour/catalog/search/availability/quote API

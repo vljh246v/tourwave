@@ -60,7 +60,7 @@ These are logical capabilities, not necessarily stored in a single enum column:
 - INSTRUCTOR
 
 ### Organization-scoped roles
-These are granted through `organization_members.roles_json`:
+These are granted through `organization_members.role`:
 
 - ORG_MEMBER
 - ORG_ADMIN
@@ -177,7 +177,7 @@ A user is considered an active member of an organization if:
 - `organization_members.status = ACTIVE`
 
 ### Role checks
-Roles are stored as a set in `roles_json`.
+Roles are stored as a single effective role in `organization_members.role`.
 
 Helper checks:
 
@@ -192,9 +192,31 @@ For permission evaluation:
 - ORG_ADMIN includes ORG_MEMBER capabilities
 - ORG_MEMBER does not imply ORG_ADMIN/ORG_OWNER
 
-Implementation may either:
-- normalize this in code
-- or materialize all effective roles
+Current implementation normalizes this in code. `OWNER` is treated as stronger than `ADMIN`, and `ADMIN` is treated as stronger than `MEMBER`.
+
+### Membership lifecycle currently implemented
+
+- `INVITED`: operator created invitation, not yet accepted
+- `ACTIVE`: usable membership for operator/member checks
+- `INACTIVE`: disabled membership, no access
+
+Current operator endpoints:
+
+- `POST /operator/organizations`
+- `GET /operator/organizations/{orgId}`
+- `PATCH /operator/organizations/{orgId}`
+- `GET /operator/organizations/{orgId}/members`
+- `POST /operator/organizations/{orgId}/members/invitations`
+- `PATCH /operator/organizations/{orgId}/members/{userId}/role`
+- `PATCH /operator/organizations/{orgId}/members/{userId}/deactivate`
+- `POST /organizations/{orgId}/memberships/accept`
+
+Authorization notes for current implementation:
+
+- org profile read for operators requires `ACTIVE` membership
+- member invitation and deactivation require `ADMIN` or `OWNER`
+- assigning `OWNER` or modifying an existing owner membership requires `OWNER`
+- operator self-deactivation is rejected
 
 ---
 
@@ -445,15 +467,16 @@ Owner rule:
 - GET `/organizations/{orgId}`
 
 ### Org member and above
-- GET `/organizations/{orgId}/members`
+- GET `/operator/organizations/{orgId}/members`
 
 ### ORG_ADMIN / ORG_OWNER
-- POST `/organizations/{orgId}/members`
-- PATCH `/organizations/{orgId}/members/{userId}`
-- POST `/organizations/{orgId}/members/{userId}/remove`
+- POST `/operator/organizations/{orgId}/members/invitations`
+- POST `/organizations/{orgId}/memberships/accept`
+- PATCH `/operator/organizations/{orgId}/members/{userId}/role`
+- PATCH `/operator/organizations/{orgId}/members/{userId}/deactivate`
 
 ### Create org
-- POST `/organizations`
+- POST `/operator/organizations`
 - authenticated user only
 - creator becomes ORG_OWNER
 

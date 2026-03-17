@@ -4,7 +4,7 @@
 
 ## 1. What Exists Today
 
-현재 저장소는 예약 핵심 엔진과 일부 운영 흐름이 구현된 상태다. 비즈니스적으로는 "운영 백오피스와 계정 체계가 빠진 예약 플랫폼 코어"로 보는 것이 정확하다.
+현재 저장소는 예약 핵심 엔진, 계정 인증, 그리고 organization 운영 기초가 구현된 상태다. 비즈니스적으로는 "투어 authoring과 외부 결제가 빠진 예약 플랫폼 코어 + 운영 조직 관리 기초"로 보는 것이 정확하다.
 
 ### Product Grade Areas Already Implemented
 
@@ -41,7 +41,10 @@
 - JWT access token runtime auth
 - local/test header auth fallback
 - role enum / organization scoped access checks
-- minimal organization / tour / instructor topology
+- organization persistence and operator/public profile split
+- organization membership invite / accept / role change / deactivate
+- `/me` membership projection
+- minimal tour / instructor topology
 
 ### Worker / Ops
 
@@ -68,7 +71,6 @@
 
 - email verification / password reset
 - me notification / favorite flow
-- organization/member management full CRUD
 - instructor registration/profile management full flow
 - tour/occurrence authoring and publish/search APIs
 - assets upload/complete/attach flow
@@ -92,7 +94,7 @@
 - 실행 진입점은 API와 worker로 분리되어 있다.
 - `mysql-test`는 현재 환경에서 H2 MySQL compatibility mode로 테스트된다.
 - 인증은 JWT access token 기준이며, local/test 런타임만 request header fallback을 허용한다.
-- organization, tour, instructor는 도메인 개념은 있으나 persistence/product API가 아직 얇다.
+- organization은 persistence와 operator/public API가 올라왔지만, 투어/강사 authoring은 아직 얇다.
 
 ## 4. Current Code Structure Snapshot
 
@@ -101,7 +103,7 @@
 - `application`
   - booking, participant, inquiry, review, user, topology, common
 - `adapter.in.web`
-  - booking, inquiry, participant, review
+  - auth, booking, inquiry, organization, participant, review
 - `adapter.in.job`
   - offer expiration, invitation expiration, refund retry, idempotency purge
 - `adapter.out.persistence`
@@ -119,6 +121,7 @@
 - true MySQL container 검증은 CI나 Docker 가능한 환경에서 다시 붙여야 한다.
 - 외부 결제 승인/취소 이벤트를 수신하는 경로가 아직 없다.
 - 조직/투어/강사 authoring이 없어 운영자가 실제 상품을 만들 수 없다.
+- organization membership는 구현됐지만 초대 이메일 전달과 조직 전환 UX는 아직 없다.
 
 ## 6. If A New Agent Starts Today
 

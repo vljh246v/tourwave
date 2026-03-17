@@ -61,6 +61,14 @@ class AuthControllerIntegrationTest {
             .andExpect(jsonPath("$.memberships").isArray)
 
         mockMvc.perform(
+            post("/operator/organizations")
+                .header("Authorization", "Bearer $accessToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"slug":"jae-ops","name":"Jae Ops","timezone":"Asia/Seoul"}""")
+        )
+            .andExpect(status().isCreated)
+
+        mockMvc.perform(
             patch("/me")
                 .header("Authorization", "Bearer $accessToken")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -78,6 +86,13 @@ class AuthControllerIntegrationTest {
             .andReturn()
 
         val rotatedAccessToken = JsonFieldReader.read(refreshResult.response.contentAsString, "accessToken")
+
+        mockMvc.perform(
+            get("/me")
+                .header("Authorization", "Bearer $rotatedAccessToken")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.memberships[0].status").value("ACTIVE"))
 
         mockMvc.perform(
             post("/auth/logout")
