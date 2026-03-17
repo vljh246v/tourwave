@@ -17,9 +17,11 @@ import com.demo.tourwave.application.participant.port.BookingParticipantReposito
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import com.demo.tourwave.domain.participant.BookingParticipant
+import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
 import java.time.Clock
 
+@Transactional
 class BookingCommandService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
@@ -55,6 +57,7 @@ class BookingCommandService(
             )
 
             IdempotencyDecision.Reserved -> {
+                occurrenceRepository.lock(command.occurrenceId)
                 val occurrence = occurrenceRepository.getOrCreate(command.occurrenceId)
 
                 if (occurrence.status == OccurrenceStatus.FINISHED) {
@@ -152,6 +155,7 @@ class BookingCommandService(
         ) {
             is IdempotencyDecision.Replay -> FinishOccurrenceResult(status = decision.status)
             IdempotencyDecision.Reserved -> {
+                occurrenceRepository.lock(command.occurrenceId)
                 val occurrence = occurrenceRepository.getOrCreate(command.occurrenceId)
                 when (occurrence.status) {
                     OccurrenceStatus.CANCELED -> throw DomainException(
@@ -213,6 +217,7 @@ class BookingCommandService(
         ) {
             is IdempotencyDecision.Replay -> CancelOccurrenceResult(status = decision.status)
             IdempotencyDecision.Reserved -> {
+                occurrenceRepository.lock(command.occurrenceId)
                 val occurrence = occurrenceRepository.getOrCreate(command.occurrenceId)
 
                 if (occurrence.status != OccurrenceStatus.CANCELED) {
@@ -294,6 +299,7 @@ class BookingCommandService(
                         message = "Booking not found",
                         details = mapOf("bookingId" to command.bookingId)
                     )
+                occurrenceRepository.lock(booking.occurrenceId)
 
                 val mutated = when (command.mutationType) {
                     BookingMutationType.APPROVE -> approveBooking(booking)

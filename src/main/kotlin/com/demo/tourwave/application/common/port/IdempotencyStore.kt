@@ -36,3 +36,7 @@ sealed interface IdempotencyDecision {
         val body: Any
     ) : IdempotencyDecision
 }
+
+interface IdempotencyMaintenancePort {
+    fun purgeExpired(nowEpochMillis: Long): Long
+}

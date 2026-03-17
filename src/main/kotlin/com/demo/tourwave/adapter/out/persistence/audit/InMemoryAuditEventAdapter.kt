@@ -21,4 +21,3 @@ class InMemoryAuditEventAdapter : AuditEventPort {
         events.clear()
     }
 }
-

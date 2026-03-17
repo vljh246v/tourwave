@@ -3,11 +3,13 @@ package com.demo.tourwave.adapter.out.persistence.review
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.domain.review.Review
 import com.demo.tourwave.domain.review.ReviewType
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Repository
+@Profile("!mysql & !mysql-test")
 class InMemoryReviewRepositoryAdapter : ReviewRepository {
     private val sequence = AtomicLong(0)
     private val reviews = ConcurrentHashMap<Long, Review>()
@@ -38,4 +40,3 @@ class InMemoryReviewRepositoryAdapter : ReviewRepository {
         sequence.set(0)
     }
 }
-

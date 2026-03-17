@@ -12,9 +12,11 @@ import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.participant.BookingParticipant
+import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
 import java.time.Clock
 
+@Transactional
 class ParticipantCommandService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
@@ -51,6 +53,7 @@ class ParticipantCommandService(
                         message = "Booking not found",
                         details = mapOf("bookingId" to command.bookingId)
                     )
+                occurrenceRepository.lock(booking.occurrenceId)
 
                 if (booking.leaderUserId != command.actorUserId) {
                     throw DomainException(
@@ -174,6 +177,7 @@ class ParticipantCommandService(
                         message = "Booking not found",
                         details = mapOf("bookingId" to command.bookingId)
                     )
+                occurrenceRepository.lock(booking.occurrenceId)
 
                 if (booking.status.isTerminal()) {
                     throw DomainException(

@@ -3,12 +3,14 @@ package com.demo.tourwave.adapter.out.persistence.booking
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Repository
+@Profile("!mysql & !mysql-test")
 class InMemoryBookingRepositoryAdapter : BookingRepository {
     private val sequence = AtomicLong(0)
     private val bookings = ConcurrentHashMap<Long, Booking>()

@@ -2,11 +2,14 @@ package com.demo.tourwave.adapter.out.persistence.payment
 
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.domain.payment.PaymentRecord
+import com.demo.tourwave.domain.payment.PaymentRecordStatus
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Repository
+@Profile("!mysql & !mysql-test")
 class InMemoryPaymentRecordRepositoryAdapter : PaymentRecordRepository {
     private val sequence = AtomicLong(0)
     private val recordsById = ConcurrentHashMap<Long, PaymentRecord>()
@@ -23,6 +26,12 @@ class InMemoryPaymentRecordRepositoryAdapter : PaymentRecordRepository {
     override fun findByBookingId(bookingId: Long): PaymentRecord? {
         val recordId = bookingToRecordId[bookingId] ?: return null
         return recordsById[recordId]
+    }
+
+    override fun findByStatuses(statuses: Set<PaymentRecordStatus>): List<PaymentRecord> {
+        return recordsById.values
+            .filter { it.status in statuses }
+            .sortedBy { it.updatedAtUtc }
     }
 
     override fun clear() {

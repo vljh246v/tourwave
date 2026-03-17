@@ -12,9 +12,11 @@ import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.inquiry.Inquiry
 import com.demo.tourwave.domain.inquiry.InquiryMessage
 import com.demo.tourwave.domain.inquiry.InquiryStatus
+import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
 import java.time.Clock
 
+@Transactional
 class InquiryCommandService(
     private val bookingRepository: BookingRepository,
     private val inquiryRepository: InquiryRepository,

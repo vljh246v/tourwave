@@ -3,11 +3,13 @@ package com.demo.tourwave.adapter.out.persistence.inquiry
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.domain.inquiry.Inquiry
 import com.demo.tourwave.domain.inquiry.InquiryMessage
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Repository
+@Profile("!mysql & !mysql-test")
 class InMemoryInquiryRepositoryAdapter : InquiryRepository {
     private val inquirySequence = AtomicLong(0)
     private val messageSequence = AtomicLong(0)

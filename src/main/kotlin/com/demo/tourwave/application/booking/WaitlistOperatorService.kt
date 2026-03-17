@@ -10,6 +10,7 @@ import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
 data class ManualWaitlistActionCommand(
@@ -24,6 +25,7 @@ data class ManualWaitlistActionResult(
     val booking: Booking
 )
 
+@Transactional
 class WaitlistOperatorService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
@@ -32,6 +34,7 @@ class WaitlistOperatorService(
 ) {
     fun promote(command: ManualWaitlistActionCommand): ManualWaitlistActionResult {
         val booking = requireOperatorScopedWaitlistedBooking(command)
+        occurrenceRepository.lock(booking.occurrenceId)
         val occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId)
         if (occurrence.status == OccurrenceStatus.CANCELED) {
             throw DomainException(
@@ -75,6 +78,7 @@ class WaitlistOperatorService(
 
     fun skip(command: ManualWaitlistActionCommand): ManualWaitlistActionResult {
         val booking = requireOperatorScopedWaitlistedBooking(command)
+        occurrenceRepository.lock(booking.occurrenceId)
         val skipped = bookingRepository.save(
             booking.skipWaitlist(clock.instant())
         )

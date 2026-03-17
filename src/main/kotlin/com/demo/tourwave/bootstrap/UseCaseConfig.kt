@@ -4,6 +4,7 @@ import com.demo.tourwave.application.booking.BookingCommandService
 import com.demo.tourwave.application.booking.BookingRefundPreviewService
 import com.demo.tourwave.application.booking.OfferExpirationService
 import com.demo.tourwave.application.booking.PaymentLedgerService
+import com.demo.tourwave.application.booking.RefundRetryService
 import com.demo.tourwave.application.booking.WaitlistOperatorService
 import com.demo.tourwave.application.booking.BookingQueryService
 import com.demo.tourwave.application.booking.port.BookingRepository
@@ -11,7 +12,9 @@ import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.booking.port.RefundExecutionPort
 import com.demo.tourwave.application.common.TimeWindowPolicyService
+import com.demo.tourwave.application.common.IdempotencyPurgeService
 import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyMaintenancePort
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.InquiryAccessPolicy
 import com.demo.tourwave.application.inquiry.InquiryCommandService
@@ -70,6 +73,36 @@ class UseCaseConfig {
         return PaymentLedgerService(
             paymentRecordRepository = paymentRecordRepository,
             refundExecutionPort = refundExecutionPort,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun refundRetryService(
+        paymentRecordRepository: PaymentRecordRepository,
+        bookingRepository: BookingRepository,
+        refundExecutionPort: RefundExecutionPort,
+        auditEventPort: AuditEventPort,
+        clock: Clock
+    ): RefundRetryService {
+        return RefundRetryService(
+            paymentRecordRepository = paymentRecordRepository,
+            bookingRepository = bookingRepository,
+            refundExecutionPort = refundExecutionPort,
+            auditEventPort = auditEventPort,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun idempotencyPurgeService(
+        idempotencyMaintenancePort: IdempotencyMaintenancePort,
+        auditEventPort: AuditEventPort,
+        clock: Clock
+    ): IdempotencyPurgeService {
+        return IdempotencyPurgeService(
+            idempotencyMaintenancePort = idempotencyMaintenancePort,
+            auditEventPort = auditEventPort,
             clock = clock
         )
     }

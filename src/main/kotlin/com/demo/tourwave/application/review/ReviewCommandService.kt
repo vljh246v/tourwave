@@ -13,9 +13,11 @@ import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.review.Review
 import com.demo.tourwave.domain.review.ReviewType
+import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
 import java.time.Clock
 
+@Transactional
 class ReviewCommandService(
     private val bookingRepository: BookingRepository,
     private val bookingParticipantRepository: BookingParticipantRepository,

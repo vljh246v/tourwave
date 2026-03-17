@@ -3,10 +3,12 @@ package com.demo.tourwave.adapter.out.persistence.occurrence
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 
 @Repository
+@Profile("!mysql & !mysql-test")
 class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
     private val occurrences = ConcurrentHashMap<Long, Occurrence>()
 
@@ -20,6 +22,8 @@ class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
             )
         }
     }
+
+    override fun lock(occurrenceId: Long): Occurrence = getOrCreate(occurrenceId)
 
     override fun save(occurrence: Occurrence) {
         occurrences[occurrence.id] = occurrence

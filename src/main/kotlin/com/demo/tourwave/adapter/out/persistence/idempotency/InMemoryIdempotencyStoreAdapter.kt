@@ -1,9 +1,11 @@
 package com.demo.tourwave.adapter.out.persistence.idempotency
 
 import com.demo.tourwave.application.common.port.IdempotencyDecision
+import com.demo.tourwave.application.common.port.IdempotencyMaintenancePort
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
@@ -27,7 +29,8 @@ data class IdempotencyScope(
 )
 
 @Component
-class InMemoryIdempotencyStoreAdapter : IdempotencyStore {
+@Profile("!mysql & !mysql-test")
+class InMemoryIdempotencyStoreAdapter : IdempotencyStore, IdempotencyMaintenancePort {
     private val records = ConcurrentHashMap<IdempotencyScope, IdempotencyRecord>()
 
     override fun reserveOrReplay(
@@ -90,6 +93,8 @@ class InMemoryIdempotencyStoreAdapter : IdempotencyStore {
     override fun clear() {
         records.clear()
     }
+
+    override fun purgeExpired(nowEpochMillis: Long): Long = 0
 
     private fun evaluateExisting(
         existing: IdempotencyRecord,

@@ -2,11 +2,13 @@ package com.demo.tourwave.adapter.out.persistence.user
 
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Repository
+@Profile("!mysql & !mysql-test")
 class UserQueryAdapter : UserRepository {
     private val sequence = AtomicLong(0L)
     private val usersById = ConcurrentHashMap<Long, User>()
