@@ -14,6 +14,7 @@ tourwave:
     allow-header-auth-fallback: true
   payment:
     webhook-secret: tourwave-webhook-secret
+    webhook-secrets: current:tourwave-webhook-secret,previous:tourwave-webhook-secret-previous
     refund:
       max-retry-attempts: 5
       retry-cooldown-seconds: 600
@@ -26,6 +27,10 @@ tourwave:
     invitation-token-ttl-seconds: 604800
 
 integration:
+  payment:
+    base-url: http://localhost:18080/mock-payment
+    api-key: test-payment-key
+    provider-name: stub-pay
   notification:
     base-url: http://localhost:18081/mock-notification
     api-key:

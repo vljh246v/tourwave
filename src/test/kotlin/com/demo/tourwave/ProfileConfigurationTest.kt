@@ -34,6 +34,8 @@ class ProfileConfigurationTest {
                 .isEqualTo("true")
             assertThat(context.environment.getProperty("integration.payment.base-url"))
                 .isEqualTo("http://localhost:18080/mock-payment")
+            assertThat(context.environment.getProperty("integration.payment.provider-name"))
+                .isEqualTo("stub-pay")
             assertThat(context.environment.getProperty("integration.notification.base-url"))
                 .isEqualTo("http://localhost:18081/mock-notification")
             assertThat(context.environment.getProperty("integration.asset.base-url"))
@@ -52,6 +54,7 @@ class ProfileConfigurationTest {
                 "ALPHA_DB_PASSWORD=alpha_password",
                 "ALPHA_PAYMENT_BASE_URL=https://alpha-payment.internal",
                 "ALPHA_PAYMENT_API_KEY=alpha-payment-key",
+                "ALPHA_PAYMENT_PROVIDER_NAME=alpha-provider",
                 "ALPHA_NOTIFICATION_BASE_URL=https://alpha-notification.internal",
                 "ALPHA_NOTIFICATION_API_KEY=alpha-notification-key",
                 "ALPHA_NOTIFICATION_SENDER_EMAIL=no-reply@alpha.internal",
@@ -65,6 +68,8 @@ class ProfileConfigurationTest {
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("alpha")
             assertThat(context.environment.getProperty("integration.payment.api-key"))
                 .isEqualTo("alpha-payment-key")
+            assertThat(context.environment.getProperty("integration.payment.provider-name"))
+                .isEqualTo("alpha-provider")
             assertThat(context.environment.getProperty("integration.notification.api-key"))
                 .isEqualTo("alpha-notification-key")
             assertThat(context.environment.getProperty("integration.notification.sender-email"))
@@ -85,6 +90,7 @@ class ProfileConfigurationTest {
                 "BETA_DB_PASSWORD=beta_password",
                 "BETA_PAYMENT_BASE_URL=https://beta-payment.internal",
                 "BETA_PAYMENT_API_KEY=beta-payment-key",
+                "BETA_PAYMENT_PROVIDER_NAME=beta-provider",
                 "BETA_NOTIFICATION_BASE_URL=https://beta-notification.internal",
                 "BETA_NOTIFICATION_API_KEY=beta-notification-key",
                 "BETA_NOTIFICATION_SENDER_EMAIL=no-reply@beta.internal",
@@ -98,6 +104,8 @@ class ProfileConfigurationTest {
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("beta")
             assertThat(context.environment.getProperty("integration.payment.api-key"))
                 .isEqualTo("beta-payment-key")
+            assertThat(context.environment.getProperty("integration.payment.provider-name"))
+                .isEqualTo("beta-provider")
             assertThat(context.environment.getProperty("integration.notification.api-key"))
                 .isEqualTo("beta-notification-key")
             assertThat(context.environment.getProperty("integration.notification.sender-email"))
@@ -118,6 +126,7 @@ class ProfileConfigurationTest {
                 "REAL_DB_PASSWORD=real_password",
                 "REAL_PAYMENT_BASE_URL=https://real-payment.internal",
                 "REAL_PAYMENT_API_KEY=real-payment-key",
+                "REAL_PAYMENT_PROVIDER_NAME=real-provider",
                 "REAL_NOTIFICATION_BASE_URL=https://real-notification.internal",
                 "REAL_NOTIFICATION_API_KEY=real-notification-key",
                 "REAL_NOTIFICATION_SENDER_EMAIL=no-reply@real.internal",
@@ -133,6 +142,8 @@ class ProfileConfigurationTest {
                 .isEqualTo("false")
             assertThat(context.environment.getProperty("integration.payment.api-key"))
                 .isEqualTo("real-payment-key")
+            assertThat(context.environment.getProperty("integration.payment.provider-name"))
+                .isEqualTo("real-provider")
             assertThat(context.environment.getProperty("integration.notification.api-key"))
                 .isEqualTo("real-notification-key")
             assertThat(context.environment.getProperty("integration.notification.sender-email"))

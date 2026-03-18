@@ -20,6 +20,7 @@ integration:
   payment:
     base-url: ${REAL_PAYMENT_BASE_URL}
     api-key: ${REAL_PAYMENT_API_KEY}
+    provider-name: ${REAL_PAYMENT_PROVIDER_NAME:tourwave-pay}
   notification:
     base-url: ${REAL_NOTIFICATION_BASE_URL}
     api-key: ${REAL_NOTIFICATION_API_KEY}

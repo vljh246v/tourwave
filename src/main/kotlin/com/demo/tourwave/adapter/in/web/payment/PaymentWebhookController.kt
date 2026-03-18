@@ -2,6 +2,8 @@ package com.demo.tourwave.adapter.`in`.web.payment
 
 import com.demo.tourwave.application.payment.PaymentWebhookCommand
 import com.demo.tourwave.application.payment.PaymentWebhookService
+import com.demo.tourwave.domain.common.DomainException
+import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.payment.PaymentProviderEventType
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.validation.Valid
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 class PaymentWebhookController(
@@ -25,7 +26,16 @@ class PaymentWebhookController(
         @RequestHeader("X-Payment-Signature", required = false) signature: String?,
         @RequestBody rawBody: String
     ): ResponseEntity<PaymentWebhookResponse> {
-        val request = objectMapper.readValue(rawBody, PaymentWebhookRequest::class.java)
+        val request = try {
+            objectMapper.readValue(rawBody, PaymentWebhookRequest::class.java)
+        } catch (exception: Exception) {
+            paymentWebhookService.recordMalformedPayload(rawBody, signature, exception.message)
+            throw DomainException(
+                errorCode = ErrorCode.VALIDATION_ERROR,
+                status = 422,
+                message = "Malformed payment webhook payload"
+            )
+        }
         val result = try {
             paymentWebhookService.receive(
                 PaymentWebhookCommand(
@@ -42,8 +52,8 @@ class PaymentWebhookController(
                     signature = signature
                 )
             )
-        } catch (exception: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, exception.message, exception)
+        } catch (exception: DomainException) {
+            throw exception
         }
 
         return ResponseEntity.status(if (result.duplicate) HttpStatus.OK else HttpStatus.ACCEPTED)

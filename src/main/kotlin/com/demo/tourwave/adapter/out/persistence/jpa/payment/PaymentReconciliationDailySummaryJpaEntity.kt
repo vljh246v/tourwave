@@ -19,6 +19,10 @@ data class PaymentReconciliationDailySummaryJpaEntity(
     val authorizedCount: Int,
     @Column(name = "captured_count", nullable = false)
     val capturedCount: Int,
+    @Column(name = "provider_captured_count", nullable = false)
+    val providerCapturedCount: Int,
+    @Column(name = "provider_refunded_count", nullable = false)
+    val providerRefundedCount: Int,
     @Column(name = "refund_pending_count", nullable = false)
     val refundPendingCount: Int,
     @Column(name = "refunded_count", nullable = false)
@@ -29,6 +33,12 @@ data class PaymentReconciliationDailySummaryJpaEntity(
     val refundFailedRetryableCount: Int,
     @Column(name = "refund_review_required_count", nullable = false)
     val refundReviewRequiredCount: Int,
+    @Column(name = "capture_mismatch_count", nullable = false)
+    val captureMismatchCount: Int,
+    @Column(name = "refund_mismatch_count", nullable = false)
+    val refundMismatchCount: Int,
+    @Column(name = "internal_status_mismatch_count", nullable = false)
+    val internalStatusMismatchCount: Int,
     @Column(name = "refreshed_at_utc", nullable = false)
     val refreshedAtUtc: Instant
 )

@@ -35,7 +35,7 @@ class PaymentWebhookServiceTest {
         paymentProviderEventRepository = paymentProviderEventRepository,
         bookingRepository = bookingRepository,
         paymentLedgerService = paymentLedgerService,
-        webhookSecret = "webhook-secret",
+        webhookSecrets = listOf("current:webhook-secret", "previous:previous-secret"),
         clock = clock
     )
 
@@ -59,7 +59,7 @@ class PaymentWebhookServiceTest {
         )
 
         val body = """{"providerName":"stub-pay","providerEventId":"evt-1","eventType":"CAPTURED","bookingId":${booking.id},"providerCaptureId":"cap-evt-1","providerReference":"capture-ref-1","retryable":true}"""
-        val signature = service.expectedSignature(body)
+        val signature = service.expectedSignature(body, "current")
 
         val first = service.receive(
             PaymentWebhookCommand(
@@ -98,7 +98,7 @@ class PaymentWebhookServiceTest {
     fun `webhook rejects invalid signature and persists rejection`() {
         val body = """{"providerName":"stub-pay","providerEventId":"evt-2","eventType":"REFUNDED","bookingId":999}"""
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<com.demo.tourwave.domain.common.DomainException> {
             service.receive(
                 PaymentWebhookCommand(
                     providerName = "stub-pay",
@@ -115,5 +115,55 @@ class PaymentWebhookServiceTest {
             PaymentProviderEventStatus.REJECTED_SIGNATURE,
             paymentProviderEventRepository.findByProviderEventId("evt-2")?.status
         )
+    }
+
+    @Test
+    fun `webhook accepts rotated secret header format and records key id`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 11L,
+                organizationId = 1L,
+                leaderUserId = 101L,
+                partySize = 1,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-17T00:00:00Z")
+            )
+        )
+        paymentLedgerService.initialize(
+            booking = booking,
+            occurrence = Occurrence(id = 11L, organizationId = 1L, capacity = 10, unitPrice = 40000, currency = "KRW"),
+            actorUserId = 101L
+        )
+        val body = """{"providerName":"stub-pay","providerEventId":"evt-rotation","eventType":"CAPTURED","bookingId":${booking.id},"providerCaptureId":"cap-rotation","providerReference":"capture-ref-rotation","retryable":true}"""
+
+        service.receive(
+            PaymentWebhookCommand(
+                providerName = "stub-pay",
+                providerEventId = "evt-rotation",
+                eventType = PaymentProviderEventType.CAPTURED,
+                bookingId = requireNotNull(booking.id),
+                providerCaptureId = "cap-rotation",
+                providerReference = "capture-ref-rotation",
+                rawPayload = body,
+                signature = "current:${service.expectedSignature(body, "current")}"
+            )
+        )
+
+        assertEquals("current", paymentProviderEventRepository.findByProviderEventId("evt-rotation")?.signatureKeyId)
+    }
+
+    @Test
+    fun `record malformed payload persists malformed status when signature is valid`() {
+        val rawBody = """{"providerName":"stub-pay","providerEventId":"""
+
+        service.recordMalformedPayload(rawBody, "kid=current,signature=${service.expectedSignature(rawBody, "current")}", "unexpected EOF")
+
+        val event = paymentProviderEventRepository.findReceivedBetween(
+            Instant.parse("2026-03-18T00:00:00Z"),
+            Instant.parse("2026-03-19T00:00:00Z")
+        ).single()
+        assertEquals(PaymentProviderEventStatus.MALFORMED_PAYLOAD, event.status)
+        assertEquals("current", event.signatureKeyId)
     }
 }

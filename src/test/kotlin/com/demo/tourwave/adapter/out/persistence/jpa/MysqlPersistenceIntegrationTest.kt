@@ -492,6 +492,8 @@ class MysqlPersistenceIntegrationTest {
                 bookingId = 901L,
                 payloadJson = """{"ok":true}""",
                 signature = "sig",
+                signatureKeyId = "current",
+                payloadSha256 = "hash-jpa-1",
                 status = PaymentProviderEventStatus.PROCESSED,
                 note = "CAPTURED",
                 receivedAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
@@ -504,11 +506,16 @@ class MysqlPersistenceIntegrationTest {
                 bookingCreatedCount = 3,
                 authorizedCount = 1,
                 capturedCount = 2,
+                providerCapturedCount = 2,
+                providerRefundedCount = 1,
                 refundPendingCount = 0,
                 refundedCount = 1,
                 noRefundCount = 0,
                 refundFailedRetryableCount = 1,
                 refundReviewRequiredCount = 0,
+                captureMismatchCount = 0,
+                refundMismatchCount = 0,
+                internalStatusMismatchCount = 0,
                 refreshedAtUtc = Instant.parse("2026-03-18T01:00:00Z")
             )
         )

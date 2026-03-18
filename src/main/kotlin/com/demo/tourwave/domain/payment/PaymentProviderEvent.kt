@@ -16,6 +16,8 @@ enum class PaymentProviderEventStatus {
     PROCESSED,
     IGNORED_DUPLICATE,
     REJECTED_SIGNATURE,
+    MALFORMED_PAYLOAD,
+    POISONED,
     IGNORED
 }
 
@@ -27,6 +29,8 @@ data class PaymentProviderEvent(
     val bookingId: Long?,
     val payloadJson: String,
     val signature: String? = null,
+    val signatureKeyId: String? = null,
+    val payloadSha256: String,
     val status: PaymentProviderEventStatus,
     val note: String? = null,
     val receivedAtUtc: Instant,

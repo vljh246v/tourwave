@@ -36,11 +36,16 @@ private fun PaymentReconciliationDailySummary.toEntity(): PaymentReconciliationD
         bookingCreatedCount = bookingCreatedCount,
         authorizedCount = authorizedCount,
         capturedCount = capturedCount,
+        providerCapturedCount = providerCapturedCount,
+        providerRefundedCount = providerRefundedCount,
         refundPendingCount = refundPendingCount,
         refundedCount = refundedCount,
         noRefundCount = noRefundCount,
         refundFailedRetryableCount = refundFailedRetryableCount,
         refundReviewRequiredCount = refundReviewRequiredCount,
+        captureMismatchCount = captureMismatchCount,
+        refundMismatchCount = refundMismatchCount,
+        internalStatusMismatchCount = internalStatusMismatchCount,
         refreshedAtUtc = refreshedAtUtc
     )
 
@@ -50,10 +55,15 @@ private fun PaymentReconciliationDailySummaryJpaEntity.toDomain(): PaymentReconc
         bookingCreatedCount = bookingCreatedCount,
         authorizedCount = authorizedCount,
         capturedCount = capturedCount,
+        providerCapturedCount = providerCapturedCount,
+        providerRefundedCount = providerRefundedCount,
         refundPendingCount = refundPendingCount,
         refundedCount = refundedCount,
         noRefundCount = noRefundCount,
         refundFailedRetryableCount = refundFailedRetryableCount,
         refundReviewRequiredCount = refundReviewRequiredCount,
+        captureMismatchCount = captureMismatchCount,
+        refundMismatchCount = refundMismatchCount,
+        internalStatusMismatchCount = internalStatusMismatchCount,
         refreshedAtUtc = refreshedAtUtc
     )

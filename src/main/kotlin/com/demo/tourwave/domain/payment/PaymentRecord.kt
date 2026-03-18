@@ -12,6 +12,11 @@ enum class PaymentRecordStatus {
     REFUND_REVIEW_REQUIRED
 }
 
+enum class RefundRemediationAction {
+    RETRY,
+    MARK_REVIEW_REQUIRED
+}
+
 data class PaymentRecord(
     val id: Long? = null,
     val bookingId: Long,
@@ -26,6 +31,10 @@ data class PaymentRecord(
     val lastErrorCode: String? = null,
     val refundRetryCount: Int = 0,
     val lastRefundAttemptedAtUtc: Instant? = null,
+    val nextRetryAtUtc: Instant? = null,
+    val lastRemediationAction: RefundRemediationAction? = null,
+    val lastRemediatedByUserId: Long? = null,
+    val lastRemediatedAtUtc: Instant? = null,
     val lastWebhookEventId: String? = null,
     val createdAtUtc: Instant,
     val updatedAtUtc: Instant

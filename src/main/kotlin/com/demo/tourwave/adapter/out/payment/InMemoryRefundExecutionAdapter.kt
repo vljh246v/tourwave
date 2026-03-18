@@ -10,10 +10,12 @@ import com.demo.tourwave.application.payment.PaymentAuthorizationResult
 import com.demo.tourwave.application.payment.PaymentCaptureRequest
 import com.demo.tourwave.application.payment.PaymentCaptureResult
 import com.demo.tourwave.application.payment.PaymentProviderPort
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
+@Profile("!alpha & !beta & !real")
 class InMemoryRefundExecutionAdapter : RefundExecutionPort, PaymentProviderPort {
     private val scriptedResults = ConcurrentHashMap<Long, RefundExecutionResult>()
 

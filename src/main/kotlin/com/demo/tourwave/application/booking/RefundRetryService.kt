@@ -11,6 +11,7 @@ import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Duration
+import java.time.Instant
 
 data class RefundRetryJobResult(
     val scannedCount: Int,
@@ -64,6 +65,7 @@ class RefundRetryService(
                             lastErrorCode = null,
                             refundRetryCount = nextRetryCount,
                             lastRefundAttemptedAtUtc = attemptedAt,
+                            nextRetryAtUtc = null,
                             updatedAtUtc = clock.instant()
                         )
                     )
@@ -79,6 +81,7 @@ class RefundRetryService(
                             lastErrorCode = result.errorCode,
                             refundRetryCount = nextRetryCount,
                             lastRefundAttemptedAtUtc = attemptedAt,
+                            nextRetryAtUtc = null,
                             updatedAtUtc = clock.instant()
                         )
                     )
@@ -97,6 +100,7 @@ class RefundRetryService(
                             lastErrorCode = result.errorCode,
                             refundRetryCount = nextRetryCount,
                             lastRefundAttemptedAtUtc = attemptedAt,
+                            nextRetryAtUtc = nextRetryAt(attemptedAt, nextRetryCount),
                             updatedAtUtc = clock.instant()
                         )
                     )
@@ -167,6 +171,7 @@ class RefundRetryService(
                         lastErrorCode = null,
                         refundRetryCount = nextRetryCount,
                         lastRefundAttemptedAtUtc = attemptedAt,
+                        nextRetryAtUtc = null,
                         updatedAtUtc = clock.instant()
                     )
                 )
@@ -182,6 +187,7 @@ class RefundRetryService(
                         lastErrorCode = result.errorCode,
                         refundRetryCount = nextRetryCount,
                         lastRefundAttemptedAtUtc = attemptedAt,
+                        nextRetryAtUtc = null,
                         updatedAtUtc = clock.instant()
                     )
                 )
@@ -201,6 +207,7 @@ class RefundRetryService(
                         lastErrorCode = result.errorCode,
                         refundRetryCount = nextRetryCount,
                         lastRefundAttemptedAtUtc = attemptedAt,
+                        nextRetryAtUtc = nextRetryAt(attemptedAt, nextRetryCount),
                         updatedAtUtc = clock.instant()
                     )
                 )
@@ -208,6 +215,14 @@ class RefundRetryService(
             }
         }
         return updatedStatus
+    }
+
+    private fun nextRetryAt(attemptedAt: Instant, nextRetryCount: Int): Instant? {
+        return if (nextRetryCount >= maxRetryAttempts) {
+            null
+        } else {
+            attemptedAt.plus(retryCooldown)
+        }
     }
 
     private fun isEligibleForRetry(record: com.demo.tourwave.domain.payment.PaymentRecord): Boolean {

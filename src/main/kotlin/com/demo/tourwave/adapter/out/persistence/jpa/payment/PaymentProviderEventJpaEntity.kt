@@ -39,6 +39,10 @@ data class PaymentProviderEventJpaEntity(
     val payloadJson: String,
     @Column(name = "signature", length = 255)
     val signature: String? = null,
+    @Column(name = "signature_key_id", length = 64)
+    val signatureKeyId: String? = null,
+    @Column(name = "payload_sha256", nullable = false, length = 64)
+    val payloadSha256: String,
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 64)
     val status: PaymentProviderEventStatus,

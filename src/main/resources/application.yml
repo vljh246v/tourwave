@@ -18,6 +18,7 @@ tourwave:
     allow-header-auth-fallback: ${TOURWAVE_ALLOW_HEADER_AUTH_FALLBACK:false}
   payment:
     webhook-secret: ${TOURWAVE_PAYMENT_WEBHOOK_SECRET:tourwave-webhook-secret}
+    webhook-secrets: ${TOURWAVE_PAYMENT_WEBHOOK_SECRETS:}
     refund:
       max-retry-attempts: ${TOURWAVE_PAYMENT_MAX_RETRY_ATTEMPTS:5}
       retry-cooldown-seconds: ${TOURWAVE_PAYMENT_RETRY_COOLDOWN_SECONDS:600}

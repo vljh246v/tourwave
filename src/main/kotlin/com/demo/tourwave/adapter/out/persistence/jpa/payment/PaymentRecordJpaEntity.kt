@@ -1,6 +1,7 @@
 package com.demo.tourwave.adapter.out.persistence.jpa.payment
 
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
+import com.demo.tourwave.domain.payment.RefundRemediationAction
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -46,6 +47,15 @@ data class PaymentRecordJpaEntity(
     val refundRetryCount: Int = 0,
     @Column(name = "last_refund_attempted_at_utc")
     val lastRefundAttemptedAtUtc: Instant? = null,
+    @Column(name = "next_retry_at_utc")
+    val nextRetryAtUtc: Instant? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "last_remediation_action", length = 64)
+    val lastRemediationAction: RefundRemediationAction? = null,
+    @Column(name = "last_remediated_by_user_id")
+    val lastRemediatedByUserId: Long? = null,
+    @Column(name = "last_remediated_at_utc")
+    val lastRemediatedAtUtc: Instant? = null,
     @Column(name = "last_webhook_event_id", length = 128)
     val lastWebhookEventId: String? = null,
     @Column(name = "created_at_utc", nullable = false)

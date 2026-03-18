@@ -19,6 +19,7 @@ integration:
   payment:
     base-url: ${LOCAL_PAYMENT_BASE_URL:http://localhost:18080/mock-payment}
     api-key: ${LOCAL_PAYMENT_API_KEY:}
+    provider-name: ${LOCAL_PAYMENT_PROVIDER_NAME:stub-pay}
   notification:
     base-url: ${LOCAL_NOTIFICATION_BASE_URL:http://localhost:18081/mock-notification}
     api-key: ${LOCAL_NOTIFICATION_API_KEY:}

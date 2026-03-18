@@ -87,13 +87,17 @@ class PaymentControllerIntegrationTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].bookingId").value(requireNotNull(booking.id)))
+            .andExpect(jsonPath("$[0].reviewRequired").value(false))
 
         mockMvc.perform(
             post("/operator/payments/bookings/${booking.id}/refund-retry")
                 .header("X-Actor-User-Id", 999L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"action":"RETRY","reasonCode":"MANUAL_RETRY","note":"operator retry"}""")
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.recordStatus").value("REFUNDED"))
+            .andExpect(jsonPath("$.lastRemediationAction").value("RETRY"))
 
         mockMvc.perform(
             post("/operator/finance/reconciliation/daily/2026-03-17/refresh")
@@ -118,7 +122,24 @@ class PaymentControllerIntegrationTest {
                 .param("endDate", "2026-03-17")
         )
             .andExpect(status().isOk)
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("date,bookingCreatedCount")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("providerCapturedCount")))
+
+        mockMvc.perform(
+            get("/operator/finance/reconciliation/mismatches")
+                .header("X-Actor-User-Id", 999L)
+                .param("startDate", "2026-03-17")
+                .param("endDate", "2026-03-17")
+        )
+            .andExpect(status().isOk)
+
+        mockMvc.perform(
+            get("/operator/finance/reconciliation/mismatches/export")
+                .header("X-Actor-User-Id", 999L)
+                .param("startDate", "2026-03-17")
+                .param("endDate", "2026-03-17")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("mismatchType")))
     }
 
     @Test
@@ -147,7 +168,7 @@ class PaymentControllerIntegrationTest {
         )
 
         val body = """{"providerName":"stub-pay","providerEventId":"evt-int-1","eventType":"CAPTURED","bookingId":${booking.id},"providerCaptureId":"cap-int-1","providerReference":"capture-int-1","retryable":true}"""
-        val signature = paymentWebhookService.expectedSignature(body)
+        val signature = "current:${paymentWebhookService.expectedSignature(body, "current")}"
 
         mockMvc.perform(
             post("/payments/webhooks/provider")
@@ -167,5 +188,19 @@ class PaymentControllerIntegrationTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.duplicate").value(true))
+    }
+
+    @Test
+    fun `payment webhook endpoint records malformed payload`() {
+        val body = """{"providerName":"stub-pay","providerEventId":"""
+
+        mockMvc.perform(
+            post("/payments/webhooks/provider")
+                .header("X-Payment-Signature", "current:${paymentWebhookService.expectedSignature(body, "current")}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
     }
 }

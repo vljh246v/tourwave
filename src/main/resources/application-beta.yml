@@ -17,6 +17,7 @@ integration:
   payment:
     base-url: ${BETA_PAYMENT_BASE_URL}
     api-key: ${BETA_PAYMENT_API_KEY}
+    provider-name: ${BETA_PAYMENT_PROVIDER_NAME:tourwave-pay-beta}
   notification:
     base-url: ${BETA_NOTIFICATION_BASE_URL}
     api-key: ${BETA_NOTIFICATION_API_KEY}

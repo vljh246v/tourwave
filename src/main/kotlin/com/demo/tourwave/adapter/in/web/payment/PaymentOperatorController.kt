@@ -1,14 +1,17 @@
 package com.demo.tourwave.adapter.`in`.web.payment
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
+import com.demo.tourwave.application.payment.RefundRemediationCommand
 import com.demo.tourwave.application.payment.ReconciliationService
 import com.demo.tourwave.application.payment.RefundOperationsService
+import com.demo.tourwave.domain.payment.RefundRemediationAction
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -31,11 +34,16 @@ class PaymentOperatorController(
                 bookingStatus = it.bookingStatus?.name,
                 paymentStatus = it.paymentStatus?.name,
                 recordStatus = it.recordStatus.name,
+                reviewRequired = it.reviewRequired,
                 refundRetryCount = it.refundRetryCount,
+                nextRetryAtUtc = it.nextRetryAtUtc?.toString(),
                 lastRefundRequestId = it.lastRefundRequestId,
                 lastRefundReasonCode = it.lastRefundReasonCode,
                 lastErrorCode = it.lastErrorCode,
                 lastProviderReference = it.lastProviderReference,
+                lastRemediationAction = it.lastRemediationAction?.name,
+                lastRemediatedByUserId = it.lastRemediatedByUserId,
+                lastRemediatedAtUtc = it.lastRemediatedAtUtc?.toString(),
                 updatedAtUtc = it.updatedAtUtc.toString()
             )
         }
@@ -44,20 +52,34 @@ class PaymentOperatorController(
     @PostMapping("/operator/payments/bookings/{bookingId}/refund-retry")
     fun retryBookingRefund(
         @PathVariable bookingId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestBody(required = false) request: RefundRemediationRequest?
     ): RefundOpsQueueItemResponse {
-        authzGuardPort.requireActorUserId(actorUserId)
-        val item = refundOperationsService.retryBookingRefund(bookingId)
+        val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
+        val item = refundOperationsService.remediateBookingRefund(
+            bookingId = bookingId,
+            command = RefundRemediationCommand(
+                actorUserId = requiredActorUserId,
+                action = request?.action ?: RefundRemediationAction.RETRY,
+                reasonCode = request?.reasonCode,
+                note = request?.note
+            )
+        )
         return RefundOpsQueueItemResponse(
             bookingId = item.bookingId,
             bookingStatus = item.bookingStatus?.name,
             paymentStatus = item.paymentStatus?.name,
             recordStatus = item.recordStatus.name,
+            reviewRequired = item.reviewRequired,
             refundRetryCount = item.refundRetryCount,
+            nextRetryAtUtc = item.nextRetryAtUtc?.toString(),
             lastRefundRequestId = item.lastRefundRequestId,
             lastRefundReasonCode = item.lastRefundReasonCode,
             lastErrorCode = item.lastErrorCode,
             lastProviderReference = item.lastProviderReference,
+            lastRemediationAction = item.lastRemediationAction?.name,
+            lastRemediatedByUserId = item.lastRemediatedByUserId,
+            lastRemediatedAtUtc = item.lastRemediatedAtUtc?.toString(),
             updatedAtUtc = item.updatedAtUtc.toString()
         )
     }
@@ -92,6 +114,39 @@ class PaymentOperatorController(
             .contentType(MediaType.parseMediaType("text/csv"))
             .body(reconciliationService.exportDailySummariesCsv(startDate, endDate))
     }
+
+    @GetMapping("/operator/finance/reconciliation/mismatches")
+    fun listMismatches(
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
+    ): List<FinanceReconciliationMismatchResponse> {
+        authzGuardPort.requireActorUserId(actorUserId)
+        return reconciliationService.listMismatches(startDate, endDate).map {
+            FinanceReconciliationMismatchResponse(
+                mismatchType = it.mismatchType.name,
+                summaryDate = it.summaryDate.toString(),
+                bookingId = it.bookingId,
+                providerEventId = it.providerEventId,
+                bookingPaymentStatus = it.bookingPaymentStatus,
+                recordStatus = it.recordStatus,
+                providerEventType = it.providerEventType,
+                note = it.note
+            )
+        }
+    }
+
+    @GetMapping("/operator/finance/reconciliation/mismatches/export", produces = ["text/csv"])
+    fun exportMismatchesCsv(
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
+    ): ResponseEntity<String> {
+        authzGuardPort.requireActorUserId(actorUserId)
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("text/csv"))
+            .body(reconciliationService.exportMismatchesCsv(startDate, endDate))
+    }
 }
 
 data class RefundOpsQueueItemResponse(
@@ -99,11 +154,16 @@ data class RefundOpsQueueItemResponse(
     val bookingStatus: String?,
     val paymentStatus: String?,
     val recordStatus: String,
+    val reviewRequired: Boolean,
     val refundRetryCount: Int,
+    val nextRetryAtUtc: String?,
     val lastRefundRequestId: String?,
     val lastRefundReasonCode: String?,
     val lastErrorCode: String?,
     val lastProviderReference: String?,
+    val lastRemediationAction: String?,
+    val lastRemediatedByUserId: Long?,
+    val lastRemediatedAtUtc: String?,
     val updatedAtUtc: String
 )
 
@@ -112,12 +172,34 @@ data class FinanceDailySummaryResponse(
     val bookingCreatedCount: Int,
     val authorizedCount: Int,
     val capturedCount: Int,
+    val providerCapturedCount: Int,
+    val providerRefundedCount: Int,
     val refundPendingCount: Int,
     val refundedCount: Int,
     val noRefundCount: Int,
     val refundFailedRetryableCount: Int,
     val refundReviewRequiredCount: Int,
+    val captureMismatchCount: Int,
+    val refundMismatchCount: Int,
+    val internalStatusMismatchCount: Int,
     val refreshedAtUtc: String
+)
+
+data class RefundRemediationRequest(
+    val action: RefundRemediationAction = RefundRemediationAction.RETRY,
+    val reasonCode: String? = null,
+    val note: String? = null
+)
+
+data class FinanceReconciliationMismatchResponse(
+    val mismatchType: String,
+    val summaryDate: String,
+    val bookingId: Long?,
+    val providerEventId: String?,
+    val bookingPaymentStatus: String?,
+    val recordStatus: String?,
+    val providerEventType: String?,
+    val note: String?
 )
 
 private fun com.demo.tourwave.domain.payment.PaymentReconciliationDailySummary.toResponse(): FinanceDailySummaryResponse =
@@ -126,10 +208,15 @@ private fun com.demo.tourwave.domain.payment.PaymentReconciliationDailySummary.t
         bookingCreatedCount = bookingCreatedCount,
         authorizedCount = authorizedCount,
         capturedCount = capturedCount,
+        providerCapturedCount = providerCapturedCount,
+        providerRefundedCount = providerRefundedCount,
         refundPendingCount = refundPendingCount,
         refundedCount = refundedCount,
         noRefundCount = noRefundCount,
         refundFailedRetryableCount = refundFailedRetryableCount,
         refundReviewRequiredCount = refundReviewRequiredCount,
+        captureMismatchCount = captureMismatchCount,
+        refundMismatchCount = refundMismatchCount,
+        internalStatusMismatchCount = internalStatusMismatchCount,
         refreshedAtUtc = refreshedAtUtc.toString()
     )

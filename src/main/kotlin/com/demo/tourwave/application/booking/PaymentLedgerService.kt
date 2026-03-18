@@ -16,6 +16,7 @@ import com.demo.tourwave.domain.booking.RefundPolicyContext
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.payment.PaymentRecord
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
+import com.demo.tourwave.domain.payment.RefundRemediationAction
 import java.time.Clock
 import java.time.Instant
 
@@ -228,6 +229,10 @@ class PaymentLedgerService(
         errorCode: String? = null,
         refundRetryCount: Int? = null,
         refundAttemptedAtUtc: Instant? = null,
+        nextRetryAtUtc: Instant? = null,
+        remediationAction: RefundRemediationAction? = null,
+        remediatedByUserId: Long? = null,
+        remediatedAtUtc: Instant? = null,
         webhookEventId: String? = null
     ): PaymentRecord {
         val now = clock.instant()
@@ -246,6 +251,10 @@ class PaymentLedgerService(
                 lastErrorCode = errorCode,
                 refundRetryCount = refundRetryCount ?: 0,
                 lastRefundAttemptedAtUtc = refundAttemptedAtUtc,
+                nextRetryAtUtc = nextRetryAtUtc,
+                lastRemediationAction = remediationAction,
+                lastRemediatedByUserId = remediatedByUserId,
+                lastRemediatedAtUtc = remediatedAtUtc,
                 lastWebhookEventId = webhookEventId,
                 createdAtUtc = now,
                 updatedAtUtc = now
@@ -263,6 +272,10 @@ class PaymentLedgerService(
                 lastErrorCode = errorCode,
                 refundRetryCount = refundRetryCount ?: existing.refundRetryCount,
                 lastRefundAttemptedAtUtc = refundAttemptedAtUtc ?: existing.lastRefundAttemptedAtUtc,
+                nextRetryAtUtc = nextRetryAtUtc,
+                lastRemediationAction = remediationAction ?: existing.lastRemediationAction,
+                lastRemediatedByUserId = remediatedByUserId ?: existing.lastRemediatedByUserId,
+                lastRemediatedAtUtc = remediatedAtUtc ?: existing.lastRemediatedAtUtc,
                 lastWebhookEventId = webhookEventId ?: existing.lastWebhookEventId,
                 updatedAtUtc = now
             )

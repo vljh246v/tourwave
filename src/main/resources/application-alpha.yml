@@ -17,6 +17,7 @@ integration:
   payment:
     base-url: ${ALPHA_PAYMENT_BASE_URL}
     api-key: ${ALPHA_PAYMENT_API_KEY}
+    provider-name: ${ALPHA_PAYMENT_PROVIDER_NAME:tourwave-pay-alpha}
   notification:
     base-url: ${ALPHA_NOTIFICATION_BASE_URL}
     api-key: ${ALPHA_NOTIFICATION_API_KEY}
