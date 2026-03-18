@@ -48,6 +48,7 @@ data class OrganizationOperatorResponse(
     val websiteUrl: String?,
     val businessName: String?,
     val businessRegistrationNumber: String?,
+    val attachmentAssetIds: List<Long>,
     val timezone: String,
     val status: String
 )
@@ -60,6 +61,7 @@ data class OrganizationPublicResponse(
     val contactEmail: String?,
     val contactPhone: String?,
     val websiteUrl: String?,
+    val attachmentAssetIds: List<Long>,
     val timezone: String
 )
 
@@ -82,6 +84,7 @@ fun Organization.toOperatorResponse(): OrganizationOperatorResponse =
         websiteUrl = websiteUrl,
         businessName = businessName,
         businessRegistrationNumber = businessRegistrationNumber,
+        attachmentAssetIds = attachmentAssetIds,
         timezone = timezone,
         status = status.name
     )
@@ -95,6 +98,7 @@ fun Organization.toPublicResponse(): OrganizationPublicResponse =
         contactEmail = contactEmail,
         contactPhone = contactPhone,
         websiteUrl = websiteUrl,
+        attachmentAssetIds = attachmentAssetIds,
         timezone = timezone
     )
 

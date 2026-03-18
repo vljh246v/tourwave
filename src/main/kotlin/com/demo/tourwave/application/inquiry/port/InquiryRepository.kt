@@ -9,6 +9,7 @@ interface InquiryRepository {
     fun findByBookingId(bookingId: Long): Inquiry?
     fun findByCreatedByUserId(createdByUserId: Long): List<Inquiry>
     fun saveMessage(message: InquiryMessage): InquiryMessage
+    fun findMessageById(messageId: Long): InquiryMessage?
     fun findMessagesByInquiryId(inquiryId: Long): List<InquiryMessage>
     fun clear()
 }

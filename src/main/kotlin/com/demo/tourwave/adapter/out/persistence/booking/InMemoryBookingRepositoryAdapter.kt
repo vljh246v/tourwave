@@ -26,6 +26,12 @@ class InMemoryBookingRepositoryAdapter : BookingRepository {
         return bookings[bookingId]
     }
 
+    override fun findByLeaderUserId(userId: Long): List<Booking> {
+        return bookings.values
+            .filter { it.leaderUserId == userId }
+            .sortedWith(compareByDescending<Booking> { it.createdAt }.thenByDescending { it.id ?: Long.MIN_VALUE })
+    }
+
     override fun findByOccurrenceId(occurrenceId: Long): List<Booking> {
         return bookings.values
             .filter { it.occurrenceId == occurrenceId }

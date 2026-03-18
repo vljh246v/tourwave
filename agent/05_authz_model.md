@@ -211,12 +211,34 @@ Current operator endpoints:
 - `PATCH /operator/organizations/{orgId}/members/{userId}/deactivate`
 - `POST /organizations/{orgId}/memberships/accept`
 
+Current instructor/tour endpoints:
+
+- `POST /instructor-registrations`
+- `GET /organizations/{orgId}/instructor-registrations`
+- `POST /instructor-registrations/{registrationId}/approve`
+- `POST /instructor-registrations/{registrationId}/reject`
+- `GET /me/instructor-profile?organizationId={orgId}`
+- `POST /me/instructor-profile`
+- `PATCH /me/instructor-profile`
+- `GET /instructors/{instructorProfileId}`
+- `POST /organizations/{orgId}/tours`
+- `GET /organizations/{orgId}/tours`
+- `PATCH /tours/{tourId}`
+- `POST /tours/{tourId}/publish`
+- `PUT /tours/{tourId}/content`
+- `GET /tours/{tourId}/content`
+
 Authorization notes for current implementation:
 
 - org profile read for operators requires `ACTIVE` membership
 - member invitation and deactivation require `ADMIN` or `OWNER`
 - assigning `OWNER` or modifying an existing owner membership requires `OWNER`
 - operator self-deactivation is rejected
+- instructor registration apply is open to authenticated users targeting an active organization
+- instructor registration approve/reject requires org operator membership
+- me instructor profile read/write is limited to the profile owner
+- operator tour create/update/publish/content write requires org operator membership
+- public tour content is visible only after publish
 
 ---
 
@@ -536,6 +558,10 @@ Owner rule:
 - GET `/occurrences/{occurrenceId}/quote`
 - GET `/search/occurrences`
 - GET `/public/announcements`
+
+Current runtime note:
+- public catalog는 published tour와 scheduled occurrence만 노출한다.
+- search는 auth 없이 호출 가능하지만, 현재 구현 필터는 `locationText`, `dateFrom/dateTo`, `timezone`, `partySize`, `onlyAvailable`, `sort`, `cursor`, `limit` 범위다.
 
 ### ORG_ADMIN / ORG_OWNER
 - POST `/tours/{tourId}/occurrences`

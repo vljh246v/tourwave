@@ -11,9 +11,16 @@ import java.util.concurrent.ConcurrentHashMap
 @Profile("!mysql & !mysql-test")
 class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
     private val occurrences = ConcurrentHashMap<Long, Occurrence>()
+    private var sequence = 0L
+
+    override fun nextId(): Long {
+        sequence += 1
+        return sequence
+    }
 
     override fun getOrCreate(occurrenceId: Long): Occurrence {
         return occurrences.computeIfAbsent(occurrenceId) {
+            sequence = maxOf(sequence, occurrenceId)
             Occurrence(
                 id = occurrenceId,
                 organizationId = 1L,
@@ -23,13 +30,26 @@ class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
         }
     }
 
+    override fun findById(occurrenceId: Long): Occurrence? = occurrences[occurrenceId]
+
+    override fun findByTourId(tourId: Long): List<Occurrence> =
+        occurrences.values
+            .filter { it.tourId == tourId }
+            .sortedWith(compareBy<Occurrence> { it.startsAtUtc ?: java.time.Instant.MAX }.thenBy { it.id })
+
+    override fun findAll(): List<Occurrence> =
+        occurrences.values.sortedBy { it.id }
+
     override fun lock(occurrenceId: Long): Occurrence = getOrCreate(occurrenceId)
 
     override fun save(occurrence: Occurrence) {
-        occurrences[occurrence.id] = occurrence
+        val occurrenceId = occurrence.id
+        sequence = maxOf(sequence, occurrenceId)
+        occurrences[occurrenceId] = occurrence.copy(id = occurrenceId)
     }
 
     override fun clear() {
+        sequence = 0L
         occurrences.clear()
     }
 }

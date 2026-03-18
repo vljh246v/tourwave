@@ -35,6 +35,12 @@ class InMemoryBookingParticipantRepositoryAdapter : BookingParticipantRepository
         return participants.values.firstOrNull { it.bookingId == bookingId && it.userId == userId }
     }
 
+    override fun findByUserId(userId: Long): List<BookingParticipant> {
+        return participants.values
+            .filter { it.userId == userId }
+            .sortedWith(compareByDescending<BookingParticipant> { it.createdAt }.thenByDescending { it.id ?: Long.MIN_VALUE })
+    }
+
     override fun findByStatus(status: BookingParticipantStatus): List<BookingParticipant> {
         return participants.values
             .filter { it.status == status }

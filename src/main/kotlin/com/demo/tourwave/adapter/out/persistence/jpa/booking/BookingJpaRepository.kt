@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param
 import java.time.Instant
 
 interface BookingJpaRepository : JpaRepository<BookingJpaEntity, Long> {
+    fun findByLeaderUserIdOrderByCreatedAtDescIdDesc(leaderUserId: Long): List<BookingJpaEntity>
     fun findByOccurrenceId(occurrenceId: Long): List<BookingJpaEntity>
     fun findByOccurrenceIdAndStatusIn(occurrenceId: Long, statuses: Collection<BookingStatus>): List<BookingJpaEntity>
 

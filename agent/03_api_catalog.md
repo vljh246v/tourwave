@@ -103,6 +103,7 @@
 ---
 
 ## Instructor profile
+- GET /me/instructor-profile?organizationId={orgId} (auth, current runtime shape)
 - POST /me/instructor-profile (auth)
 - PATCH /me/instructor-profile (auth)
 - GET /instructors/{instructorProfileId} (public)
@@ -134,9 +135,10 @@ Content:
 - PUT /tours/{tourId}/content (ORG_ADMIN/OWNER)
 
 Assets:
-- POST /tours/{tourId}/assets (ORG_ADMIN/OWNER)
-- PATCH /tours/{tourId}/assets/reorder (ORG_ADMIN/OWNER)
-- DELETE /tours/{tourId}/assets/{tourAssetId} (ORG_ADMIN/OWNER)
+- POST /assets/uploads (auth)
+- POST /assets/{assetId}/complete (auth)
+- PUT /operator/organizations/{orgId}/assets (ORG_ADMIN/OWNER)
+- PUT /tours/{tourId}/assets (ORG_ADMIN/OWNER)
 
 ---
 
@@ -157,10 +159,18 @@ Availability/Quote:
 - GET /occurrences/{occurrenceId}/availability
 - GET /occurrences/{occurrenceId}/quote
 
+Current runtime note:
+- Sprint 11 current runtime supports `locationText`, `meetingPoint`, `unitPrice`, and `currency` on occurrences.
+- Current public search supports `locationText`, `dateFrom`, `dateTo`, `timezone`, `partySize`, `onlyAvailable`, `sort`, `cursor`, `limit`.
+- Sprint 12 current runtime supports asset upload/complete plus organization/tour attachment replacement by ordered `assetIds`.
+- Sprint 12 current runtime supports `GET /me/bookings`, calendar ICS export, favorites, and notifications read model APIs.
+
 ---
 
 ## Search
 - GET /search/occurrences (public)
+- POST /tours/{tourId}/favorite (auth)
+- DELETE /tours/{tourId}/favorite (auth)
 
 ---
 
@@ -191,6 +201,7 @@ User actions:
 Additional:
 - GET /bookings/{bookingId}/explain (participant or operator)
 - GET /bookings/{bookingId}/calendar.ics (accepted participant or leader)
+- GET /occurrences/{occurrenceId}/calendar.ics (public if published + scheduled)
 
 Waitlist (operator):
 - GET /occurrences/{occurrenceId}/waitlist (ORG_ADMIN/OWNER)
@@ -233,14 +244,6 @@ Operator/private:
 - GET /reviews/{reviewId}
 - GET /organizations/{orgId}/reviews
 - POST /moderation/content/reviews/{reviewId}/hide
-
----
-
-## Assets
-- POST /assets/upload-url
-- POST /assets/complete
-- GET  /assets/{assetId}
-- DELETE /assets/{assetId}
 
 ---
 

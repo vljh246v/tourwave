@@ -47,6 +47,12 @@ class InMemoryInquiryRepositoryAdapter : InquiryRepository {
         return saved
     }
 
+    override fun findMessageById(messageId: Long): InquiryMessage? {
+        return messagesByInquiry.values.asSequence()
+            .flatMap { it.asSequence() }
+            .firstOrNull { it.id == messageId }
+    }
+
     override fun findMessagesByInquiryId(inquiryId: Long): List<InquiryMessage> {
         return messagesByInquiry[inquiryId]
             ?.sortedBy { it.id }

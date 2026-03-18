@@ -47,6 +47,10 @@ class OrganizationAccessGuard(
         return membership
     }
 
+    fun requireAdmin(actorUserId: Long, organizationId: Long): OrganizationMembership {
+        return requireOperator(actorUserId, organizationId)
+    }
+
     private fun forbidden(message: String): DomainException {
         return DomainException(
             errorCode = ErrorCode.FORBIDDEN,

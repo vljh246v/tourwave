@@ -73,6 +73,55 @@
 - `GET /organizations/{organizationId}`
 - `POST /organizations/{organizationId}/memberships/accept`
 
+### Instructor
+
+- `POST /instructor-registrations`
+- `GET /organizations/{organizationId}/instructor-registrations`
+- `POST /instructor-registrations/{registrationId}/approve`
+- `POST /instructor-registrations/{registrationId}/reject`
+- `GET /me/instructor-profile?organizationId=...`
+- `POST /me/instructor-profile`
+- `PATCH /me/instructor-profile`
+- `GET /instructors/{instructorProfileId}`
+
+### Tour Authoring
+
+- `POST /organizations/{organizationId}/tours`
+- `GET /organizations/{organizationId}/tours`
+- `PATCH /tours/{tourId}`
+- `POST /tours/{tourId}/publish`
+- `PUT /tours/{tourId}/content`
+- `POST /tours/{tourId}/occurrences`
+- `PATCH /occurrences/{occurrenceId}`
+- `POST /occurrences/{occurrenceId}/reschedule`
+- `PUT /operator/organizations/{organizationId}/assets`
+- `PUT /tours/{tourId}/assets`
+
+### Public Catalog / Search
+
+- `GET /tours`
+- `GET /tours/{tourId}`
+- `GET /tours/{tourId}/content`
+- `GET /tours/{tourId}/occurrences`
+- `GET /occurrences/{occurrenceId}`
+- `GET /occurrences/{occurrenceId}/availability`
+- `GET /occurrences/{occurrenceId}/quote`
+- `GET /search/occurrences`
+- `GET /occurrences/{occurrenceId}/calendar.ics`
+
+### Assets / Customer Surface
+
+- `POST /assets/uploads`
+- `POST /assets/{assetId}/complete`
+- `GET /me/bookings`
+- `GET /bookings/{bookingId}/calendar.ics`
+- `POST /tours/{tourId}/favorite`
+- `DELETE /tours/{tourId}/favorite`
+- `GET /me/favorites`
+- `GET /me/notifications`
+- `POST /me/notifications/{notificationId}/read`
+- `POST /me/notifications/read-all`
+
 ### Runtime / Worker
 
 - offer expiration job
@@ -91,18 +140,23 @@
 - `real` 런타임에서는 header fallback 없이 Bearer JWT가 필요하다.
 - `/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.
 - organization operator API는 `/operator/organizations/...` 네임스페이스를 사용하고, 공개 조회는 `/organizations/{organizationId}`에 분리되어 있다.
+- instructor registration 승인 시 instructor profile이 자동 생성되며, 이후 `me` profile API로 수정한다.
+- 현재 instructor `me` 조회는 단일 path를 유지하기 위해 `organizationId` query parameter를 사용한다.
+- public catalog는 published tour + scheduled occurrence만 노출한다.
+- occurrence create/update는 가격 변경 없이 authoring 필드만 수정하고, reschedule은 시간/장소 변경 전용 path로 분리되어 있다.
+- search는 현재 `locationText`, `dateFrom/dateTo`, `timezone`, `partySize`, `onlyAvailable`, `sort`, `cursor`, `limit`를 지원한다.
+- quote 응답은 가격 계산과 함께 현재 환불 설명 문자열 및 full refund deadline을 포함한다.
+- asset upload는 fake storage URL issuance를 사용하고, `READY` 상태 asset만 organization/tour에 ordered attach할 수 있다.
+- `GET /me/bookings`는 leader booking과 accepted participant booking을 함께 보여준다.
+- booking calendar export는 participant access policy를 그대로 따르고, occurrence calendar export는 published + scheduled occurrence에 한해 공개된다.
+- favorites는 published tour만 허용한다.
+- notifications는 booking/inquiry/refund 관련 audit event에서 read model로 축적되고, `read`/`read-all` API를 지원한다.
 
 ## 3. Not Implemented Yet But Needed For Product
 
 다음 항목은 제품 비전에는 포함되지만 현재 코드에는 아직 없다.
 
-- `GET /me/bookings`, `GET /me/favorites`, `GET /me/notifications`
-- instructor registration/profile API 전반
-- operator tour/occurrence authoring API 전반
-- public tour/catalog/search/availability/quote API
-- assets upload / complete / attach 흐름 전체
 - `tourId` / `instructorProfileId` / `organizationId` 기반 공개 review summary
-- calendar export
 - favorites / announcements / report export
 - external payment callback/webhook intake
 
@@ -117,5 +171,7 @@
 
 - [DocumentationBaselineTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/agent/DocumentationBaselineTest.kt)
 - [BookingControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/domain/booking/application/BookingControllerIntegrationTest.kt)
+- [OccurrenceCatalogControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/topology/OccurrenceCatalogControllerIntegrationTest.kt)
+- [CustomerControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/customer/CustomerControllerIntegrationTest.kt)
 - [MysqlPersistenceIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/MysqlPersistenceIntegrationTest.kt)
 - [MysqlBookingConcurrencyTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/MysqlBookingConcurrencyTest.kt)

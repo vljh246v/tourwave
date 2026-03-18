@@ -31,9 +31,23 @@ data class OccurrenceJpaEntity(
     val capacity: Int,
     @Column(name = "starts_at_utc")
     val startsAtUtc: Instant? = null,
+    @Column(name = "end_at_utc")
+    val endsAtUtc: Instant? = null,
     @Column(nullable = false, length = 64)
     val timezone: String = "UTC",
+    @Column(name = "unit_price", nullable = false)
+    val unitPrice: Int = 0,
+    @Column(nullable = false, length = 3)
+    val currency: String = "KRW",
+    @Column(name = "location_text", length = 255)
+    val locationText: String? = null,
+    @Column(name = "meeting_point", length = 500)
+    val meetingPoint: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    val status: OccurrenceStatus = OccurrenceStatus.SCHEDULED
+    val status: OccurrenceStatus = OccurrenceStatus.SCHEDULED,
+    @Column(name = "created_at", nullable = false)
+    val createdAt: Instant = Instant.EPOCH,
+    @Column(name = "updated_at", nullable = false)
+    val updatedAt: Instant = Instant.EPOCH
 )

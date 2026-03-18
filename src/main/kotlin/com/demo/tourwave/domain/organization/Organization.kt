@@ -13,6 +13,7 @@ data class Organization(
     val websiteUrl: String? = null,
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
+    val attachmentAssetIds: List<Long> = emptyList(),
     val timezone: String,
     val status: OrganizationStatus = OrganizationStatus.ACTIVE,
     val createdAt: Instant,
@@ -40,6 +41,13 @@ data class Organization(
             businessName = businessName,
             businessRegistrationNumber = businessRegistrationNumber,
             timezone = timezone,
+            updatedAt = now
+        )
+    }
+
+    fun updateAttachments(assetIds: List<Long>, now: Instant): Organization {
+        return copy(
+            attachmentAssetIds = assetIds,
             updatedAt = now
         )
     }

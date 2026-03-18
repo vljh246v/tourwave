@@ -39,6 +39,8 @@ data class OrganizationJpaEntity(
     val businessName: String? = null,
     @Column(name = "business_registration_number")
     val businessRegistrationNumber: String? = null,
+    @Column(name = "attachment_asset_ids_json", columnDefinition = "TEXT", nullable = false)
+    val attachmentAssetIdsJson: String,
     @Column(nullable = false)
     val timezone: String,
     @Enumerated(EnumType.STRING)

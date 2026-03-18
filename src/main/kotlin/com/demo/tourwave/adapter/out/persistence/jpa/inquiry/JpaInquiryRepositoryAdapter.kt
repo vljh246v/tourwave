@@ -24,6 +24,9 @@ class JpaInquiryRepositoryAdapter(
     override fun saveMessage(message: InquiryMessage): InquiryMessage =
         inquiryMessageJpaRepository.save(message.toEntity()).toDomain()
 
+    override fun findMessageById(messageId: Long): InquiryMessage? =
+        inquiryMessageJpaRepository.findById(messageId).orElse(null)?.toDomain()
+
     override fun findMessagesByInquiryId(inquiryId: Long): List<InquiryMessage> =
         inquiryMessageJpaRepository.findByInquiryIdOrderByIdAsc(inquiryId).map { it.toDomain() }
 

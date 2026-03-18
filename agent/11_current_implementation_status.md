@@ -4,7 +4,7 @@
 
 ## 1. What Exists Today
 
-현재 저장소는 예약 핵심 엔진, 계정 인증, 그리고 organization 운영 기초가 구현된 상태다. 비즈니스적으로는 "투어 authoring과 외부 결제가 빠진 예약 플랫폼 코어 + 운영 조직 관리 기초"로 보는 것이 정확하다.
+현재 저장소는 예약 핵심 엔진, 계정 인증, organization 운영 기초, instructor/tour authoring, occurrence public catalog/search, 그리고 customer-facing asset/favorite/notification surface가 구현된 상태다. 비즈니스적으로는 "판매 가능한 catalog와 기본 customer self-service까지 올라온 예약 플랫폼 코어, 다만 외부 결제/운영 인프라 hardening이 남은 상태"로 보는 것이 정확하다.
 
 ### Product Grade Areas Already Implemented
 
@@ -43,8 +43,18 @@
 - role enum / organization scoped access checks
 - organization persistence and operator/public profile split
 - organization membership invite / accept / role change / deactivate
+- instructor registration apply / approve / reject workflow
+- instructor profile public/operator split
+- operator tour CRUD / publish / structured content persistence
+- operator occurrence create / update / reschedule
+- public tours / public occurrences / availability / quote / search
 - `/me` membership projection
-- minimal tour / instructor topology
+- public tour content query
+- asset upload / complete / attach workflow
+- `GET /me/bookings`
+- booking / occurrence calendar export
+- favorites add / remove / list
+- notifications read model / read / read-all
 
 ### Worker / Ops
 
@@ -70,12 +80,7 @@
 ### Product Surface Missing
 
 - email verification / password reset
-- me notification / favorite flow
-- instructor registration/profile management full flow
-- tour/occurrence authoring and publish/search APIs
-- assets upload/complete/attach flow
 - announcements / moderation / report APIs
-- calendar export
 - public review summary by tour / instructor / organization
 - external payment webhook / callback
 
@@ -94,7 +99,7 @@
 - 실행 진입점은 API와 worker로 분리되어 있다.
 - `mysql-test`는 현재 환경에서 H2 MySQL compatibility mode로 테스트된다.
 - 인증은 JWT access token 기준이며, local/test 런타임만 request header fallback을 허용한다.
-- organization은 persistence와 operator/public API가 올라왔지만, 투어/강사 authoring은 아직 얇다.
+- organization, instructor, tour, occurrence까지 운영자 authoring이 가능하고, public catalog/search 및 customer self-service 일부가 구현됐다.
 
 ## 4. Current Code Structure Snapshot
 
@@ -120,7 +125,7 @@
 - auth/account 영역은 아직 제품 표면 대비 비어 있다.
 - true MySQL container 검증은 CI나 Docker 가능한 환경에서 다시 붙여야 한다.
 - 외부 결제 승인/취소 이벤트를 수신하는 경로가 아직 없다.
-- 조직/투어/강사 authoring이 없어 운영자가 실제 상품을 만들 수 없다.
+- 운영자가 organization, instructor, tour, occurrence와 attachment까지 다룰 수 있고 고객은 booking/favorite/notification까지 self-service 가능하지만, 외부 payment integration과 운영 observability가 없어 아직 완전한 판매 제품은 아니다.
 - organization membership는 구현됐지만 초대 이메일 전달과 조직 전환 UX는 아직 없다.
 
 ## 6. If A New Agent Starts Today
