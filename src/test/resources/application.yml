@@ -3,6 +3,8 @@ spring:
     default: local
 
 tourwave:
+  app:
+    base-url: http://localhost:3000
   idempotency:
     ttl-seconds: 86400
   auth:
@@ -20,6 +22,22 @@ tourwave:
       owner-id:
       lease-seconds: 120
       stale-after-seconds: 300
+  organization:
+    invitation-token-ttl-seconds: 604800
+
+integration:
+  notification:
+    base-url: http://localhost:18081/mock-notification
+    api-key:
+    sender-email: no-reply@tourwave.test
+    sender-name: Tourwave Test
+  asset:
+    base-url: http://localhost:18082/mock-asset
+    public-base-url: http://localhost:18082/mock-asset/public
+    bucket: tourwave-test
+    access-key: test-access
+    secret-key: test-secret
+    presign-ttl-seconds: 900
 
 management:
   endpoints:

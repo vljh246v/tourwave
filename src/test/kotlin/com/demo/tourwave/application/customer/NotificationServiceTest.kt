@@ -1,9 +1,12 @@
 package com.demo.tourwave.application.customer
 
 import com.demo.tourwave.adapter.out.persistence.booking.InMemoryBookingRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
+import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.inquiry.InMemoryInquiryRepositoryAdapter
 import com.demo.tourwave.application.common.port.AuditEventCommand
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
@@ -11,6 +14,8 @@ import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.inquiry.Inquiry
+import com.demo.tourwave.support.FakeUserRepository
+import com.demo.tourwave.domain.user.User
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
@@ -20,8 +25,10 @@ import kotlin.test.assertNotNull
 
 class NotificationServiceTest {
     private val notificationRepository: NotificationRepository = InMemoryNotificationRepositoryAdapter()
+    private val notificationDeliveryRepository: NotificationDeliveryRepository = InMemoryNotificationDeliveryRepositoryAdapter()
     private val bookingRepository: BookingRepository = InMemoryBookingRepositoryAdapter()
     private val inquiryRepository = InMemoryInquiryRepositoryAdapter()
+    private val userRepository = FakeUserRepository()
     private val paymentRecordRepository = object : PaymentRecordRepository {
         override fun save(record: com.demo.tourwave.domain.payment.PaymentRecord) = record
         override fun findByBookingId(bookingId: Long) = null
@@ -32,14 +39,29 @@ class NotificationServiceTest {
     }
     private val service = NotificationService(
         notificationRepository = notificationRepository,
+        notificationDeliveryService = NotificationDeliveryService(
+            notificationDeliveryRepository = notificationDeliveryRepository,
+            notificationChannelPort = FakeEmailNotificationChannelAdapter(),
+            clock = Clock.fixed(Instant.parse("2026-03-18T10:00:00Z"), ZoneOffset.UTC)
+        ),
         bookingRepository = bookingRepository,
         inquiryRepository = inquiryRepository,
         paymentRecordRepository = paymentRecordRepository,
+        userRepository = userRepository,
+        notificationTemplateFactory = NotificationTemplateFactory(),
         clock = Clock.fixed(Instant.parse("2026-03-18T10:00:00Z"), ZoneOffset.UTC)
     )
 
     @Test
     fun `booking and inquiry audit events accumulate notifications and can be marked read`() {
+        userRepository.save(
+            User.create(
+                displayName = "Customer",
+                email = "customer@test.com",
+                passwordHash = "hash",
+                now = Instant.parse("2026-03-18T00:00:00Z")
+            ).copy(id = 100L)
+        )
         val booking = bookingRepository.save(
             Booking(
                 occurrenceId = 30L,
@@ -87,5 +109,7 @@ class NotificationServiceTest {
         assertEquals(2, notifications.size)
         assertNotNull(marked.readAt)
         assertEquals(2, service.markAllRead(100L).size)
+        assertEquals(2, notificationDeliveryRepository.findAll().size)
+        assertEquals("SENT", notificationDeliveryRepository.findAll().first().status.name)
     }
 }

@@ -164,11 +164,12 @@
 - occurrence create/update는 가격 변경 없이 authoring 필드만 수정하고, reschedule은 시간/장소 변경 전용 path로 분리되어 있다.
 - search는 현재 `locationText`, `dateFrom/dateTo`, `timezone`, `partySize`, `onlyAvailable`, `sort`, `cursor`, `limit`를 지원한다.
 - quote 응답은 가격 계산과 함께 현재 환불 설명 문자열 및 full refund deadline을 포함한다.
-- asset upload는 fake storage URL issuance를 사용하고, `READY` 상태 asset만 organization/tour에 ordered attach할 수 있다.
+- asset upload는 local/test에서 fake storage URL issuance를 유지하고, alpha/beta/real profile에서는 presigned upload URL issuance + complete 시 HEAD metadata verification을 수행한다. `READY` 상태 asset만 organization/tour에 ordered attach할 수 있다.
 - `GET /me/bookings`는 leader booking과 accepted participant booking을 함께 보여준다.
 - booking calendar export는 participant access policy를 그대로 따르고, occurrence calendar export는 published + scheduled occurrence에 한해 공개된다.
 - favorites는 published tour만 허용한다.
-- notifications는 booking/inquiry/refund 관련 audit event에서 read model로 축적되고, `read`/`read-all` API를 지원한다.
+- notifications는 booking/inquiry/refund 관련 audit event에서 read model로 축적되고, `read`/`read-all` API를 지원한다. 동시에 email delivery log를 outbound channel로 분리해 retryable/non-retryable failure를 기록한다.
+- organization membership invitation은 초대 시 email delivery를 만들고, accept API는 authenticated user 기준에 더해 optional invitation token payload를 받아 link 기반 UX를 지원한다.
 - payment webhook intake는 `X-Payment-Signature` HMAC 검증을 수행하고, `providerEventId` 기준 replay-safe 처리로 중복 이벤트를 무시한다.
 - refund ops queue는 `REFUND_PENDING`, `REFUND_FAILED_RETRYABLE`, `REFUND_REVIEW_REQUIRED` 상태를 운영자가 조회하고 booking 단위 manual retry를 수행할 수 있다.
 - reconciliation daily summary는 booking 생성 건수와 payment ledger status 업데이트 건수를 일자별로 저장하고 JSON/CSV 조회를 지원한다.
@@ -185,8 +186,6 @@
 - announcements API
 - moderation API
 - organization report APIs beyond finance reconciliation export
-- external notification delivery webhook/provider integration
-- real asset storage signed upload integration
 - real payment provider authorize/capture/refund adapter
 
 ## 4. API Contract Handling Rule

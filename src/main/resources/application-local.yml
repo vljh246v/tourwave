@@ -10,6 +10,8 @@ spring:
 tourwave:
   environment: local
   runtime-mode: local-system
+  app:
+    base-url: ${LOCAL_APP_BASE_URL:http://localhost:3000}
   auth:
     allow-header-auth-fallback: true
 
@@ -20,6 +22,12 @@ integration:
   notification:
     base-url: ${LOCAL_NOTIFICATION_BASE_URL:http://localhost:18081/mock-notification}
     api-key: ${LOCAL_NOTIFICATION_API_KEY:}
+    sender-email: ${LOCAL_NOTIFICATION_SENDER_EMAIL:no-reply@tourwave.local}
+    sender-name: ${LOCAL_NOTIFICATION_SENDER_NAME:Tourwave Local}
   asset:
     base-url: ${LOCAL_ASSET_BASE_URL:http://localhost:18082/mock-asset}
-    access-token: ${LOCAL_ASSET_ACCESS_TOKEN:}
+    public-base-url: ${LOCAL_ASSET_PUBLIC_BASE_URL:http://localhost:18082/mock-asset/public}
+    bucket: ${LOCAL_ASSET_BUCKET:tourwave-local}
+    access-key: ${LOCAL_ASSET_ACCESS_KEY:local-access}
+    secret-key: ${LOCAL_ASSET_SECRET_KEY:local-secret}
+    presign-ttl-seconds: ${LOCAL_ASSET_PRESIGN_TTL_SECONDS:900}

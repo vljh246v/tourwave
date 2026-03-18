@@ -33,6 +33,10 @@ data class InviteOrganizationMemberWebRequest(
     val role: String
 )
 
+data class AcceptOrganizationInvitationWebRequest(
+    val token: String? = null
+)
+
 data class UpdateOrganizationMemberRoleWebRequest(
     val role: String
 )

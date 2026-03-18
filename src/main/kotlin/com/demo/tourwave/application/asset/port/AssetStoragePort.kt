@@ -6,6 +6,20 @@ data class AssetUploadDescriptor(
     val publicUrl: String
 )
 
+data class AssetUploadVerificationRequest(
+    val storageKey: String,
+    val expectedContentType: String,
+    val reportedSizeBytes: Long?,
+    val reportedChecksumSha256: String?
+)
+
+data class StoredAssetMetadata(
+    val publicUrl: String,
+    val contentType: String,
+    val sizeBytes: Long,
+    val checksumSha256: String? = null
+)
+
 interface AssetStoragePort {
     fun issueUpload(
         ownerUserId: Long,
@@ -13,4 +27,6 @@ interface AssetStoragePort {
         fileName: String,
         contentType: String
     ): AssetUploadDescriptor
+
+    fun verifyUpload(request: AssetUploadVerificationRequest): StoredAssetMetadata
 }

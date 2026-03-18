@@ -13,6 +13,7 @@ class OrganizationMembershipService(
     private val membershipRepository: OrganizationMembershipRepository,
     private val userRepository: UserRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
+    private val organizationInvitationDeliveryService: OrganizationInvitationDeliveryService,
     private val clock: Clock
 ) {
     fun invite(command: InviteOrganizationMemberCommand): OrganizationMembership {
@@ -47,10 +48,15 @@ class OrganizationMembershipService(
                 message = "organization membership already active"
             )
         }
-        return membershipRepository.save(saved)
+        return membershipRepository.save(saved).also {
+            organizationInvitationDeliveryService.sendInvitation(it)
+        }
     }
 
     fun acceptInvitation(command: AcceptOrganizationInvitationCommand): OrganizationMembership {
+        command.token?.trim()?.takeIf { it.isNotBlank() }?.let {
+            organizationInvitationDeliveryService.consumeInvitationToken(command.actorUserId, it)
+        }
         val membership = membershipRepository.findByOrganizationIdAndUserId(command.organizationId, command.actorUserId)
             ?: throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,

@@ -5,6 +5,13 @@ import com.demo.tourwave.adapter.out.persistence.topology.InMemoryInstructorRegi
 import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
+import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
+import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.application.auth.ActionTokenGenerator
+import com.demo.tourwave.application.auth.UserActionTokenService
+import com.demo.tourwave.application.customer.NotificationDeliveryService
+import com.demo.tourwave.application.customer.NotificationTemplateFactory
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.instructor.InstructorRegistrationStatus
 import com.demo.tourwave.domain.organization.OrganizationRole
@@ -25,6 +32,24 @@ class InstructorRegistrationServiceTest {
     private val instructorProfileRepository = InMemoryInstructorProfileRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
+    private val invitationDeliveryService = OrganizationInvitationDeliveryService(
+        userRepository = userRepository,
+        organizationRepository = organizationRepository,
+        userActionTokenService = UserActionTokenService(
+            userActionTokenRepository = InMemoryUserActionTokenRepositoryAdapter(),
+            actionTokenGenerator = ActionTokenGenerator { "org-invite-token" },
+            clock = clock
+        ),
+        notificationDeliveryService = NotificationDeliveryService(
+            notificationDeliveryRepository = InMemoryNotificationDeliveryRepositoryAdapter(),
+            notificationChannelPort = FakeEmailNotificationChannelAdapter(),
+            clock = clock
+        ),
+        notificationTemplateFactory = NotificationTemplateFactory(),
+        appBaseUrl = "https://app.test",
+        invitationTokenTtl = java.time.Duration.ofDays(7),
+        clock = clock
+    )
     private val organizationCommandService = OrganizationCommandService(
         organizationRepository = organizationRepository,
         membershipRepository = membershipRepository,
@@ -36,6 +61,7 @@ class InstructorRegistrationServiceTest {
         membershipRepository = membershipRepository,
         userRepository = userRepository,
         organizationAccessGuard = accessGuard,
+        organizationInvitationDeliveryService = invitationDeliveryService,
         clock = clock
     )
     private val registrationService = InstructorRegistrationService(

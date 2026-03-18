@@ -2,6 +2,7 @@ package com.demo.tourwave.application.asset
 
 import com.demo.tourwave.application.asset.port.AssetRepository
 import com.demo.tourwave.application.asset.port.AssetStoragePort
+import com.demo.tourwave.application.asset.port.AssetUploadVerificationRequest
 import com.demo.tourwave.application.topology.OrganizationAccessGuard
 import com.demo.tourwave.application.topology.port.OrganizationRepository
 import com.demo.tourwave.application.topology.port.TourRepository
@@ -76,17 +77,29 @@ class AssetCommandService(
         if (asset.ownerUserId != command.actorUserId) {
             throw forbidden("asset ${command.assetId} is not owned by actor")
         }
-        val upload = assetStoragePort.issueUpload(
-            ownerUserId = asset.ownerUserId,
-            assetIdHint = requireNotNull(asset.id),
-            fileName = asset.fileName,
-            contentType = asset.contentType
+        val normalizedChecksum = normalizeChecksum(command.checksumSha256)
+        val storedMetadata = assetStoragePort.verifyUpload(
+            AssetUploadVerificationRequest(
+                storageKey = asset.storageKey,
+                expectedContentType = asset.contentType,
+                reportedSizeBytes = command.sizeBytes,
+                reportedChecksumSha256 = normalizedChecksum
+            )
         )
+        if (storedMetadata.contentType != asset.contentType) {
+            throw validation("uploaded asset content type does not match requested content type")
+        }
+        if (command.sizeBytes != null && storedMetadata.sizeBytes != command.sizeBytes) {
+            throw validation("uploaded asset size does not match completion payload")
+        }
+        if (normalizedChecksum != null && storedMetadata.checksumSha256 != null && storedMetadata.checksumSha256 != normalizedChecksum) {
+            throw validation("uploaded asset checksum does not match completion payload")
+        }
         return assetRepository.save(
             asset.complete(
-                publicUrl = upload.publicUrl,
-                sizeBytes = command.sizeBytes,
-                checksumSha256 = normalizeChecksum(command.checksumSha256),
+                publicUrl = storedMetadata.publicUrl,
+                sizeBytes = storedMetadata.sizeBytes,
+                checksumSha256 = storedMetadata.checksumSha256 ?: normalizedChecksum,
                 now = clock.instant()
             )
         )

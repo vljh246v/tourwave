@@ -10,6 +10,8 @@ spring:
 tourwave:
   environment: real
   runtime-mode: production
+  app:
+    base-url: ${REAL_APP_BASE_URL}
   auth:
     jwt-secret: ${TOURWAVE_JWT_SECRET:tourwave-real-secret-change-me}
     allow-header-auth-fallback: false
@@ -21,6 +23,12 @@ integration:
   notification:
     base-url: ${REAL_NOTIFICATION_BASE_URL}
     api-key: ${REAL_NOTIFICATION_API_KEY}
+    sender-email: ${REAL_NOTIFICATION_SENDER_EMAIL}
+    sender-name: ${REAL_NOTIFICATION_SENDER_NAME:Tourwave}
   asset:
     base-url: ${REAL_ASSET_BASE_URL}
-    access-token: ${REAL_ASSET_ACCESS_TOKEN}
+    public-base-url: ${REAL_ASSET_PUBLIC_BASE_URL}
+    bucket: ${REAL_ASSET_BUCKET}
+    access-key: ${REAL_ASSET_ACCESS_KEY}
+    secret-key: ${REAL_ASSET_SECRET_KEY}
+    presign-ttl-seconds: ${REAL_ASSET_PRESIGN_TTL_SECONDS:900}

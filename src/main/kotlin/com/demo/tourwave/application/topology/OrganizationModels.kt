@@ -39,7 +39,8 @@ data class InviteOrganizationMemberCommand(
 
 data class AcceptOrganizationInvitationCommand(
     val actorUserId: Long,
-    val organizationId: Long
+    val organizationId: Long,
+    val token: String? = null
 )
 
 data class ChangeOrganizationMemberRoleCommand(

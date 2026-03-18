@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
@@ -29,14 +30,16 @@ class OrganizationPublicController(
     @PostMapping("/organizations/{organizationId}/memberships/accept")
     fun acceptInvitation(
         @PathVariable organizationId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestBody(required = false) request: AcceptOrganizationInvitationWebRequest?
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
             organizationMembershipService.acceptInvitation(
                 AcceptOrganizationInvitationCommand(
                     actorUserId = actorUserIdRequired,
-                    organizationId = organizationId
+                    organizationId = organizationId,
+                    token = request?.token
                 )
             ).toResponse()
         )

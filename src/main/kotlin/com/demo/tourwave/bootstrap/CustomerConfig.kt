@@ -8,7 +8,11 @@ import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.customer.CustomerBookingQueryService
 import com.demo.tourwave.application.customer.FavoriteService
+import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationService
+import com.demo.tourwave.application.customer.NotificationTemplateFactory
+import com.demo.tourwave.application.customer.port.NotificationChannelPort
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.customer.port.FavoriteRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
@@ -82,16 +86,40 @@ class CustomerConfig {
     @Bean
     fun notificationService(
         notificationRepository: NotificationRepository,
+        notificationDeliveryService: NotificationDeliveryService,
         bookingRepository: BookingRepository,
         inquiryRepository: InquiryRepository,
         paymentRecordRepository: PaymentRecordRepository,
+        userRepository: UserRepository,
+        notificationTemplateFactory: NotificationTemplateFactory,
         clock: Clock
     ): NotificationService {
         return NotificationService(
             notificationRepository = notificationRepository,
+            notificationDeliveryService = notificationDeliveryService,
             bookingRepository = bookingRepository,
             inquiryRepository = inquiryRepository,
             paymentRecordRepository = paymentRecordRepository,
+            userRepository = userRepository,
+            notificationTemplateFactory = notificationTemplateFactory,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun notificationTemplateFactory(): NotificationTemplateFactory {
+        return NotificationTemplateFactory()
+    }
+
+    @Bean
+    fun notificationDeliveryService(
+        notificationDeliveryRepository: NotificationDeliveryRepository,
+        notificationChannelPort: NotificationChannelPort,
+        clock: Clock
+    ): NotificationDeliveryService {
+        return NotificationDeliveryService(
+            notificationDeliveryRepository = notificationDeliveryRepository,
+            notificationChannelPort = notificationChannelPort,
             clock = clock
         )
     }

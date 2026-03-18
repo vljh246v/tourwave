@@ -143,10 +143,10 @@
 - `SecurityConfig`는 현재 `anyRequest().permitAll()` 구성이므로 perimeter security hardening이 아직 끝나지 않았다.
 - true MySQL container 검증은 smoke 수준까지 올라왔고 더 넓은 suite 확장이 남아 있다.
 - 외부 결제 이벤트는 수신하지만 실제 third-party provider adapter와 webhook secret 운영 절차는 아직 stub 수준이다.
-- asset upload는 fake storage URL issuance를 사용한다.
-- notifications는 read model 조회까지는 구현됐지만 외부 email/SMS/push 발송은 없다.
+- asset upload는 local/test에서 fake storage를 유지하고, alpha/beta/real profile에서는 presigned URL + HEAD metadata verification 기반 real storage adapter를 사용한다.
+- notifications는 read model 조회와 함께 email outbound delivery log를 남기며, local/test fake channel과 alpha/beta/real HTTP provider adapter를 profile별로 분리한다.
 - 운영자가 organization, instructor, tour, occurrence와 attachment를 다루고 고객은 booking/favorite/notification self-service가 가능하며 payment ops queue와 reconciliation까지 조회할 수 있지만, observability alerting과 실PG 연동이 아직 부족하다.
-- organization membership는 구현됐지만 초대 이메일 전달과 조직 전환 UX는 아직 없다.
+- organization membership invitation은 email delivery와 invite token link를 발급하고, 재초대 시 기존 pending token을 무효화한다.
 
 ## 6. If A New Agent Starts Today
 

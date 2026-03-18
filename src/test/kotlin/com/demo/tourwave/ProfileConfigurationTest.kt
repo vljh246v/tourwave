@@ -38,6 +38,8 @@ class ProfileConfigurationTest {
                 .isEqualTo("http://localhost:18081/mock-notification")
             assertThat(context.environment.getProperty("integration.asset.base-url"))
                 .isEqualTo("http://localhost:18082/mock-asset")
+            assertThat(context.environment.getProperty("tourwave.app.base-url"))
+                .isEqualTo("http://localhost:3000")
         }
     }
 
@@ -52,16 +54,25 @@ class ProfileConfigurationTest {
                 "ALPHA_PAYMENT_API_KEY=alpha-payment-key",
                 "ALPHA_NOTIFICATION_BASE_URL=https://alpha-notification.internal",
                 "ALPHA_NOTIFICATION_API_KEY=alpha-notification-key",
+                "ALPHA_NOTIFICATION_SENDER_EMAIL=no-reply@alpha.internal",
                 "ALPHA_ASSET_BASE_URL=https://alpha-asset.internal",
-                "ALPHA_ASSET_ACCESS_TOKEN=alpha-asset-token"
+                "ALPHA_ASSET_PUBLIC_BASE_URL=https://cdn.alpha.internal",
+                "ALPHA_ASSET_BUCKET=alpha-tourwave",
+                "ALPHA_ASSET_ACCESS_KEY=alpha-asset-access",
+                "ALPHA_ASSET_SECRET_KEY=alpha-asset-secret",
+                "ALPHA_APP_BASE_URL=https://alpha-app.internal"
         ) { context ->
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("alpha")
             assertThat(context.environment.getProperty("integration.payment.api-key"))
                 .isEqualTo("alpha-payment-key")
             assertThat(context.environment.getProperty("integration.notification.api-key"))
                 .isEqualTo("alpha-notification-key")
-            assertThat(context.environment.getProperty("integration.asset.access-token"))
-                .isEqualTo("alpha-asset-token")
+            assertThat(context.environment.getProperty("integration.notification.sender-email"))
+                .isEqualTo("no-reply@alpha.internal")
+            assertThat(context.environment.getProperty("integration.asset.secret-key"))
+                .isEqualTo("alpha-asset-secret")
+            assertThat(context.environment.getProperty("tourwave.app.base-url"))
+                .isEqualTo("https://alpha-app.internal")
         }
     }
 
@@ -76,16 +87,25 @@ class ProfileConfigurationTest {
                 "BETA_PAYMENT_API_KEY=beta-payment-key",
                 "BETA_NOTIFICATION_BASE_URL=https://beta-notification.internal",
                 "BETA_NOTIFICATION_API_KEY=beta-notification-key",
+                "BETA_NOTIFICATION_SENDER_EMAIL=no-reply@beta.internal",
                 "BETA_ASSET_BASE_URL=https://beta-asset.internal",
-                "BETA_ASSET_ACCESS_TOKEN=beta-asset-token"
+                "BETA_ASSET_PUBLIC_BASE_URL=https://cdn.beta.internal",
+                "BETA_ASSET_BUCKET=beta-tourwave",
+                "BETA_ASSET_ACCESS_KEY=beta-asset-access",
+                "BETA_ASSET_SECRET_KEY=beta-asset-secret",
+                "BETA_APP_BASE_URL=https://beta-app.internal"
         ) { context ->
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("beta")
             assertThat(context.environment.getProperty("integration.payment.api-key"))
                 .isEqualTo("beta-payment-key")
             assertThat(context.environment.getProperty("integration.notification.api-key"))
                 .isEqualTo("beta-notification-key")
-            assertThat(context.environment.getProperty("integration.asset.access-token"))
-                .isEqualTo("beta-asset-token")
+            assertThat(context.environment.getProperty("integration.notification.sender-email"))
+                .isEqualTo("no-reply@beta.internal")
+            assertThat(context.environment.getProperty("integration.asset.secret-key"))
+                .isEqualTo("beta-asset-secret")
+            assertThat(context.environment.getProperty("tourwave.app.base-url"))
+                .isEqualTo("https://beta-app.internal")
         }
     }
 
@@ -100,8 +120,13 @@ class ProfileConfigurationTest {
                 "REAL_PAYMENT_API_KEY=real-payment-key",
                 "REAL_NOTIFICATION_BASE_URL=https://real-notification.internal",
                 "REAL_NOTIFICATION_API_KEY=real-notification-key",
+                "REAL_NOTIFICATION_SENDER_EMAIL=no-reply@real.internal",
                 "REAL_ASSET_BASE_URL=https://real-asset.internal",
-                "REAL_ASSET_ACCESS_TOKEN=real-asset-token"
+                "REAL_ASSET_PUBLIC_BASE_URL=https://cdn.real.internal",
+                "REAL_ASSET_BUCKET=real-tourwave",
+                "REAL_ASSET_ACCESS_KEY=real-asset-access",
+                "REAL_ASSET_SECRET_KEY=real-asset-secret",
+                "REAL_APP_BASE_URL=https://app.tourwave.internal"
         ) { context ->
             assertThat(context.environment.getProperty("tourwave.environment")).isEqualTo("real")
             assertThat(context.environment.getProperty("tourwave.auth.allow-header-auth-fallback"))
@@ -110,8 +135,12 @@ class ProfileConfigurationTest {
                 .isEqualTo("real-payment-key")
             assertThat(context.environment.getProperty("integration.notification.api-key"))
                 .isEqualTo("real-notification-key")
-            assertThat(context.environment.getProperty("integration.asset.access-token"))
-                .isEqualTo("real-asset-token")
+            assertThat(context.environment.getProperty("integration.notification.sender-email"))
+                .isEqualTo("no-reply@real.internal")
+            assertThat(context.environment.getProperty("integration.asset.secret-key"))
+                .isEqualTo("real-asset-secret")
+            assertThat(context.environment.getProperty("tourwave.app.base-url"))
+                .isEqualTo("https://app.tourwave.internal")
         }
     }
 }

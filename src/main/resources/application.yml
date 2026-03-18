@@ -7,6 +7,8 @@ spring:
     open-in-view: false
 
 tourwave:
+  app:
+    base-url: ${TOURWAVE_APP_BASE_URL:http://localhost:3000}
   idempotency:
     ttl-seconds: ${IDEMPOTENCY_TTL_SECONDS:86400}
   auth:
@@ -24,6 +26,8 @@ tourwave:
       owner-id: ${TOURWAVE_JOB_LOCK_OWNER_ID:}
       lease-seconds: ${TOURWAVE_JOB_LOCK_LEASE_SECONDS:120}
       stale-after-seconds: ${TOURWAVE_JOB_LOCK_STALE_AFTER_SECONDS:300}
+  organization:
+    invitation-token-ttl-seconds: ${TOURWAVE_ORG_INVITATION_TOKEN_TTL_SECONDS:604800}
 
 management:
   endpoints:

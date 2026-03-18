@@ -1,0 +1,20 @@
+CREATE TABLE notification_deliveries (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  channel VARCHAR(32) NOT NULL,
+  template_code VARCHAR(100) NOT NULL,
+  recipient VARCHAR(255) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  resource_type VARCHAR(64) NOT NULL,
+  resource_id BIGINT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  attempt_count INT NOT NULL,
+  provider_message_id VARCHAR(255) NULL,
+  last_error VARCHAR(500) NULL,
+  sent_at DATETIME(6) NULL,
+  created_at DATETIME(6) NOT NULL,
+  updated_at DATETIME(6) NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_notification_deliveries_resource (resource_type, resource_id),
+  KEY idx_notification_deliveries_status_created (status, created_at)
+);

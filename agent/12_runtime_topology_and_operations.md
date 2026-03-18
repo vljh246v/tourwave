@@ -46,6 +46,7 @@
 
 - in-memory adapters 사용
 - 빠른 로컬 검증과 일부 테스트에 적합
+- asset storage는 fake adapter, notification channel은 fake email adapter를 사용한다.
 
 ### `mysql`
 
@@ -60,6 +61,30 @@
 - 이유
   - Docker provider가 항상 보장되지 않음
 - 별도로 real MySQL container smoke test를 CI에서 실행한다.
+
+## 3.1 Runtime Adapter Matrix
+
+- `local`
+  - asset: fake storage adapter
+  - notification: fake email channel
+  - auth fallback: enabled
+  - required secrets: 없음, localhost default 사용 가능
+- `alpha`, `beta`, `real`
+  - asset: HTTP real storage adapter with presign + HEAD verification
+  - notification: HTTP email provider adapter
+  - auth fallback: disabled by profile policy
+  - required secrets:
+    - datasource URL / username / password
+    - payment base URL / API key
+    - notification base URL / API key / sender email
+    - asset base URL / public base URL / bucket / access key / secret key
+    - app base URL
+
+## 3.2 Fail-Fast Rule
+
+- `alpha`, `beta`, `real` profile은 placeholder default 없이 환경변수를 요구한다.
+- 필수 secret이 빠지면 Spring property binding 단계에서 애플리케이션이 기동되지 않아야 한다.
+- local/test만 fallback default를 허용한다.
 
 ## 4. Important Infrastructure Classes
 

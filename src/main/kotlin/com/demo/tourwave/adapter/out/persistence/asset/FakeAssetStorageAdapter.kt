@@ -2,6 +2,9 @@ package com.demo.tourwave.adapter.out.persistence.asset
 
 import com.demo.tourwave.application.asset.port.AssetStoragePort
 import com.demo.tourwave.application.asset.port.AssetUploadDescriptor
+import com.demo.tourwave.application.asset.port.AssetUploadVerificationRequest
+import com.demo.tourwave.application.asset.port.StoredAssetMetadata
+import org.springframework.context.annotation.Profile
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.net.URLEncoder
@@ -9,6 +12,7 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 @Component
+@Profile("!alpha & !beta & !real")
 class FakeAssetStorageAdapter(
     @Value("\${integration.asset.base-url:http://localhost:18082/mock-asset}") private val baseUrl: String
 ) : AssetStoragePort {
@@ -21,6 +25,16 @@ class FakeAssetStorageAdapter(
             storageKey = storageKey,
             uploadUrl = "$normalizedBase/uploads/$storageKey",
             publicUrl = "$normalizedBase/public/$storageKey"
+        )
+    }
+
+    override fun verifyUpload(request: AssetUploadVerificationRequest): StoredAssetMetadata {
+        val normalizedBase = baseUrl.trimEnd('/')
+        return StoredAssetMetadata(
+            publicUrl = "$normalizedBase/public/${request.storageKey}",
+            contentType = request.expectedContentType,
+            sizeBytes = request.reportedSizeBytes ?: 0L,
+            checksumSha256 = request.reportedChecksumSha256
         )
     }
 }

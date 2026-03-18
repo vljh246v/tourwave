@@ -4,19 +4,25 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventSubscriber
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
+import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
+import com.demo.tourwave.domain.customer.NotificationChannel
 import com.demo.tourwave.domain.customer.Notification
 import com.demo.tourwave.domain.customer.NotificationType
 import java.time.Clock
 
 class NotificationService(
     private val notificationRepository: NotificationRepository,
+    private val notificationDeliveryService: NotificationDeliveryService,
     private val bookingRepository: BookingRepository,
     private val inquiryRepository: InquiryRepository,
     private val paymentRecordRepository: PaymentRecordRepository,
+    private val userRepository: UserRepository,
+    private val notificationTemplateFactory: NotificationTemplateFactory,
     private val clock: Clock
 ) : AuditEventSubscriber {
     fun list(userId: Long): List<Notification> = notificationRepository.findByUserId(userId)
@@ -43,7 +49,7 @@ class NotificationService(
 
     override fun handle(event: AuditEventCommand) {
         val projection = project(event) ?: return
-        notificationRepository.save(
+        val notification = notificationRepository.save(
             Notification(
                 userId = projection.userId,
                 type = projection.type,
@@ -52,6 +58,20 @@ class NotificationService(
                 resourceType = event.resourceType,
                 resourceId = event.resourceId,
                 createdAt = event.occurredAtUtc
+            )
+        )
+        val user = userRepository.findById(projection.userId) ?: return
+        val template = notificationTemplateFactory.renderAuditEvent(event, projection.title, projection.body)
+        notificationDeliveryService.deliver(
+            DeliverNotificationCommand(
+                channel = NotificationChannel.EMAIL,
+                templateCode = template.templateCode,
+                recipient = user.email,
+                subject = template.subject,
+                body = template.body,
+                resourceType = notification.resourceType,
+                resourceId = notification.resourceId,
+                idempotencyKey = "notification:${event.resourceType}:${event.resourceId}:${event.action}:${projection.userId}"
             )
         )
     }

@@ -4,7 +4,8 @@ import java.time.Instant
 
 enum class UserActionTokenPurpose {
     EMAIL_VERIFICATION,
-    PASSWORD_RESET
+    PASSWORD_RESET,
+    ORG_INVITATION
 }
 
 data class UserActionToken(

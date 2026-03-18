@@ -2,6 +2,7 @@ package com.demo.tourwave.adapter.`in`.web.organization
 
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
 import org.junit.jupiter.api.BeforeEach
@@ -33,8 +34,12 @@ class OrganizationControllerIntegrationTest {
     @Autowired
     private lateinit var membershipRepository: OrganizationMembershipRepository
 
+    @Autowired
+    private lateinit var notificationDeliveryRepository: NotificationDeliveryRepository
+
     @BeforeEach
     fun setUp() {
+        notificationDeliveryRepository.clear()
         membershipRepository.clear()
         organizationRepository.clear()
         userRepository.clear()
@@ -88,10 +93,18 @@ class OrganizationControllerIntegrationTest {
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.status").value("INVITED"))
+        val inviteDelivery = notificationDeliveryRepository.findAll().single()
+        val token = Regex("token=([^\\s.]+)")
+            .find(inviteDelivery.body)
+            ?.groupValues
+            ?.get(1)
+            ?: error("invitation token not found in delivery body")
 
         mockMvc.perform(
             post("/organizations/$organizationId/memberships/accept")
                 .header("X-Actor-User-Id", requireNotNull(invitee.id))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"token":"$token"}""")
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("ACTIVE"))
