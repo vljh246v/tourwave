@@ -2,7 +2,7 @@
 
 > 현재 구현 상태는 `13_api_status_matrix.md`를 먼저 확인한다.
 > 이 문서는 제품 목표 API 카탈로그이며, 일부 항목은 아직 미구현 상태다.
-> 2026-03-18 현재 특히 `email verification`, `password reset`, `announcements`, `reports`, `moderation`, `tour/instructor/org review summary`는 target-only 계약이다.
+> 2026-03-19 현재 `moderation`, `tour/instructor/org review summary`, `POST /me/delete`는 target-only 계약이다.
 
 ## Conventions
 - Target Product Auth: Bearer JWT (except public)
@@ -60,14 +60,14 @@
 - POST /auth/logout (auth)
 - POST /auth/refresh (token flow)
 
-Target-only as of 2026-03-18:
+Implemented as of 2026-03-19:
 - POST /auth/password/reset-request (public)
 - POST /auth/password/reset-confirm (public)
 - POST /auth/email/verify-request (auth)
 - POST /auth/email/verify-confirm (public via token)
-
-Target-only as of 2026-03-18:
 - POST /me/deactivate (auth)
+
+Target-only as of 2026-03-19:
 - POST /me/delete (auth, soft delete)
 
 ---
@@ -177,6 +177,27 @@ Public:
 Availability/Quote:
 - GET /occurrences/{occurrenceId}/availability
 - GET /occurrences/{occurrenceId}/quote
+
+Announcements:
+- GET /public/announcements (public; optional `organizationId`, `cursor`, `limit`)
+- GET /operator/organizations/{orgId}/announcements (ORG_ADMIN/OWNER)
+- POST /organizations/{orgId}/announcements (ORG_ADMIN/OWNER)
+- PATCH /announcements/{announcementId} (ORG_ADMIN/OWNER of owning organization)
+- DELETE /announcements/{announcementId} (ORG_ADMIN/OWNER of owning organization)
+
+Current runtime note:
+- public listing exposes only `visibility=PUBLIC` announcements whose publish window contains current time
+- operator listing includes draft/internal announcements for the organization
+
+Reports:
+- GET /organizations/{orgId}/reports/bookings (ORG_ADMIN/OWNER)
+- GET /organizations/{orgId}/reports/bookings/export (ORG_ADMIN/OWNER, CSV)
+- GET /organizations/{orgId}/reports/occurrences (ORG_ADMIN/OWNER)
+- GET /organizations/{orgId}/reports/occurrences/export (ORG_ADMIN/OWNER, CSV)
+
+Current runtime note:
+- booking report date filters are based on booking `createdAt` in UTC date space
+- occurrence ops report date filters are based on occurrence `startsAtUtc` in UTC date space
 
 Current runtime note:
 - Sprint 11 current runtime supports `locationText`, `meetingPoint`, `unitPrice`, and `currency` on occurrences.

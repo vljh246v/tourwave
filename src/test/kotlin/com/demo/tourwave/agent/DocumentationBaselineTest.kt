@@ -1,6 +1,7 @@
 package com.demo.tourwave.agent
 
 import com.demo.tourwave.adapter.`in`.web.asset.AssetController
+import com.demo.tourwave.adapter.`in`.web.announcement.AnnouncementController
 import com.demo.tourwave.adapter.`in`.web.booking.BookingRefundPreviewController
 import com.demo.tourwave.adapter.`in`.web.booking.WaitlistOperatorController
 import com.demo.tourwave.adapter.`in`.web.customer.CustomerController
@@ -14,6 +15,7 @@ import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrencePublicController
 import com.demo.tourwave.adapter.`in`.web.participant.ParticipantRosterController
 import com.demo.tourwave.adapter.`in`.web.payment.PaymentOperatorController
 import com.demo.tourwave.adapter.`in`.web.payment.PaymentWebhookController
+import com.demo.tourwave.adapter.`in`.web.reporting.OrganizationReportController
 import com.demo.tourwave.adapter.`in`.web.tour.TourOperatorController
 import com.demo.tourwave.adapter.`in`.web.tour.TourPublicController
 import org.junit.jupiter.api.Test
@@ -42,6 +44,10 @@ class DocumentationBaselineTest {
         assertContains(doc, "GET /me")
         assertContains(doc, "POST /operator/organizations")
         assertContains(doc, "POST /organizations/{organizationId}/memberships/accept")
+        assertContains(doc, "GET /public/announcements")
+        assertContains(doc, "POST /organizations/{organizationId}/announcements")
+        assertContains(doc, "GET /organizations/{organizationId}/reports/bookings")
+        assertContains(doc, "GET /organizations/{organizationId}/reports/occurrences")
         assertContains(doc, "POST /instructor-registrations")
         assertContains(doc, "GET /me/instructor-profile?organizationId=...")
         assertContains(doc, "POST /organizations/{organizationId}/tours")
@@ -96,6 +102,9 @@ class DocumentationBaselineTest {
         assertContains(apiCatalog, "Current Runtime Auth: Bearer JWT, with request header actor context fallback only in local/test flows")
         assertContains(apiCatalog, "POST /operator/organizations")
         assertContains(apiCatalog, "POST /organizations/{orgId}/memberships/accept")
+        assertContains(apiCatalog, "GET /public/announcements")
+        assertContains(apiCatalog, "GET /organizations/{orgId}/reports/bookings")
+        assertContains(apiCatalog, "GET /organizations/{orgId}/reports/occurrences")
         assertContains(apiCatalog, "GET /me/instructor-profile?organizationId={orgId}")
         assertContains(apiCatalog, "POST /organizations/{orgId}/tours")
         assertContains(apiCatalog, "POST /tours/{tourId}/occurrences")
@@ -156,6 +165,36 @@ class DocumentationBaselineTest {
             controller = OrganizationOperatorController::class.java,
             methodName = "createOrganization",
             expectedPath = "/operator/organizations"
+        )
+        assertGetMapping(
+            controller = AnnouncementController::class.java,
+            methodName = "listPublicAnnouncements",
+            expectedPath = "/public/announcements"
+        )
+        assertPostMapping(
+            controller = AnnouncementController::class.java,
+            methodName = "createAnnouncement",
+            expectedPath = "/organizations/{organizationId}/announcements"
+        )
+        assertPatchMapping(
+            controller = AnnouncementController::class.java,
+            methodName = "updateAnnouncement",
+            expectedPath = "/announcements/{announcementId}"
+        )
+        assertDeleteMapping(
+            controller = AnnouncementController::class.java,
+            methodName = "deleteAnnouncement",
+            expectedPath = "/announcements/{announcementId}"
+        )
+        assertGetMapping(
+            controller = OrganizationReportController::class.java,
+            methodName = "getBookingReport",
+            expectedPath = "/organizations/{organizationId}/reports/bookings"
+        )
+        assertGetMapping(
+            controller = OrganizationReportController::class.java,
+            methodName = "getOccurrenceOpsReport",
+            expectedPath = "/organizations/{organizationId}/reports/occurrences"
         )
         assertGetMapping(
             controller = OrganizationPublicController::class.java,

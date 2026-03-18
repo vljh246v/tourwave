@@ -70,8 +70,20 @@
 - `POST /operator/organizations/{organizationId}/members/invitations`
 - `PATCH /operator/organizations/{organizationId}/members/{memberUserId}/role`
 - `PATCH /operator/organizations/{organizationId}/members/{memberUserId}/deactivate`
+- `GET /operator/organizations/{organizationId}/announcements`
 - `GET /organizations/{organizationId}`
 - `POST /organizations/{organizationId}/memberships/accept`
+
+### Announcements / Reporting
+
+- `GET /public/announcements`
+- `POST /organizations/{organizationId}/announcements`
+- `PATCH /announcements/{announcementId}`
+- `DELETE /announcements/{announcementId}`
+- `GET /organizations/{organizationId}/reports/bookings`
+- `GET /organizations/{organizationId}/reports/bookings/export`
+- `GET /organizations/{organizationId}/reports/occurrences`
+- `GET /organizations/{organizationId}/reports/occurrences/export`
 
 ### Instructor
 
@@ -170,6 +182,9 @@
 - favorites는 published tour만 허용한다.
 - notifications는 booking/inquiry/refund 관련 audit event에서 read model로 축적되고, `read`/`read-all` API를 지원한다. 동시에 email delivery log를 outbound channel로 분리해 retryable/non-retryable failure를 기록한다.
 - organization membership invitation은 초대 시 email delivery를 만들고, accept API는 authenticated user 기준에 더해 optional invitation token payload를 받아 link 기반 UX를 지원한다.
+- announcement는 `PUBLIC`, `INTERNAL`, `DRAFT` visibility를 가지며, public listing은 `PUBLIC`이고 현재 시각이 publish window 안에 있는 항목만 노출한다. operator listing은 같은 organization의 ORG_ADMIN/ORG_OWNER만 조회/수정/삭제할 수 있다.
+- booking report는 organization path 아래에서 `dateFrom/dateTo`, `tourId`, `occurrenceId`, `cursor`, `limit` 필터를 지원하고, date 범위는 booking `createdAt` UTC 날짜 기준으로 해석한다. CSV export path를 별도로 제공한다.
+- occurrence ops report는 occurrence start date 기준 필터를 지원하고, confirmed seats, waitlist count, seat utilization, attendance, refund signal을 함께 반환한다. CSV export path를 별도로 제공한다.
 - payment webhook intake는 `X-Payment-Signature` HMAC 검증을 수행하고, `providerEventId` 기준 replay-safe 처리로 중복 이벤트를 무시한다. active/previous secret rotation, malformed payload persistence, poison event marking을 함께 지원한다.
 - refund ops queue는 `REFUND_PENDING`, `REFUND_FAILED_RETRYABLE`, `REFUND_REVIEW_REQUIRED` 상태를 운영자가 조회하고 retry count, next retry, last error, remediation metadata를 함께 본다. remediation endpoint는 retry 또는 explicit review-required 전환을 받고 operator audit trail을 남긴다.
 - reconciliation daily summary는 booking 생성 건수와 payment ledger status 업데이트 건수뿐 아니라 provider captured/refunded count와 mismatch count를 일자별로 저장하고 JSON/CSV 조회를 지원한다. mismatch detail JSON/CSV export도 제공한다.
@@ -183,9 +198,7 @@
 
 - `POST /me/delete`
 - `tourId` / `instructorProfileId` / `organizationId` 기반 공개 review summary
-- announcements API
 - moderation API
-- organization report APIs beyond finance reconciliation export
 
 ## 4. API Contract Handling Rule
 
@@ -200,6 +213,7 @@
 - [BookingControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/domain/booking/application/BookingControllerIntegrationTest.kt)
 - [OccurrenceCatalogControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/topology/OccurrenceCatalogControllerIntegrationTest.kt)
 - [CustomerControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/customer/CustomerControllerIntegrationTest.kt)
+- [CommunicationReportingIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/communication/CommunicationReportingIntegrationTest.kt)
 - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
 - [MysqlPersistenceIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/MysqlPersistenceIntegrationTest.kt)
 - [MysqlBookingConcurrencyTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/MysqlBookingConcurrencyTest.kt)

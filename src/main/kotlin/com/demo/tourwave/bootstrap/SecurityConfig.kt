@@ -180,6 +180,7 @@ class SecurityConfig(
                 PublicEndpoint(HttpMethod.POST, "/auth/password/reset-confirm"),
                 PublicEndpoint(HttpMethod.POST, "/auth/email/verify-confirm"),
                 PublicEndpoint(HttpMethod.POST, "/payments/webhooks/provider"),
+                PublicEndpoint(HttpMethod.GET, "/public/announcements"),
                 PublicEndpoint(HttpMethod.GET, "/tours"),
                 PublicEndpoint(HttpMethod.GET, "/tours/*"),
                 PublicEndpoint(HttpMethod.GET, "/tours/*/occurrences"),

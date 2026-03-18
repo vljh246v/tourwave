@@ -424,6 +424,24 @@ Can be read by:
 - ORG_ADMIN
 - ORG_OWNER
 
+Export endpoints follow the same rule:
+- GET `/organizations/{orgId}/reports/bookings/export`
+- GET `/organizations/{orgId}/reports/occurrences/export`
+
+### Announcements
+Can be created/updated/deleted/read in operator namespace by:
+- ORG_ADMIN
+- ORG_OWNER
+
+Public read:
+- GET `/public/announcements`
+- only announcements with `visibility=PUBLIC`
+- current time must be within `publishStartsAtUtc <= now < publishEndsAtUtc` when `publishEndsAtUtc` is set
+
+Not allowed for:
+- ORG_MEMBER
+- instructors without operator role
+
 ---
 
 ## Favorites / Notifications / Me Access Model

@@ -1177,6 +1177,9 @@ paths:
       security: []
       summary: List public announcements
       parameters:
+        - name: organizationId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
       responses:
@@ -1185,6 +1188,23 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AnnouncementListResponse' }
+
+  /operator/organizations/{orgId}/announcements:
+    get:
+      tags: [Announcements]
+      summary: List operator announcements (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnnouncementListResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   /organizations/{orgId}/announcements:
     post:
@@ -2067,6 +2087,12 @@ paths:
         - $ref: '#/components/parameters/orgId'
         - $ref: '#/components/parameters/dateFromOptional'
         - $ref: '#/components/parameters/dateToOptional'
+        - name: tourId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
+        - name: occurrenceId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
       responses:
@@ -2078,6 +2104,30 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /organizations/{orgId}/reports/occurrences/export:
+    get:
+      tags: [Reports]
+      summary: Export occurrence ops report CSV (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/dateFromOptional'
+        - $ref: '#/components/parameters/dateToOptional'
+        - name: tourId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
+        - name: occurrenceId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
   /organizations/{orgId}/reports/bookings:
     get:
       tags: [Reports]
@@ -2086,6 +2136,12 @@ paths:
         - $ref: '#/components/parameters/orgId'
         - $ref: '#/components/parameters/dateFromOptional'
         - $ref: '#/components/parameters/dateToOptional'
+        - name: tourId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
+        - name: occurrenceId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
         - $ref: '#/components/parameters/cursor'
         - $ref: '#/components/parameters/limit'
       responses:
@@ -2094,6 +2150,30 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/BookingReportResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /organizations/{orgId}/reports/bookings/export:
+    get:
+      tags: [Reports]
+      summary: Export booking report CSV (ORG_ADMIN/ORG_OWNER)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/dateFromOptional'
+        - $ref: '#/components/parameters/dateToOptional'
+        - name: tourId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
+        - name: occurrenceId
+          in: query
+          schema: { $ref: '#/components/schemas/Id64' }
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
@@ -3008,26 +3088,42 @@ components:
 
     Announcement:
       type: object
-      required: [id, organizationId, title, body, createdAt]
+      required: [id, organizationId, title, body, visibility, createdAt, updatedAt]
       properties:
         id: { $ref: '#/components/schemas/Id64' }
         organizationId: { $ref: '#/components/schemas/Id64' }
         title: { type: string, maxLength: 200 }
         body: { type: string, maxLength: 5000 }
+        visibility:
+          type: string
+          enum: [DRAFT, PUBLIC, INTERNAL]
+        publishStartsAtUtc: { type: string, format: date-time, nullable: true }
+        publishEndsAtUtc: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
 
     AnnouncementCreateRequest:
       type: object
-      required: [title, body]
+      required: [title, body, visibility]
       properties:
         title: { type: string, maxLength: 200 }
         body: { type: string, maxLength: 5000 }
+        visibility:
+          type: string
+          enum: [DRAFT, PUBLIC, INTERNAL]
+        publishStartsAtUtc: { type: string, format: date-time, nullable: true }
+        publishEndsAtUtc: { type: string, format: date-time, nullable: true }
 
     AnnouncementPatchRequest:
       type: object
       properties:
         title: { type: string, maxLength: 200 }
         body: { type: string, maxLength: 5000 }
+        visibility:
+          type: string
+          enum: [DRAFT, PUBLIC, INTERNAL]
+        publishStartsAtUtc: { type: string, format: date-time, nullable: true }
+        publishEndsAtUtc: { type: string, format: date-time, nullable: true }
 
     AnnouncementListResponse:
       type: object
@@ -3046,11 +3142,18 @@ components:
       type: object
       properties:
         occurrenceId: { $ref: '#/components/schemas/Id64' }
+        organizationId: { $ref: '#/components/schemas/Id64' }
         tourId: { $ref: '#/components/schemas/Id64' }
-        startAtUtc: { type: string, format: date-time }
+        startsAtUtc: { type: string, format: date-time, nullable: true }
         status: { $ref: '#/components/schemas/OccurrenceStatus' }
+        capacity: { type: integer, minimum: 0 }
         confirmedSeats: { type: integer, minimum: 0 }
         waitlistCount: { type: integer, minimum: 0 }
+        seatUtilizationPercent: { type: integer, minimum: 0, maximum: 100 }
+        attendedCount: { type: integer, minimum: 0 }
+        noShowCount: { type: integer, minimum: 0 }
+        refundedBookingCount: { type: integer, minimum: 0 }
+        refundPendingCount: { type: integer, minimum: 0 }
 
     OccurrenceReportResponse:
       type: object
@@ -3066,10 +3169,14 @@ components:
       properties:
         bookingId: { $ref: '#/components/schemas/Id64' }
         occurrenceId: { $ref: '#/components/schemas/Id64' }
+        tourId: { $ref: '#/components/schemas/Id64' }
         organizerUserId: { $ref: '#/components/schemas/Id64' }
         partySize: { type: integer, minimum: 1 }
         status: { $ref: '#/components/schemas/BookingStatus' }
         paymentStatus: { $ref: '#/components/schemas/PaymentStatus' }
+        refundStatus:
+          type: string
+          nullable: true
         createdAt: { type: string, format: date-time }
 
     BookingReportResponse:

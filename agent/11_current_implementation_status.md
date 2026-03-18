@@ -89,7 +89,7 @@
 
 ### Product Surface Missing
 
-- announcements / moderation / report APIs
+- moderation API
 - public review summary by tour / instructor / organization
 - real outbound notification delivery
 - real asset storage adapter
@@ -106,6 +106,8 @@
 - perimeter security enforcement in Spring Security filter chain
 - email verification / password reset / account deactivation lifecycle
 - payment provider HTTP adapter, webhook rotation/malformed handling, refund remediation metadata, reconciliation mismatch reporting
+- announcement lifecycle with public/operator APIs and visibility window enforcement
+- organization booking report and occurrence ops report APIs with CSV export
 
 ## 3. Current Runtime Truths
 
