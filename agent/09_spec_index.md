@@ -26,6 +26,7 @@
 5. `14_test_traceability_matrix.md`
 6. `15_next_development_backlog.md`
 7. `16_product_delivery_roadmap.md`
+8. `17_release_gap_execution_plan.md`
 
 ### Supporting Docs
 
@@ -53,6 +54,7 @@
 13. `12_runtime_topology_and_operations.md`
 14. `15_next_development_backlog.md`
 15. `16_product_delivery_roadmap.md`
+16. `17_release_gap_execution_plan.md`
 
 규칙:
 
@@ -69,11 +71,12 @@
 3. `12_runtime_topology_and_operations.md`
 4. `13_api_status_matrix.md`
 5. `16_product_delivery_roadmap.md`
-6. `14_test_traceability_matrix.md`
-7. `01_domain_rules.md`
-8. `10_architecture_hexagonal.md`
-9. `08_operational_policy_tables.md`
-10. `15_next_development_backlog.md`
+6. `17_release_gap_execution_plan.md`
+7. `14_test_traceability_matrix.md`
+8. `01_domain_rules.md`
+9. `10_architecture_hexagonal.md`
+10. `08_operational_policy_tables.md`
+11. `15_next_development_backlog.md`
 
 ### B. API 계약 수정이 목적일 때
 
@@ -105,6 +108,7 @@
 - 테스트 없는 기능 완료 처리는 금지한다.
 - `agent` 폴더에는 시점 종속 메모를 남기지 않고, 영구 문서에 흡수하거나 삭제한다.
 - 운영 변경은 `launch-readiness-checklist.md`와 actuator/CI 기준까지 같이 맞춘다.
+- 이미 완료된 sprint 정리는 `16_product_delivery_roadmap.md`를 보고, 출시까지 남은 gap closure는 `17_release_gap_execution_plan.md`를 기준으로 새 티켓을 만든다.
 
 ## 5. Quick Commands
 

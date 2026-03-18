@@ -40,16 +40,17 @@
 
 ## Current Open Items
 
-2026-03-17 기준으로 남아 있는 핵심 gap은 "미구현 product surface" 쪽이다.
+2026-03-18 기준으로 남아 있는 핵심 gap은 "미구현 product surface"와 "실운영 integration/hardening" 쪽이다.
 
-- auth/account/me target contract
-- organization/member management contract
-- instructor onboarding/profile contract
-- tour/occurrence authoring and public catalog contract
-- external payment webhook/callback contract
+- email verification / password reset / account deactivate contract
+- announcement / report / moderation target-only contract
+- public review aggregation by tour / instructor / organization
+- real payment provider / real asset storage / outbound notification delivery
+- security perimeter enforcement and alerting contract
 
 상세 우선순위는 아래 문서를 따른다.
 
 - current truth: `agent/13_api_status_matrix.md`
-- delivery plan: `agent/16_product_delivery_roadmap.md`
+- completed delivery plan: `agent/16_product_delivery_roadmap.md`
+- remaining release gap plan: `agent/17_release_gap_execution_plan.md`
 - next backlog: `agent/15_next_development_backlog.md`

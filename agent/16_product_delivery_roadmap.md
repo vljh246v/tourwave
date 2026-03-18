@@ -1,9 +1,11 @@
 # Product Delivery Roadmap
 
-이 문서는 현재 Tourwave 코드를 실제 판매 가능한 제품까지 끌고 가기 위한 delivery 기준 문서다. 문서 목적은 두 가지다.
+이 문서는 Sprint 7~14 구현 프로그램을 통해 현재 Tourwave 코드를 제품 코어 수준까지 끌고 온 delivery 기록 문서다. 문서 목적은 두 가지다.
 
-- 비즈니스 기준의 출시 로드맵을 Sprint 단위로 고정한다.
-- Jira에 바로 생성 가능한 Epic, Story, Sub-task 구조를 정의한다.
+- 비즈니스 기준의 Sprint 7~14 구현 로드맵을 고정한다.
+- Jira에 생성된 Epic, Story, Sub-task 구조의 기준을 보관한다.
+
+Sprint 14 이후에 남아 있는 release gap closure는 `17_release_gap_execution_plan.md`를 따른다.
 
 ## 1. Release Goal
 

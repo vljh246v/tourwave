@@ -5,6 +5,8 @@ info:
   description: |
     REST API target contract for the Tour Booking Platform MVP.
     Current implementation status and known drift are tracked in `agent/13_api_status_matrix.md`.
+    As of 2026-03-18, this file still contains target-only paths for release-gap work such as
+    email verification, password reset, announcements, reports, moderation, and richer review summaries.
 servers:
   - url: https://api.example.com
 security:

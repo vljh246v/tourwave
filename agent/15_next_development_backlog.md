@@ -1,62 +1,59 @@
 # Next Development Backlog
 
-이 문서는 Sprint 6 이후 기준으로 "다음에 무엇을 개발할지"를 handoff 용도로 정리한다. 상세 sprint/epic/story/subtask 구조는 `16_product_delivery_roadmap.md`를 따른다.
+이 문서는 Sprint 14 완료 이후 기준으로 "현재 제품 수준까지 남은 작업"을 handoff 용도로 정리한다. Sprint 14까지의 구현 완료 구조는 `16_product_delivery_roadmap.md`, 남은 gap closure의 상세 sprint/epic/story/subtask 구조는 `17_release_gap_execution_plan.md`를 따른다.
 
 ## 1. Priority Order
 
 ### P0
 
-- OpenAPI와 실제 구현 동기화
-- auth/account/me 실제 플로우 도입
-- organization/member management 최소 CRUD
-- tour/occurrence authoring의 persistence/API 도입
-- Jira delivery plan에 따라 Sprint 7~10 착수
-- real MySQL container 기반 CI 검증
+- Spring Security perimeter enforcement
+- email verification / password reset / account deactivation
+- real asset storage adapter
+- real payment provider adapter
+- outbound notification delivery
+- alert routing / dashboard / SLO baseline
 
 ### P1
 
-- assets upload / complete / attachment flow
-- public catalog / search / availability / quote
 - public review aggregation by tour / instructor
-- calendar export
-- payment webhook / callback
-- worker distributed lock / observability
+- announcements / operator communication surface
+- organization report APIs
+- real MySQL container suite 확대
+- operator DLQ / remediation queue hardening
 
 ### P2
 
-- announcements / reports
+- moderation 정책 확정 및 필요 시 API 도입
 - favorites / notifications 고도화
 - Gradle 멀티모듈 분리
 
 ## 2. Recommended Next Sprint Themes
 
-### Theme A. Contract Alignment
+### Theme A. Security And Account Closure
 
-- `04_openapi.yaml` 정리
-- `03_api_catalog.md` 정리
-- 현재 구현 vs 목표 API 분리 문서화
+- route-level auth enforcement
+- email verify / password reset
+- account lifecycle
 
-### Theme B. Identity And Operator Foundation
+### Theme B. Real Integrations
 
-- auth / JWT / me endpoints 구현
-- organization/member APIs
-- instructor registration/profile APIs
-- tour/occurrence authoring APIs
-- integration test 보강
+- asset storage
+- payment provider
+- notification delivery
 
-### Theme C. Platform Infra Hardening
+### Theme C. Launch Operations
 
-- real MySQL container tests
-- distributed lock
-- worker execution metrics
+- alerting / dashboard / SLO
+- report surfaces
+- real MySQL suite expansion
 
 ## 3. Immediate Actionable Tasks
 
-1. `13_api_status_matrix.md`를 기준으로 OpenAPI drift를 먼저 정리한다.
-2. auth/account/me를 product 수준으로 올린다.
-3. organization/tour/instructor authoring에 필요한 schema/API를 설계한다.
-4. worker 운영 안정성과 payment integration 경로를 설계한다.
-5. 남은 공용 테스트 시나리오를 `07_test_scenarios.md`와 맞춰 보강한다.
+1. `SecurityConfig` 기준으로 보호 경로와 공개 경로를 재정의한다.
+2. email verification / password reset / account deactivate contract를 current gap 문서와 맞춘다.
+3. fake/stub integration을 real adapter boundary와 rollout 문서로 분리한다.
+4. launch 차단 운영 항목을 alert/dashboard/runbook 기준으로 다시 정의한다.
+5. 새 구현 티켓은 `17_release_gap_execution_plan.md`의 sprint/stage 구조에 맞춰 생성한다.
 
 ## 4. Rules For Future Tickets
 

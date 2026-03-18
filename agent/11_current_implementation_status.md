@@ -42,7 +42,7 @@
 
 ### Authz / Topology
 
-- JWT access token runtime auth
+- JWT access token issuance and runtime resolution
 - local/test header auth fallback
 - role enum / organization scoped access checks
 - organization persistence and operator/public profile split
@@ -92,12 +92,16 @@
 - email verification / password reset
 - announcements / moderation / report APIs
 - public review summary by tour / instructor / organization
+- real outbound notification delivery
+- real asset storage adapter
+- real payment provider adapter
 
 ### Infra / Ops Hardening Missing
 
 - alert routing / SLO dashboarding
 - dead-letter style operator queue
 - Gradle true multi-module split
+- perimeter security enforcement in Spring Security filter chain
 
 ## 3. Current Runtime Truths
 
@@ -106,7 +110,8 @@
 - 실행 진입점은 API와 worker로 분리되어 있다.
 - `mysql-test`는 현재 환경에서 H2 MySQL compatibility mode로 테스트된다.
 - CI는 별도 real MySQL container smoke test를 추가로 실행하도록 설계됐다.
-- 인증은 JWT access token 기준이며, local/test 런타임만 request header fallback을 허용한다.
+- 인증 토큰은 JWT access token 기준이며, local/test 런타임만 request header fallback을 허용한다.
+- 다만 현재 Spring Security filter chain이 경로 단위로 인증을 강제하는 구조는 아니고, 다수 endpoint가 controller/service guard에 의존한다.
 - organization, instructor, tour, occurrence까지 운영자 authoring이 가능하고, public catalog/search 및 customer self-service 일부가 구현됐다.
 - scheduled job은 distributed lock과 execution metric을 거쳐 실행된다.
 
@@ -132,8 +137,11 @@
 - `04_openapi.yaml`은 구현보다 앞서 있거나 일부 경로가 다를 수 있다.
 - 배치 작업은 distributed lock까지 올라왔지만 alert routing과 stale lock 운영 기준은 계속 다듬어야 한다.
 - auth/account 영역은 아직 제품 표면 대비 비어 있다.
+- `SecurityConfig`는 현재 `anyRequest().permitAll()` 구성이므로 perimeter security hardening이 아직 끝나지 않았다.
 - true MySQL container 검증은 smoke 수준까지 올라왔고 더 넓은 suite 확장이 남아 있다.
 - 외부 결제 이벤트는 수신하지만 실제 third-party provider adapter와 webhook secret 운영 절차는 아직 stub 수준이다.
+- asset upload는 fake storage URL issuance를 사용한다.
+- notifications는 read model 조회까지는 구현됐지만 외부 email/SMS/push 발송은 없다.
 - 운영자가 organization, instructor, tour, occurrence와 attachment를 다루고 고객은 booking/favorite/notification self-service가 가능하며 payment ops queue와 reconciliation까지 조회할 수 있지만, observability alerting과 실PG 연동이 아직 부족하다.
 - organization membership는 구현됐지만 초대 이메일 전달과 조직 전환 UX는 아직 없다.
 
@@ -145,5 +153,6 @@
 2. `12_runtime_topology_and_operations.md`
 3. `13_api_status_matrix.md`
 4. `16_product_delivery_roadmap.md`
-5. `14_test_traceability_matrix.md`
-6. 관련 controller / service / repository adapter 코드
+5. `17_release_gap_execution_plan.md`
+6. `14_test_traceability_matrix.md`
+7. 관련 controller / service / repository adapter 코드
