@@ -44,11 +44,21 @@
   - [RefundRetryServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/RefundRetryServiceTest.kt)
 - idempotency TTL purge
   - [IdempotencyPurgeServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/common/IdempotencyPurgeServiceTest.kt)
+- distributed job lock, skip/failure metric, execution tracking
+  - [ScheduledJobCoordinatorTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/common/ScheduledJobCoordinatorTest.kt)
+- worker job adapters delegate through distributed coordinator
+  - [OfferExpirationJobTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/job/OfferExpirationJobTest.kt)
+  - [InvitationExpirationJobTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/job/InvitationExpirationJobTest.kt)
+  - [RefundRetryJobTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/job/RefundRetryJobTest.kt)
+  - [IdempotencyPurgeJobTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/job/IdempotencyPurgeJobTest.kt)
+  - [FinanceReconciliationJobTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/job/FinanceReconciliationJobTest.kt)
 
 ## 5. Persistence
 
 - JPA/MySQL-compatible persistence round trip
   - [MysqlPersistenceIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/MysqlPersistenceIntegrationTest.kt)
+- real MySQL container smoke
+  - [RealMysqlContainerSmokeTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/RealMysqlContainerSmokeTest.kt)
 - profile wiring / app boot
   - [ProfileConfigurationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/ProfileConfigurationTest.kt)
   - [TourwaveApplicationTests](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/TourwaveApplicationTests.kt)
@@ -99,12 +109,14 @@
 - reconciliation daily summary and export
   - [ReconciliationServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/ReconciliationServiceTest.kt)
   - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
+- actuator health / metrics operational surface
+  - [OperationalActuatorIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/health/OperationalActuatorIntegrationTest.kt)
+- OpenAPI parser based contract verification
+  - [OpenApiContractVerificationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/agent/OpenApiContractVerificationTest.kt)
 
 ## 7. Known Coverage Gaps
 
-- real MySQL container execution
-  - 현재 환경에는 Docker provider가 없어서 `mysql-test`는 H2 MySQL compatibility mode로 검증한다.
-- OpenAPI parser 기반 contract validation
-  - smoke/integration coverage는 있으나 spec parser 기반 자동 검증은 아직 없다.
+- real MySQL container full-suite expansion
+  - 현재는 smoke 수준까지 CI 대상이며, 더 넓은 회귀 범위 확장이 남아 있다.
 - richer review aggregation / operator reporting contract
   - asset attachment와 customer calendar/export surface는 Sprint 12에서 구현됐고 payment ops reporting baseline은 Sprint 13에서 올라왔지만, review aggregation by tour/instructor/org and richer BI reporting은 아직 없다.

@@ -32,6 +32,7 @@
 - `03_api_catalog.md`
 - `06_implementation_notes.md`
 - `07_test_scenarios.md`
+- `../docs/launch-readiness-checklist.md`
 
 ## 2. Source Of Truth Priority
 
@@ -103,9 +104,11 @@
 - worker job은 `application` service를 호출하는 orchestration layer여야 한다.
 - 테스트 없는 기능 완료 처리는 금지한다.
 - `agent` 폴더에는 시점 종속 메모를 남기지 않고, 영구 문서에 흡수하거나 삭제한다.
+- 운영 변경은 `launch-readiness-checklist.md`와 actuator/CI 기준까지 같이 맞춘다.
 
 ## 5. Quick Commands
 
 - 전체 테스트: `./gradlew test`
 - 핵심 API 회귀: `./gradlew test --tests 'com.demo.tourwave.domain.booking.application.BookingControllerIntegrationTest'`
 - MySQL-compatible persistence 회귀: `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.MysqlPersistenceIntegrationTest'`
+- OpenAPI contract 회귀: `./gradlew test --tests 'com.demo.tourwave.agent.OpenApiContractVerificationTest'`

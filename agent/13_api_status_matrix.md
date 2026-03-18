@@ -131,12 +131,21 @@
 - `POST /operator/finance/reconciliation/daily/{summaryDate}/refresh`
 - `GET /operator/finance/reconciliation/daily/export`
 
+### Runtime / Ops Endpoints
+
+- `GET /actuator/health`
+- `GET /actuator/health/liveness`
+- `GET /actuator/health/readiness`
+- `GET /actuator/metrics/tourwave.job.execution`
+
 ### Runtime / Worker
 
 - offer expiration job
 - invitation expiration job
 - refund retry job
 - idempotency purge job
+- distributed lock coordinated execution
+- finance reconciliation job
 
 ## 2. Important Current Runtime Notes
 
@@ -163,6 +172,9 @@
 - payment webhook intake는 `X-Payment-Signature` HMAC 검증을 수행하고, `providerEventId` 기준 replay-safe 처리로 중복 이벤트를 무시한다.
 - refund ops queue는 `REFUND_PENDING`, `REFUND_FAILED_RETRYABLE`, `REFUND_REVIEW_REQUIRED` 상태를 운영자가 조회하고 booking 단위 manual retry를 수행할 수 있다.
 - reconciliation daily summary는 booking 생성 건수와 payment ledger status 업데이트 건수를 일자별로 저장하고 JSON/CSV 조회를 지원한다.
+- actuator health는 `workerJobs`, `workerJobLocks`, liveness, readiness component를 노출한다.
+- scheduled job은 distributed lock을 선점한 인스턴스만 실행하고, 나머지 인스턴스는 skip metric만 남긴다.
+- execution metric은 `tourwave.job.execution`, `tourwave.job.execution.duration`, `tourwave.job.lock.skipped`로 기록된다.
 
 ## 3. Not Implemented Yet But Needed For Product
 

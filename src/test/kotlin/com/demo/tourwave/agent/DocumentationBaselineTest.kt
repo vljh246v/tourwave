@@ -74,6 +74,8 @@ class DocumentationBaselineTest {
         assertContains(doc, "GET /operator/finance/reconciliation/daily")
         assertContains(doc, "POST /operator/finance/reconciliation/daily/{summaryDate}/refresh")
         assertContains(doc, "GET /operator/finance/reconciliation/daily/export")
+        assertContains(doc, "GET /actuator/health")
+        assertContains(doc, "GET /actuator/metrics/tourwave.job.execution")
         assertContains(doc, "/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.")
         assertContains(doc, "DocumentationBaselineTest")
     }
@@ -84,8 +86,10 @@ class DocumentationBaselineTest {
         val apiCatalog = readProjectFile("agent/03_api_catalog.md")
         val traceability = readProjectFile("agent/14_test_traceability_matrix.md")
         val gapArchive = readProjectFile("docs/openapi-gap-report.md")
+        val runbook = readProjectFile("docs/launch-readiness-checklist.md")
 
         assertContains(specIndex, "16_product_delivery_roadmap.md")
+        assertContains(specIndex, "launch-readiness-checklist.md")
         assertContains(specIndex, "13_api_status_matrix.md")
         assertContains(specIndex, "실무 순서:")
         assertContains(apiCatalog, "Target Product Auth: Bearer JWT")
@@ -112,8 +116,13 @@ class DocumentationBaselineTest {
         assertContains(traceability, "OccurrenceCatalogControllerIntegrationTest")
         assertContains(traceability, "CustomerControllerIntegrationTest")
         assertContains(traceability, "PaymentControllerIntegrationTest")
+        assertContains(traceability, "OperationalActuatorIntegrationTest")
+        assertContains(traceability, "OpenApiContractVerificationTest")
+        assertContains(traceability, "RealMysqlContainerSmokeTest")
         assertContains(gapArchive, "Historical Archive")
         assertContains(gapArchive, "현재 truth 확인 순서:")
+        assertContains(runbook, "Launch Readiness Checklist")
+        assertContains(runbook, "worker distributed lock")
     }
 
     @Test

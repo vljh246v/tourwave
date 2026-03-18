@@ -19,3 +19,30 @@ tourwave:
     refund:
       max-retry-attempts: ${TOURWAVE_PAYMENT_MAX_RETRY_ATTEMPTS:5}
       retry-cooldown-seconds: ${TOURWAVE_PAYMENT_RETRY_COOLDOWN_SECONDS:600}
+  jobs:
+    lock:
+      owner-id: ${TOURWAVE_JOB_LOCK_OWNER_ID:}
+      lease-seconds: ${TOURWAVE_JOB_LOCK_LEASE_SECONDS:120}
+      stale-after-seconds: ${TOURWAVE_JOB_LOCK_STALE_AFTER_SECONDS:300}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-components: always
+      show-details: always
+    prometheus:
+      enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}

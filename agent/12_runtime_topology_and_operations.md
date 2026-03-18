@@ -23,6 +23,7 @@
   - invitation expiration
   - refund retry
   - idempotency purge
+  - distributed lock coordinated execution
 
 ## 2. Current Module Shape
 
@@ -58,6 +59,7 @@
 - 현재 환경에서는 H2 MySQL compatibility mode 사용
 - 이유
   - Docker provider가 항상 보장되지 않음
+- 별도로 real MySQL container smoke test를 CI에서 실행한다.
 
 ## 4. Important Infrastructure Classes
 
@@ -71,6 +73,10 @@
 - `InvitedParticipantExpirationService`
 - `RefundRetryService`
 - `IdempotencyPurgeService`
+- `ScheduledJobCoordinator`
+  - worker distributed lock + execution metrics + skip/failure tracking
+- `WorkerJobLockRepository`
+  - in-memory/local and JPA/MySQL adapter 제공
 
 ## 5. Worker Design Rules
 
@@ -78,6 +84,7 @@
 - 모든 실제 규칙은 `application` service에 둔다.
 - job은 대상 조회, 반복 실행, 스케줄 진입점 역할만 한다.
 - 새 job이 필요하면 먼저 `application` use case를 만들고 그다음 `adapter.in.job`을 추가한다.
+- 모든 scheduled job은 `ScheduledJobCoordinator`를 통해 distributed lock과 metrics를 거쳐야 한다.
 
 ## 6. AWS Deployment Target
 
@@ -92,9 +99,9 @@
 
 추가로 필요한 것:
 
-- multi-instance worker용 분산락
-- metrics / alerting
-- refund retry/operator queue
+- alert routing and dashboard standardization
+- dead-letter style operator queue
+- refund retry/operator queue expansion
 
 ## 7. Practical Commands
 
@@ -106,10 +113,14 @@
   - `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.MysqlPersistenceIntegrationTest'`
 - concurrency 회귀 핵심
   - `./gradlew test --tests 'com.demo.tourwave.application.booking.MysqlBookingConcurrencyTest'`
+- contract 회귀 핵심
+  - `./gradlew test --tests 'com.demo.tourwave.agent.OpenApiContractVerificationTest'`
+- real MySQL smoke
+  - `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerSmokeTest'`
 
 ## 8. Next Infra Steps
 
 - Gradle true multi-module split
-- real MySQL container test restore
-- distributed lock / scheduler coordination
-- observability / operational queue
+- alert routing / dashboard automation
+- worker schedule ownership standardization
+- observability / operational queue deepening

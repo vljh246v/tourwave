@@ -60,6 +60,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Verify OpenAPI contract
+        run: ./gradlew test --tests 'com.demo.tourwave.agent.OpenApiContractVerificationTest'
+
+      - name: Run real MySQL container smoke
+        run: ./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerSmokeTest'
+
       - name: Build and test
         run: ./gradlew test
-

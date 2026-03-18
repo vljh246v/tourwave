@@ -87,6 +87,12 @@
 - POST /operator/finance/reconciliation/daily/{summaryDate}/refresh (ORG_ADMIN/OWNER or finance operator)
 - GET /operator/finance/reconciliation/daily/export?startDate={date}&endDate={date} (ORG_ADMIN/OWNER or finance operator)
 
+## Runtime Operations
+- GET /actuator/health
+- GET /actuator/health/liveness
+- GET /actuator/health/readiness
+- GET /actuator/metrics/tourwave.job.execution
+
 ---
 
 ## Organizations & Members
@@ -173,6 +179,7 @@ Current runtime note:
 - Sprint 12 current runtime supports asset upload/complete plus organization/tour attachment replacement by ordered `assetIds`.
 - Sprint 12 current runtime supports `GET /me/bookings`, calendar ICS export, favorites, and notifications read model APIs.
 - Sprint 13 current runtime supports provider webhook intake with `X-Payment-Signature`, refund ops queue, booking-level manual refund retry, and reconciliation daily summary JSON/CSV export.
+- Sprint 14 current runtime supports distributed lock coordinated worker jobs and actuator health/metrics for operations.
 
 ---
 

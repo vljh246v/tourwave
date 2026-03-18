@@ -2136,6 +2136,148 @@ paths:
         '204': { description: Hidden }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /payments/webhooks/provider:
+    post:
+      tags: [Payments]
+      security: []
+      summary: Receive payment provider webhook
+      description: Target contract for provider event intake with signature validation and replay-safe handling.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [providerName, providerEventId, eventType]
+              properties:
+                providerName: { type: string }
+                providerEventId: { type: string }
+                eventType: { type: string }
+                bookingId: { type: integer, format: int64 }
+      responses:
+        '202': { description: Accepted }
+        '200': { description: Duplicate but already processed }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /operator/payments/refunds/ops:
+    get:
+      tags: [Payments]
+      summary: List refund operations queue
+      parameters:
+        - name: statuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bookingId: { type: integer, format: int64 }
+                    recordStatus: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /operator/payments/bookings/{bookingId}/refund-retry:
+    post:
+      tags: [Payments]
+      summary: Retry refund for a booking
+      parameters:
+        - $ref: '#/components/parameters/bookingId'
+      responses:
+        '200':
+          description: Retry executed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookingId: { type: integer, format: int64 }
+                  recordStatus: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /operator/finance/reconciliation/daily:
+    get:
+      tags: [Finance]
+      summary: List daily reconciliation summaries
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    summaryDate: { type: string, format: date }
+                    bookingCreatedCount: { type: integer }
+                    capturedCount: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /operator/finance/reconciliation/daily/{summaryDate}/refresh:
+    post:
+      tags: [Finance]
+      summary: Refresh one daily reconciliation summary
+      parameters:
+        - name: summaryDate
+          in: path
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summaryDate: { type: string, format: date }
+                  refreshedAtUtc: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /operator/finance/reconciliation/daily/export:
+    get:
+      tags: [Finance]
+      summary: Export reconciliation summaries as CSV
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: CSV export
+          content:
+            text/csv:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 components:
   securitySchemes:
     bearerAuth:

@@ -38,6 +38,9 @@
 ## 공통 환경변수
 
 - `IDEMPOTENCY_TTL_SECONDS` (선택, 기본값 `86400`)
+- `TOURWAVE_JOB_LOCK_OWNER_ID` (선택, worker instance owner id override)
+- `TOURWAVE_JOB_LOCK_LEASE_SECONDS` (선택, 기본값 `120`)
+- `TOURWAVE_JOB_LOCK_STALE_AFTER_SECONDS` (선택, 기본값 `300`)
 
 ## local 환경변수
 

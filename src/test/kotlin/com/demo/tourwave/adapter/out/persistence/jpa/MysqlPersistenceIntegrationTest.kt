@@ -6,6 +6,7 @@ import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.common.port.IdempotencyDecision
 import com.demo.tourwave.application.common.port.IdempotencyStore
+import com.demo.tourwave.application.common.port.WorkerJobLockRepository
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
@@ -127,8 +128,12 @@ class MysqlPersistenceIntegrationTest {
     @Autowired
     private lateinit var paymentReconciliationSummaryRepository: PaymentReconciliationSummaryRepository
 
+    @Autowired
+    private lateinit var workerJobLockRepository: WorkerJobLockRepository
+
     @BeforeEach
     fun setUp() {
+        workerJobLockRepository.clear()
         paymentReconciliationSummaryRepository.clear()
         paymentProviderEventRepository.clear()
         notificationRepository.clear()
@@ -515,5 +520,22 @@ class MysqlPersistenceIntegrationTest {
         assertEquals(PaymentProviderEventType.CAPTURED, event.eventType)
         assertNotNull(summary)
         assertEquals(2, summary.capturedCount)
+    }
+
+    @Test
+    fun `mysql adapters persist worker job locks`() {
+        val acquired = workerJobLockRepository.tryAcquire(
+            lockName = "offer-expiration",
+            ownerId = "mysql-test-worker",
+            lockedAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
+            leaseExpiresAtUtc = Instant.parse("2026-03-18T00:02:00Z")
+        )
+
+        assertTrue(acquired)
+        assertEquals(1, workerJobLockRepository.findAll().size)
+
+        workerJobLockRepository.release("offer-expiration", "mysql-test-worker")
+
+        assertTrue(workerJobLockRepository.findAll().isEmpty())
     }
 }
