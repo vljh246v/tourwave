@@ -29,3 +29,22 @@ data class OccurrenceReviewSummaryWebResponse(
     val instructor: ReviewSummaryItemWebResponse
 )
 
+data class TourReviewSummaryWebResponse(
+    val tourId: Long,
+    val summary: ReviewSummaryItemWebResponse,
+    val aggregationMode: String
+)
+
+data class InstructorReviewSummaryWebResponse(
+    val instructorProfileId: Long,
+    val summary: ReviewSummaryItemWebResponse,
+    val aggregationMode: String
+)
+
+data class OrganizationReviewSummaryWebResponse(
+    val organizationId: Long,
+    val scope: String,
+    val tour: ReviewSummaryItemWebResponse,
+    val instructor: ReviewSummaryItemWebResponse,
+    val aggregationMode: String
+)

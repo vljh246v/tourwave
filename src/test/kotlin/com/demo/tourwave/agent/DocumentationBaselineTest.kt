@@ -16,6 +16,7 @@ import com.demo.tourwave.adapter.`in`.web.participant.ParticipantRosterControlle
 import com.demo.tourwave.adapter.`in`.web.payment.PaymentOperatorController
 import com.demo.tourwave.adapter.`in`.web.payment.PaymentWebhookController
 import com.demo.tourwave.adapter.`in`.web.reporting.OrganizationReportController
+import com.demo.tourwave.adapter.`in`.web.review.ReviewController
 import com.demo.tourwave.adapter.`in`.web.tour.TourOperatorController
 import com.demo.tourwave.adapter.`in`.web.tour.TourPublicController
 import org.junit.jupiter.api.Test
@@ -48,6 +49,10 @@ class DocumentationBaselineTest {
         assertContains(doc, "POST /organizations/{organizationId}/announcements")
         assertContains(doc, "GET /organizations/{organizationId}/reports/bookings")
         assertContains(doc, "GET /organizations/{organizationId}/reports/occurrences")
+        assertContains(doc, "GET /tours/{tourId}/reviews/summary")
+        assertContains(doc, "GET /instructors/{instructorProfileId}/reviews/summary")
+        assertContains(doc, "GET /organizations/{organizationId}/reviews/summary")
+        assertContains(doc, "GET /operator/organizations/{organizationId}/reviews/summary")
         assertContains(doc, "POST /instructor-registrations")
         assertContains(doc, "GET /me/instructor-profile?organizationId=...")
         assertContains(doc, "POST /organizations/{organizationId}/tours")
@@ -105,6 +110,10 @@ class DocumentationBaselineTest {
         assertContains(apiCatalog, "GET /public/announcements")
         assertContains(apiCatalog, "GET /organizations/{orgId}/reports/bookings")
         assertContains(apiCatalog, "GET /organizations/{orgId}/reports/occurrences")
+        assertContains(apiCatalog, "GET /tours/{tourId}/reviews/summary")
+        assertContains(apiCatalog, "GET /instructors/{instructorProfileId}/reviews/summary")
+        assertContains(apiCatalog, "GET /organizations/{orgId}/reviews/summary")
+        assertContains(apiCatalog, "GET /operator/organizations/{orgId}/reviews/summary")
         assertContains(apiCatalog, "GET /me/instructor-profile?organizationId={orgId}")
         assertContains(apiCatalog, "POST /organizations/{orgId}/tours")
         assertContains(apiCatalog, "POST /tours/{tourId}/occurrences")
@@ -132,6 +141,8 @@ class DocumentationBaselineTest {
         assertContains(gapArchive, "현재 truth 확인 순서:")
         assertContains(runbook, "Launch Readiness Checklist")
         assertContains(runbook, "worker distributed lock")
+        assertContains(readProjectFile("agent/18_trust_surface_policy.md"), "MVP 결정은 `no-build`다.")
+        assertContains(readProjectFile("agent/18_trust_surface_policy.md"), "GET /operator/organizations/{organizationId}/reviews/summary")
     }
 
     @Test
@@ -195,6 +206,26 @@ class DocumentationBaselineTest {
             controller = OrganizationReportController::class.java,
             methodName = "getOccurrenceOpsReport",
             expectedPath = "/organizations/{organizationId}/reports/occurrences"
+        )
+        assertGetMapping(
+            controller = ReviewController::class.java,
+            methodName = "getTourSummary",
+            expectedPath = "/tours/{tourId}/reviews/summary"
+        )
+        assertGetMapping(
+            controller = ReviewController::class.java,
+            methodName = "getInstructorSummary",
+            expectedPath = "/instructors/{instructorProfileId}/reviews/summary"
+        )
+        assertGetMapping(
+            controller = ReviewController::class.java,
+            methodName = "getPublicOrganizationSummary",
+            expectedPath = "/organizations/{organizationId}/reviews/summary"
+        )
+        assertGetMapping(
+            controller = ReviewController::class.java,
+            methodName = "getOperatorOrganizationSummary",
+            expectedPath = "/operator/organizations/{organizationId}/reviews/summary"
         )
         assertGetMapping(
             controller = OrganizationPublicController::class.java,

@@ -19,6 +19,8 @@ class JpaReviewRepositoryAdapter(
     override fun findByOccurrenceAndType(occurrenceId: Long, type: ReviewType): List<Review> =
         reviewJpaRepository.findByOccurrenceIdAndTypeOrderByCreatedAtAsc(occurrenceId, type).map { it.toDomain() }
 
+    override fun findAll(): List<Review> = reviewJpaRepository.findAllByOrderByIdAsc().map { it.toDomain() }
+
     override fun clear() {
         reviewJpaRepository.deleteAllInBatch()
     }

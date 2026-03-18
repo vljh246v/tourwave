@@ -51,6 +51,10 @@
 - `POST /occurrences/{occurrenceId}/reviews/tour`
 - `POST /occurrences/{occurrenceId}/reviews/instructor`
 - `GET /occurrences/{occurrenceId}/reviews/summary`
+- `GET /tours/{tourId}/reviews/summary`
+- `GET /instructors/{instructorProfileId}/reviews/summary`
+- `GET /organizations/{organizationId}/reviews/summary`
+- `GET /operator/organizations/{organizationId}/reviews/summary`
 
 ### Auth / Account
 
@@ -165,6 +169,9 @@
 - participant invitation path는 booking-scoped path를 기준으로 유지한다.
 - attendance는 booking-level update가 아니라 participant-level path가 기준이다.
 - review summary의 현재 기준 path는 `occurrenceId`다.
+- review aggregation은 materialized projection이 아니라 query-time 계산이다.
+- public tour/instructor/organization summary는 public trust surface만 반영하도록 published tour 기준으로 집계한다.
+- operator organization summary는 same-org 모든 occurrence review를 집계한다.
 - refund preview는 `GET /bookings/{bookingId}/refund-preview`로 구현되어 있다.
 - waitlist manual operation API는 booking-scoped path로 구현되어 있다.
 - `real` 런타임에서는 header fallback 없이 Bearer JWT가 필요하다.
@@ -197,9 +204,6 @@
 다음 항목은 제품 비전에는 포함되지만 현재 코드에는 아직 없다.
 
 - `POST /me/delete`
-- `tourId` / `instructorProfileId` / `organizationId` 기반 공개 review summary
-- moderation API
-
 ## 4. API Contract Handling Rule
 
 - 새로운 개발은 무조건 이 문서와 실제 controller를 먼저 본다.
@@ -214,6 +218,7 @@
 - [OccurrenceCatalogControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/topology/OccurrenceCatalogControllerIntegrationTest.kt)
 - [CustomerControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/customer/CustomerControllerIntegrationTest.kt)
 - [CommunicationReportingIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/communication/CommunicationReportingIntegrationTest.kt)
+- [ReviewControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/review/ReviewControllerIntegrationTest.kt)
 - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
 - [MysqlPersistenceIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/MysqlPersistenceIntegrationTest.kt)
 - [MysqlBookingConcurrencyTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/MysqlBookingConcurrencyTest.kt)

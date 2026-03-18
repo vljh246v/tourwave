@@ -35,6 +35,8 @@ class InMemoryReviewRepositoryAdapter : ReviewRepository {
             .sortedBy { it.createdAt }
     }
 
+    override fun findAll(): List<Review> = reviews.values.sortedBy { it.id }
+
     override fun clear() {
         reviews.clear()
         sequence.set(0)

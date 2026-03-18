@@ -695,7 +695,8 @@ Endpoints:
 
 ### Public
 - GET `/instructors/{instructorProfileId}/reviews/summary`
-- GET `/tours/{tourId}/rating-summary`
+- GET `/tours/{tourId}/reviews/summary`
+- GET `/organizations/{orgId}/reviews/summary`
 
 ### Eligible participant only
 Review creation requires:
@@ -716,6 +717,17 @@ Allowed for:
 - org operators
 - reviewed instructor (only for instructor review)
 
+### Organization operator aggregation
+- GET `/operator/organizations/{orgId}/reviews/summary`
+
+Allowed for:
+- ORG_ADMIN
+- ORG_OWNER
+
+Current rule:
+- public summary는 published tour 하위 occurrence review만 집계한다.
+- operator summary는 same-org 모든 occurrence review를 집계한다.
+
 ---
 
 ## 10. Reports
@@ -728,19 +740,10 @@ Allowed for:
 
 ## 11. Moderation
 
-MVP recommendation:
-- keep platform moderation disabled unless truly needed
-
-If enabled:
-- POST `/moderation/users/{userId}/suspend`
-- POST `/moderation/users/{userId}/unsuspend`
-- POST `/moderation/content/reviews/{reviewId}/hide`
-
-Allowed for:
-- platform admin only
-
-Not allowed for:
-- normal org operators, unless explicitly extended
+MVP decision as of 2026-03-19:
+- keep platform moderation disabled
+- runtime and OpenAPI do not expose moderation endpoints
+- emergency handling stays in manual operational process, not public API contract
 
 ---
 

@@ -33,12 +33,9 @@ Sprint 1~6 범위에서 이미 확보된 것은 다음과 같다.
 
 아직 제품 비전에 남아 있는 것은 다음과 같다.
 
-- Spring Security perimeter enforcement와 사용자 계정 라이프사이클 마감
-- email verification / password reset / account deactivation 정책의 실제 API와 delivery flow
-- real asset storage / real payment provider / outbound notification delivery
-- public review summary by tour / instructor / organization
-- announcements / operator reporting / moderation 정책 결정 및 필요 시 구현
+- `POST /me/delete`
 - alert routing / dashboard / SLO / broader real MySQL verification
+- operator remediation queue / launch ops hardening
 
 ## Delivery Principle
 

@@ -100,6 +100,9 @@
 - notifications read model and read state transitions
   - [NotificationServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/customer/NotificationServiceTest.kt)
   - [CustomerControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/customer/CustomerControllerIntegrationTest.kt)
+- review aggregation by occurrence / tour / instructor / organization
+  - [ReviewQueryServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/review/ReviewQueryServiceTest.kt)
+  - [ReviewControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/review/ReviewControllerIntegrationTest.kt)
 - payment webhook signature verification and replay-safe processing
   - [PaymentWebhookServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/PaymentWebhookServiceTest.kt)
   - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
@@ -118,5 +121,5 @@
 
 - real MySQL container full-suite expansion
   - 현재는 smoke 수준까지 CI 대상이며, 더 넓은 회귀 범위 확장이 남아 있다.
-- richer review aggregation / operator reporting contract
-  - asset attachment와 customer calendar/export surface는 Sprint 12에서 구현됐고 payment ops reporting baseline은 Sprint 13에서 올라왔지만, review aggregation by tour/instructor/org and richer BI reporting은 아직 없다.
+- alert routing / dashboard / operator remediation queue
+  - launch ops 관련 운영 회귀는 Sprint 20 범위로 남아 있다.

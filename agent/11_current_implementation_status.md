@@ -89,11 +89,7 @@
 
 ### Product Surface Missing
 
-- moderation API
-- public review summary by tour / instructor / organization
-- real outbound notification delivery
-- real asset storage adapter
-- payment provider HTTP adapter with authorize/capture/refund cutover
+- `POST /me/delete`
 
 ### Infra / Ops Hardening Missing
 
@@ -108,6 +104,8 @@
 - payment provider HTTP adapter, webhook rotation/malformed handling, refund remediation metadata, reconciliation mismatch reporting
 - announcement lifecycle with public/operator APIs and visibility window enforcement
 - organization booking report and occurrence ops report APIs with CSV export
+- public review summary by tour / instructor / organization and operator organization trust summary
+- moderation no-build policy and favorites/notifications UX rules
 
 ## 3. Current Runtime Truths
 
@@ -151,6 +149,8 @@
 - notifications는 read model 조회와 함께 email outbound delivery log를 남기며, local/test fake channel과 alpha/beta/real HTTP provider adapter를 profile별로 분리한다.
 - 운영자는 refund retry metadata, review-required 구분, remediation audit trail, reconciliation mismatch export까지 조회할 수 있다. 다만 alert routing과 dashboarding은 여전히 추가 작업이 필요하다.
 - organization membership invitation은 email delivery와 invite token link를 발급하고, 재초대 시 기존 pending token을 무효화한다.
+- review aggregation은 query-time 계산으로 유지하고, public scope는 published tour 기준, operator organization scope는 same-org 전체 occurrence 기준으로 분리한다.
+- moderation은 현재 MVP 범위에서 비활성화하며 public/runtime contract에 moderation API를 노출하지 않는다.
 
 ## 6. If A New Agent Starts Today
 

@@ -2,7 +2,7 @@
 
 > 현재 구현 상태는 `13_api_status_matrix.md`를 먼저 확인한다.
 > 이 문서는 제품 목표 API 카탈로그이며, 일부 항목은 아직 미구현 상태다.
-> 2026-03-19 현재 `moderation`, `tour/instructor/org review summary`, `POST /me/delete`는 target-only 계약이다.
+> 2026-03-19 현재 `POST /me/delete`만 target-only 계약이다.
 
 ## Conventions
 - Target Product Auth: Bearer JWT (except public)
@@ -124,9 +124,6 @@ Target-only as of 2026-03-19:
 - POST /me/instructor-profile (auth)
 - PATCH /me/instructor-profile (auth)
 - GET /instructors/{instructorProfileId} (public)
-
-Target-only as of 2026-03-18:
-- GET /instructors/{instructorProfileId}/rating-summary (public)
 
 ---
 
@@ -281,17 +278,19 @@ Create:
 Public summary:
 Current runtime:
 - GET /occurrences/{occurrenceId}/reviews/summary
-
-Target-only as of 2026-03-18:
-- GET /tours/{tourId}/rating-summary
 - GET /instructors/{instructorProfileId}/reviews/summary
+- GET /tours/{tourId}/reviews/summary
+- GET /organizations/{orgId}/reviews/summary
+- GET /operator/organizations/{orgId}/reviews/summary
 
 Operator/private:
 - GET /reviews/{reviewId}
 - GET /organizations/{orgId}/reviews
 
-Target-only as of 2026-03-18:
-- POST /moderation/content/reviews/{reviewId}/hide
+Current runtime note:
+- aggregation refresh는 materialized projection이 아니라 query-time 계산이다.
+- public organization summary는 published tour 하위 occurrence review만 집계한다.
+- operator organization summary는 same-org 모든 occurrence review를 집계한다.
 
 ---
 
@@ -307,7 +306,6 @@ Target-only as of 2026-03-18:
 ---
 
 ## Announcements
-Target-only as of 2026-03-18:
 - GET /public/announcements
 - POST /organizations/{orgId}/announcements
 - PATCH /announcements/{announcementId}
@@ -328,13 +326,7 @@ Target-only as of 2026-03-18:
 ---
 
 ## Reports
-Target-only as of 2026-03-18:
 - GET /organizations/{orgId}/reports/bookings
 - GET /organizations/{orgId}/reports/occurrences
 
 ---
-
-## Moderation / User reports
-Target-only as of 2026-03-18:
-- POST /moderation/users/{userId}/suspend
-- POST /moderation/users/{userId}/unsuspend

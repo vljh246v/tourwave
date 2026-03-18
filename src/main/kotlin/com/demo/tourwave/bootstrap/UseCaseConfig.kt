@@ -30,6 +30,9 @@ import com.demo.tourwave.application.participant.port.BookingParticipantReposito
 import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
 import com.demo.tourwave.application.review.port.ReviewRepository
+import com.demo.tourwave.application.topology.OrganizationAccessGuard
+import com.demo.tourwave.application.topology.port.InstructorProfileRepository
+import com.demo.tourwave.application.topology.port.TourRepository
 import com.demo.tourwave.application.user.UserCommandService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.application.payment.PaymentProviderPort
@@ -334,8 +337,18 @@ class UseCaseConfig {
 
     @Bean
     fun reviewQueryService(
-        reviewRepository: ReviewRepository
+        reviewRepository: ReviewRepository,
+        occurrenceRepository: OccurrenceRepository,
+        tourRepository: TourRepository,
+        instructorProfileRepository: InstructorProfileRepository,
+        organizationAccessGuard: OrganizationAccessGuard
     ): ReviewQueryService {
-        return ReviewQueryService(reviewRepository)
+        return ReviewQueryService(
+            reviewRepository = reviewRepository,
+            occurrenceRepository = occurrenceRepository,
+            tourRepository = tourRepository,
+            instructorProfileRepository = instructorProfileRepository,
+            organizationAccessGuard = organizationAccessGuard
+        )
     }
 }

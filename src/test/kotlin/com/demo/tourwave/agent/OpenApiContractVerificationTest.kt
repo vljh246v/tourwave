@@ -40,6 +40,22 @@ class OpenApiContractVerificationTest {
     }
 
     @Test
+    fun `target openapi contract contains sprint 19 review aggregation paths and no moderation paths`() {
+        val spec = Yaml().load<Map<String, Any>>(Files.readString(Path.of("agent/04_openapi.yaml")))
+        val paths = spec["paths"] as? Map<*, *>
+        assertNotNull(paths)
+
+        assertTrue(paths.containsKey("/occurrences/{occurrenceId}/reviews/summary"))
+        assertTrue(paths.containsKey("/tours/{tourId}/reviews/summary"))
+        assertTrue(paths.containsKey("/instructors/{instructorProfileId}/reviews/summary"))
+        assertTrue(paths.containsKey("/organizations/{orgId}/reviews/summary"))
+        assertTrue(paths.containsKey("/operator/organizations/{orgId}/reviews/summary"))
+        assertTrue(!paths.containsKey("/moderation/users/{userId}/suspend"))
+        assertTrue(!paths.containsKey("/moderation/users/{userId}/unsuspend"))
+        assertTrue(!paths.containsKey("/moderation/content/reviews/{reviewId}/hide"))
+    }
+
+    @Test
     fun `target openapi contract keeps bearer auth as default security`() {
         val spec = Yaml().load<Map<String, Any>>(Files.readString(Path.of("agent/04_openapi.yaml")))
         val security = spec["security"] as? List<*>

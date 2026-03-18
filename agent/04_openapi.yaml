@@ -5,8 +5,8 @@ info:
   description: |
     REST API target contract for the Tour Booking Platform MVP.
     Current implementation status and known drift are tracked in `agent/13_api_status_matrix.md`.
-    As of 2026-03-18, this file still contains target-only paths for release-gap work such as
-    email verification, password reset, announcements, reports, moderation, and richer review summaries.
+    As of 2026-03-19, this file reflects the current target contract after Sprint 19 review aggregation closure
+    and excludes moderation APIs by policy decision.
 servers:
   - url: https://api.example.com
 security:
@@ -594,11 +594,11 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /instructors/{instructorProfileId}/rating-summary:
+  /instructors/{instructorProfileId}/reviews/summary:
     get:
-      tags: [Instructors]
+      tags: [Reviews]
       security: []
-      summary: Get instructor rating summary
+      summary: Get instructor review summary
       parameters:
         - name: instructorProfileId
           in: path
@@ -608,11 +608,11 @@ paths:
             format: int64
       responses:
         '200':
-          description: Rating summary
+          description: Review summary
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RatingSummary'
+                $ref: '#/components/schemas/InstructorReviewSummaryResponse'
 # =========================
 # 3) Tours + Content + Assets(Tour images) + Favorites
 # Paste under: paths:
@@ -866,12 +866,12 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /tours/{tourId}/rating-summary:
+  /tours/{tourId}/reviews/summary:
     get:
       tags: [Reviews]
       security: []
-      summary: Tour rating summary (public)
-      description: Public summary only (average + count). Review content is not public.
+      summary: Tour review summary (public)
+      description: Public summary only. Review content is not public.
       parameters:
         - $ref: '#/components/parameters/tourId'
       responses:
@@ -879,7 +879,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/RatingSummary' }
+              schema: { $ref: '#/components/schemas/TourReviewSummaryResponse' }
 
   /tours/{tourId}/favorite:
     post:
@@ -2017,6 +2017,21 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Unprocessable' }
 
+  /occurrences/{occurrenceId}/reviews/summary:
+    get:
+      tags: [Reviews]
+      security: []
+      summary: Occurrence review summary
+      parameters:
+        - $ref: '#/components/parameters/occurrenceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OccurrenceReviewSummaryResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /reviews/{reviewId}:
     get:
       tags: [Reviews]
@@ -2061,8 +2076,8 @@ paths:
     get:
       tags: [Reviews]
       security: []
-      summary: Instructor rating summary (public)
-      description: Public summary only (average + count). Content is restricted.
+      summary: Instructor review summary (public)
+      description: Public summary only. Content is restricted.
       parameters:
         - name: instructorProfileId
           in: path
@@ -2073,7 +2088,38 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/RatingSummary' }
+              schema: { $ref: '#/components/schemas/InstructorReviewSummaryResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /organizations/{orgId}/reviews/summary:
+    get:
+      tags: [Reviews]
+      security: []
+      summary: Organization review summary (public)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrganizationReviewSummaryResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /operator/organizations/{orgId}/reviews/summary:
+    get:
+      tags: [Reviews]
+      summary: Organization review summary (operator)
+      parameters:
+        - $ref: '#/components/parameters/orgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrganizationReviewSummaryResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   # ---------
   # Reports
@@ -2174,48 +2220,6 @@ paths:
             text/csv:
               schema:
                 type: string
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-
-  # ---------
-  # Moderation (Admin-only, optional in MVP)
-  # ---------
-
-  /moderation/users/{userId}/suspend:
-    post:
-      tags: [Moderation]
-      summary: Suspend a user (ADMIN only)
-      parameters:
-        - $ref: '#/components/parameters/userId'
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UserSuspendRequest' }
-      responses:
-        '204': { description: Suspended }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-
-  /moderation/users/{userId}/unsuspend:
-    post:
-      tags: [Moderation]
-      summary: Unsuspend a user (ADMIN only)
-      parameters:
-        - $ref: '#/components/parameters/userId'
-      responses:
-        '204': { description: Unsuspended }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-
-  /moderation/content/reviews/{reviewId}/hide:
-    post:
-      tags: [Moderation]
-      summary: Hide a review (ADMIN only)
-      parameters:
-        - $ref: '#/components/parameters/reviewId'
-      responses:
-        '204': { description: Hidden }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
@@ -2703,6 +2707,42 @@ components:
         reviewCount:
           type: integer
           minimum: 0
+
+    ReviewSummaryItem:
+      type: object
+      properties:
+        count: { type: integer, minimum: 0, example: 12 }
+        averageRating: { type: number, format: double, nullable: true, example: 4.5 }
+
+    OccurrenceReviewSummaryResponse:
+      type: object
+      properties:
+        occurrenceId: { $ref: '#/components/schemas/Id64' }
+        tour: { $ref: '#/components/schemas/ReviewSummaryItem' }
+        instructor: { $ref: '#/components/schemas/ReviewSummaryItem' }
+
+    TourReviewSummaryResponse:
+      type: object
+      properties:
+        tourId: { $ref: '#/components/schemas/Id64' }
+        summary: { $ref: '#/components/schemas/ReviewSummaryItem' }
+        aggregationMode: { type: string, example: QUERY_TIME }
+
+    InstructorReviewSummaryResponse:
+      type: object
+      properties:
+        instructorProfileId: { $ref: '#/components/schemas/Id64' }
+        summary: { $ref: '#/components/schemas/ReviewSummaryItem' }
+        aggregationMode: { type: string, example: QUERY_TIME }
+
+    OrganizationReviewSummaryResponse:
+      type: object
+      properties:
+        organizationId: { $ref: '#/components/schemas/Id64' }
+        scope: { type: string, example: PUBLIC }
+        tour: { $ref: '#/components/schemas/ReviewSummaryItem' }
+        instructor: { $ref: '#/components/schemas/ReviewSummaryItem' }
+        aggregationMode: { type: string, example: QUERY_TIME }
 
     OccurrenceSearchItem:
       type: object

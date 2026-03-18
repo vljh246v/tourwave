@@ -33,6 +33,7 @@
 - `03_api_catalog.md`
 - `06_implementation_notes.md`
 - `07_test_scenarios.md`
+- `18_trust_surface_policy.md`
 - `../docs/launch-readiness-checklist.md`
 
 ## 2. Source Of Truth Priority
