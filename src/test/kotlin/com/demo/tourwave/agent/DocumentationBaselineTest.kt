@@ -12,6 +12,8 @@ import com.demo.tourwave.adapter.`in`.web.organization.OrganizationPublicControl
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrenceOperatorController
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrencePublicController
 import com.demo.tourwave.adapter.`in`.web.participant.ParticipantRosterController
+import com.demo.tourwave.adapter.`in`.web.payment.PaymentOperatorController
+import com.demo.tourwave.adapter.`in`.web.payment.PaymentWebhookController
 import com.demo.tourwave.adapter.`in`.web.tour.TourOperatorController
 import com.demo.tourwave.adapter.`in`.web.tour.TourPublicController
 import org.junit.jupiter.api.Test
@@ -66,6 +68,12 @@ class DocumentationBaselineTest {
         assertContains(doc, "GET /me/notifications")
         assertContains(doc, "POST /me/notifications/{notificationId}/read")
         assertContains(doc, "POST /me/notifications/read-all")
+        assertContains(doc, "POST /payments/webhooks/provider")
+        assertContains(doc, "GET /operator/payments/refunds/ops")
+        assertContains(doc, "POST /operator/payments/bookings/{bookingId}/refund-retry")
+        assertContains(doc, "GET /operator/finance/reconciliation/daily")
+        assertContains(doc, "POST /operator/finance/reconciliation/daily/{summaryDate}/refresh")
+        assertContains(doc, "GET /operator/finance/reconciliation/daily/export")
         assertContains(doc, "/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.")
         assertContains(doc, "DocumentationBaselineTest")
     }
@@ -93,6 +101,9 @@ class DocumentationBaselineTest {
         assertContains(apiCatalog, "GET /me/bookings")
         assertContains(apiCatalog, "GET /me/favorites")
         assertContains(apiCatalog, "GET /me/notifications")
+        assertContains(apiCatalog, "POST /payments/webhooks/provider")
+        assertContains(apiCatalog, "GET /operator/payments/refunds/ops")
+        assertContains(apiCatalog, "GET /operator/finance/reconciliation/daily")
         assertContains(apiCatalog, "Current runtime note:")
         assertContains(apiCatalog, "1차 확인: controller + integration test")
         assertContains(traceability, "DocumentationBaselineTest")
@@ -100,6 +111,7 @@ class DocumentationBaselineTest {
         assertContains(traceability, "InstructorAndTourControllerIntegrationTest")
         assertContains(traceability, "OccurrenceCatalogControllerIntegrationTest")
         assertContains(traceability, "CustomerControllerIntegrationTest")
+        assertContains(traceability, "PaymentControllerIntegrationTest")
         assertContains(gapArchive, "Historical Archive")
         assertContains(gapArchive, "현재 truth 확인 순서:")
     }
@@ -300,6 +312,36 @@ class DocumentationBaselineTest {
             controller = CustomerController::class.java,
             methodName = "markAllNotificationsRead",
             expectedPath = "/me/notifications/read-all"
+        )
+        assertPostMapping(
+            controller = PaymentWebhookController::class.java,
+            methodName = "receiveProviderWebhook",
+            expectedPath = "/payments/webhooks/provider"
+        )
+        assertGetMapping(
+            controller = PaymentOperatorController::class.java,
+            methodName = "listRefundOpsQueue",
+            expectedPath = "/operator/payments/refunds/ops"
+        )
+        assertPostMapping(
+            controller = PaymentOperatorController::class.java,
+            methodName = "retryBookingRefund",
+            expectedPath = "/operator/payments/bookings/{bookingId}/refund-retry"
+        )
+        assertGetMapping(
+            controller = PaymentOperatorController::class.java,
+            methodName = "listDailySummaries",
+            expectedPath = "/operator/finance/reconciliation/daily"
+        )
+        assertPostMapping(
+            controller = PaymentOperatorController::class.java,
+            methodName = "refreshDailySummary",
+            expectedPath = "/operator/finance/reconciliation/daily/{summaryDate}/refresh"
+        )
+        assertGetMapping(
+            controller = PaymentOperatorController::class.java,
+            methodName = "exportDailySummariesCsv",
+            expectedPath = "/operator/finance/reconciliation/daily/export"
         )
     }
 

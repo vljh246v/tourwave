@@ -7,6 +7,7 @@ import java.time.Instant
 interface BookingRepository {
     fun save(booking: Booking): Booking
     fun findById(bookingId: Long): Booking?
+    fun findAll(): List<Booking>
     fun findByLeaderUserId(userId: Long): List<Booking>
     fun findByOccurrenceId(occurrenceId: Long): List<Booking>
     fun findByOccurrenceAndStatuses(occurrenceId: Long, statuses: Set<BookingStatus>): List<Booking>

@@ -26,6 +26,8 @@ class NotificationServiceTest {
         override fun save(record: com.demo.tourwave.domain.payment.PaymentRecord) = record
         override fun findByBookingId(bookingId: Long) = null
         override fun findByStatuses(statuses: Set<com.demo.tourwave.domain.payment.PaymentRecordStatus>) = emptyList<com.demo.tourwave.domain.payment.PaymentRecord>()
+        override fun findUpdatedBetween(startInclusive: Instant, endExclusive: Instant) = emptyList<com.demo.tourwave.domain.payment.PaymentRecord>()
+        override fun findAll() = emptyList<com.demo.tourwave.domain.payment.PaymentRecord>()
         override fun clear() = Unit
     }
     private val service = NotificationService(

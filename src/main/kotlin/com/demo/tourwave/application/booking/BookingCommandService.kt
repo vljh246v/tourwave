@@ -102,7 +102,11 @@ class BookingCommandService(
                     )
                 )
 
-                paymentLedgerService.initialize(created)
+                paymentLedgerService.initialize(
+                    booking = created,
+                    occurrence = occurrence,
+                    actorUserId = command.actorUserId
+                )
 
                 val response = BookingCreated(
                     id = requireNotNull(created.id),
@@ -715,7 +719,7 @@ class BookingCommandService(
 
         val settled = when (mutationType) {
             BookingMutationType.APPROVE,
-            BookingMutationType.OFFER_ACCEPT -> paymentLedgerService.capture(after)
+            BookingMutationType.OFFER_ACCEPT -> paymentLedgerService.capture(after, actorUserId)
 
             BookingMutationType.REJECT -> paymentLedgerService.applyRefundPolicy(
                 booking = after,

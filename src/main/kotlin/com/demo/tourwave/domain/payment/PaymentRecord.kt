@@ -16,9 +16,17 @@ data class PaymentRecord(
     val id: Long? = null,
     val bookingId: Long,
     val status: PaymentRecordStatus,
+    val providerName: String? = null,
+    val providerPaymentKey: String? = null,
+    val providerAuthorizationId: String? = null,
+    val providerCaptureId: String? = null,
     val lastRefundRequestId: String? = null,
+    val lastProviderReference: String? = null,
     val lastRefundReasonCode: String? = null,
     val lastErrorCode: String? = null,
+    val refundRetryCount: Int = 0,
+    val lastRefundAttemptedAtUtc: Instant? = null,
+    val lastWebhookEventId: String? = null,
     val createdAtUtc: Instant,
     val updatedAtUtc: Instant
 )

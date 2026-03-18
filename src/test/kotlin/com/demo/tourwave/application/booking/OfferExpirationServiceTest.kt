@@ -24,7 +24,7 @@ class OfferExpirationServiceTest {
     private val paymentRecordRepository = InMemoryPaymentRecordRepositoryAdapter()
     private val refundExecutionAdapter = InMemoryRefundExecutionAdapter()
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
-    private val paymentLedgerService = PaymentLedgerService(paymentRecordRepository, refundExecutionAdapter, clock)
+    private val paymentLedgerService = PaymentLedgerService(paymentRecordRepository, refundExecutionAdapter, refundExecutionAdapter, clock)
     private val service = OfferExpirationService(
         bookingRepository = bookingRepository,
         occurrenceRepository = occurrenceRepository,
@@ -56,7 +56,11 @@ class OfferExpirationServiceTest {
                 createdAt = Instant.parse("2026-03-10T00:00:00Z")
             )
         )
-        paymentLedgerService.initialize(expired)
+        paymentLedgerService.initialize(
+            booking = expired,
+            occurrence = occurrenceRepository.getOrCreate(4001L),
+            actorUserId = 101L
+        )
         val waiting = bookingRepository.save(
             Booking(
                 occurrenceId = 4001L,

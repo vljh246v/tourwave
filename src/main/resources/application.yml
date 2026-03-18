@@ -14,3 +14,8 @@ tourwave:
     access-token-ttl-seconds: ${TOURWAVE_ACCESS_TOKEN_TTL_SECONDS:3600}
     refresh-token-ttl-seconds: ${TOURWAVE_REFRESH_TOKEN_TTL_SECONDS:1209600}
     allow-header-auth-fallback: ${TOURWAVE_ALLOW_HEADER_AUTH_FALLBACK:true}
+  payment:
+    webhook-secret: ${TOURWAVE_PAYMENT_WEBHOOK_SECRET:tourwave-webhook-secret}
+    refund:
+      max-retry-attempts: ${TOURWAVE_PAYMENT_MAX_RETRY_ATTEMPTS:5}
+      retry-cooldown-seconds: ${TOURWAVE_PAYMENT_RETRY_COOLDOWN_SECONDS:600}

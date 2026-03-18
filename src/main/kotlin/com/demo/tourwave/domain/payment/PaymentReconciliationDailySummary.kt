@@ -1,0 +1,17 @@
+package com.demo.tourwave.domain.payment
+
+import java.time.Instant
+import java.time.LocalDate
+
+data class PaymentReconciliationDailySummary(
+    val summaryDate: LocalDate,
+    val bookingCreatedCount: Int,
+    val authorizedCount: Int,
+    val capturedCount: Int,
+    val refundPendingCount: Int,
+    val refundedCount: Int,
+    val noRefundCount: Int,
+    val refundFailedRetryableCount: Int,
+    val refundReviewRequiredCount: Int,
+    val refreshedAtUtc: Instant
+)

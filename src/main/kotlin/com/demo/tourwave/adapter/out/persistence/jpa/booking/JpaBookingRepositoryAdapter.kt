@@ -16,6 +16,8 @@ class JpaBookingRepositoryAdapter(
 
     override fun findById(bookingId: Long): Booking? = bookingJpaRepository.findById(bookingId).orElse(null)?.toDomain()
 
+    override fun findAll(): List<Booking> = bookingJpaRepository.findAll().map { it.toDomain() }
+
     override fun findByLeaderUserId(userId: Long): List<Booking> =
         bookingJpaRepository.findByLeaderUserIdOrderByCreatedAtDescIdDesc(userId).map { it.toDomain() }
 

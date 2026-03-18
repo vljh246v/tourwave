@@ -79,6 +79,14 @@
 - POST /me/notifications/{notificationId}/read (auth)
 - POST /me/notifications/read-all (auth)
 
+## Payments / Finance
+- POST /payments/webhooks/provider (provider callback; HMAC signature)
+- GET /operator/payments/refunds/ops (ORG_ADMIN/OWNER or finance operator)
+- POST /operator/payments/bookings/{bookingId}/refund-retry (ORG_ADMIN/OWNER or finance operator)
+- GET /operator/finance/reconciliation/daily?startDate={date}&endDate={date} (ORG_ADMIN/OWNER or finance operator)
+- POST /operator/finance/reconciliation/daily/{summaryDate}/refresh (ORG_ADMIN/OWNER or finance operator)
+- GET /operator/finance/reconciliation/daily/export?startDate={date}&endDate={date} (ORG_ADMIN/OWNER or finance operator)
+
 ---
 
 ## Organizations & Members
@@ -164,6 +172,7 @@ Current runtime note:
 - Current public search supports `locationText`, `dateFrom`, `dateTo`, `timezone`, `partySize`, `onlyAvailable`, `sort`, `cursor`, `limit`.
 - Sprint 12 current runtime supports asset upload/complete plus organization/tour attachment replacement by ordered `assetIds`.
 - Sprint 12 current runtime supports `GET /me/bookings`, calendar ICS export, favorites, and notifications read model APIs.
+- Sprint 13 current runtime supports provider webhook intake with `X-Payment-Signature`, refund ops queue, booking-level manual refund retry, and reconciliation daily summary JSON/CSV export.
 
 ---
 

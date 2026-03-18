@@ -26,9 +26,11 @@ class BookingRefundPreviewServiceTest {
     private val bookingRepository = mock(BookingRepository::class.java)
     private val occurrenceRepository = mock(OccurrenceRepository::class.java)
     private val participantRepository = mock(BookingParticipantRepository::class.java)
+    private val paymentProviderAdapter = com.demo.tourwave.adapter.out.payment.InMemoryRefundExecutionAdapter()
     private val paymentLedgerService = PaymentLedgerService(
         paymentRecordRepository = com.demo.tourwave.adapter.out.persistence.payment.InMemoryPaymentRecordRepositoryAdapter(),
-        refundExecutionPort = com.demo.tourwave.adapter.out.payment.InMemoryRefundExecutionAdapter(),
+        paymentProviderPort = paymentProviderAdapter,
+        refundExecutionPort = paymentProviderAdapter,
         clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
     )
     private val participantAccessPolicy = ParticipantAccessPolicy(bookingRepository, participantRepository)

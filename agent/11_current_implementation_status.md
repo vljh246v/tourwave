@@ -4,7 +4,7 @@
 
 ## 1. What Exists Today
 
-현재 저장소는 예약 핵심 엔진, 계정 인증, organization 운영 기초, instructor/tour authoring, occurrence public catalog/search, 그리고 customer-facing asset/favorite/notification surface가 구현된 상태다. 비즈니스적으로는 "판매 가능한 catalog와 기본 customer self-service까지 올라온 예약 플랫폼 코어, 다만 외부 결제/운영 인프라 hardening이 남은 상태"로 보는 것이 정확하다.
+현재 저장소는 예약 핵심 엔진, 계정 인증, organization 운영 기초, instructor/tour authoring, occurrence public catalog/search, customer-facing asset/favorite/notification surface, 그리고 payment webhook/refund ops/reconciliation foundation이 구현된 상태다. 비즈니스적으로는 "판매 가능한 catalog와 기본 customer self-service, 그리고 운영자가 결제 실패와 정산 기초를 다룰 수 있는 예약 플랫폼 코어"로 보는 것이 정확하다.
 
 ### Product Grade Areas Already Implemented
 
@@ -35,6 +35,10 @@
 - cancel flow refund integration
 - payment ledger / payment status model
 - refund retry flow
+- provider authorization / capture / refund boundary
+- payment webhook persistence + signature verification
+- refund ops queue / manual remediation
+- reconciliation daily summary / export
 
 ### Authz / Topology
 
@@ -61,6 +65,7 @@
 - offer expiration job
 - invitation expiration job
 - refund retry job
+- finance reconciliation daily summary job
 - idempotency TTL purge job
 - structured audit payload support
 - timezone-aware time window policy
@@ -82,7 +87,6 @@
 - email verification / password reset
 - announcements / moderation / report APIs
 - public review summary by tour / instructor / organization
-- external payment webhook / callback
 
 ### Infra / Ops Hardening Missing
 
@@ -124,8 +128,8 @@
 - 배치 작업은 구현되어 있지만 실제 다중 인스턴스 운영용 분산락은 아직 약하다.
 - auth/account 영역은 아직 제품 표면 대비 비어 있다.
 - true MySQL container 검증은 CI나 Docker 가능한 환경에서 다시 붙여야 한다.
-- 외부 결제 승인/취소 이벤트를 수신하는 경로가 아직 없다.
-- 운영자가 organization, instructor, tour, occurrence와 attachment까지 다룰 수 있고 고객은 booking/favorite/notification까지 self-service 가능하지만, 외부 payment integration과 운영 observability가 없어 아직 완전한 판매 제품은 아니다.
+- 외부 결제 이벤트는 수신하지만 실제 third-party provider adapter와 webhook secret 운영 절차는 아직 stub 수준이다.
+- 운영자가 organization, instructor, tour, occurrence와 attachment를 다루고 고객은 booking/favorite/notification self-service가 가능하며 payment ops queue와 reconciliation까지 조회할 수 있지만, observability와 실PG 연동이 아직 부족하다.
 - organization membership는 구현됐지만 초대 이메일 전달과 조직 전환 UX는 아직 없다.
 
 ## 6. If A New Agent Starts Today

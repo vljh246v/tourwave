@@ -14,6 +14,8 @@ import com.demo.tourwave.application.auth.port.UserActionTokenRepository
 import com.demo.tourwave.application.asset.port.AssetRepository
 import com.demo.tourwave.application.customer.port.FavoriteRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
+import com.demo.tourwave.application.payment.port.PaymentProviderEventRepository
+import com.demo.tourwave.application.payment.port.PaymentReconciliationSummaryRepository
 import com.demo.tourwave.application.topology.port.InstructorProfileRepository
 import com.demo.tourwave.application.topology.port.InstructorRegistrationRepository
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
@@ -38,7 +40,11 @@ import com.demo.tourwave.domain.inquiry.InquiryMessage
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.participant.BookingParticipant
 import com.demo.tourwave.domain.payment.PaymentRecord
+import com.demo.tourwave.domain.payment.PaymentProviderEvent
+import com.demo.tourwave.domain.payment.PaymentProviderEventStatus
+import com.demo.tourwave.domain.payment.PaymentProviderEventType
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
+import com.demo.tourwave.domain.payment.PaymentReconciliationDailySummary
 import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.organization.OrganizationRole
@@ -115,8 +121,16 @@ class MysqlPersistenceIntegrationTest {
     @Autowired
     private lateinit var notificationRepository: NotificationRepository
 
+    @Autowired
+    private lateinit var paymentProviderEventRepository: PaymentProviderEventRepository
+
+    @Autowired
+    private lateinit var paymentReconciliationSummaryRepository: PaymentReconciliationSummaryRepository
+
     @BeforeEach
     fun setUp() {
+        paymentReconciliationSummaryRepository.clear()
+        paymentProviderEventRepository.clear()
         notificationRepository.clear()
         favoriteRepository.clear()
         assetRepository.clear()
@@ -461,5 +475,45 @@ class MysqlPersistenceIntegrationTest {
         assertEquals(1, favoriteRepository.findByUserId(requireNotNull(user.id)).size)
         assertEquals(1, notificationRepository.findByUserId(requireNotNull(user.id)).size)
         assertEquals("https://asset.test/public/1", assetRepository.findById(requireNotNull(asset.id))?.publicUrl)
+    }
+
+    @Test
+    fun `mysql adapters persist payment provider events and reconciliation summaries`() {
+        paymentProviderEventRepository.save(
+            PaymentProviderEvent(
+                providerName = "stub-pay",
+                providerEventId = "evt-jpa-1",
+                eventType = PaymentProviderEventType.CAPTURED,
+                bookingId = 901L,
+                payloadJson = """{"ok":true}""",
+                signature = "sig",
+                status = PaymentProviderEventStatus.PROCESSED,
+                note = "CAPTURED",
+                receivedAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
+                processedAtUtc = Instant.parse("2026-03-18T00:00:01Z")
+            )
+        )
+        paymentReconciliationSummaryRepository.save(
+            PaymentReconciliationDailySummary(
+                summaryDate = java.time.LocalDate.parse("2026-03-18"),
+                bookingCreatedCount = 3,
+                authorizedCount = 1,
+                capturedCount = 2,
+                refundPendingCount = 0,
+                refundedCount = 1,
+                noRefundCount = 0,
+                refundFailedRetryableCount = 1,
+                refundReviewRequiredCount = 0,
+                refreshedAtUtc = Instant.parse("2026-03-18T01:00:00Z")
+            )
+        )
+
+        val event = paymentProviderEventRepository.findByProviderEventId("evt-jpa-1")
+        val summary = paymentReconciliationSummaryRepository.findByDate(java.time.LocalDate.parse("2026-03-18"))
+
+        assertNotNull(event)
+        assertEquals(PaymentProviderEventType.CAPTURED, event.eventType)
+        assertNotNull(summary)
+        assertEquals(2, summary.capturedCount)
     }
 }

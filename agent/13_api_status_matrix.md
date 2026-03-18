@@ -122,6 +122,15 @@
 - `POST /me/notifications/{notificationId}/read`
 - `POST /me/notifications/read-all`
 
+### Payment / Finance Operations
+
+- `POST /payments/webhooks/provider`
+- `GET /operator/payments/refunds/ops`
+- `POST /operator/payments/bookings/{bookingId}/refund-retry`
+- `GET /operator/finance/reconciliation/daily`
+- `POST /operator/finance/reconciliation/daily/{summaryDate}/refresh`
+- `GET /operator/finance/reconciliation/daily/export`
+
 ### Runtime / Worker
 
 - offer expiration job
@@ -151,6 +160,9 @@
 - booking calendar export는 participant access policy를 그대로 따르고, occurrence calendar export는 published + scheduled occurrence에 한해 공개된다.
 - favorites는 published tour만 허용한다.
 - notifications는 booking/inquiry/refund 관련 audit event에서 read model로 축적되고, `read`/`read-all` API를 지원한다.
+- payment webhook intake는 `X-Payment-Signature` HMAC 검증을 수행하고, `providerEventId` 기준 replay-safe 처리로 중복 이벤트를 무시한다.
+- refund ops queue는 `REFUND_PENDING`, `REFUND_FAILED_RETRYABLE`, `REFUND_REVIEW_REQUIRED` 상태를 운영자가 조회하고 booking 단위 manual retry를 수행할 수 있다.
+- reconciliation daily summary는 booking 생성 건수와 payment ledger status 업데이트 건수를 일자별로 저장하고 JSON/CSV 조회를 지원한다.
 
 ## 3. Not Implemented Yet But Needed For Product
 
@@ -158,7 +170,6 @@
 
 - `tourId` / `instructorProfileId` / `organizationId` 기반 공개 review summary
 - favorites / announcements / report export
-- external payment callback/webhook intake
 
 ## 4. API Contract Handling Rule
 
@@ -173,5 +184,6 @@
 - [BookingControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/domain/booking/application/BookingControllerIntegrationTest.kt)
 - [OccurrenceCatalogControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/topology/OccurrenceCatalogControllerIntegrationTest.kt)
 - [CustomerControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/customer/CustomerControllerIntegrationTest.kt)
+- [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
 - [MysqlPersistenceIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/MysqlPersistenceIntegrationTest.kt)
 - [MysqlBookingConcurrencyTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/MysqlBookingConcurrencyTest.kt)

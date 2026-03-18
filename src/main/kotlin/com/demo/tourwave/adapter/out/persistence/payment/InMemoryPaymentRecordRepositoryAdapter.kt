@@ -5,6 +5,7 @@ import com.demo.tourwave.domain.payment.PaymentRecord
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -32,6 +33,16 @@ class InMemoryPaymentRecordRepositoryAdapter : PaymentRecordRepository {
         return recordsById.values
             .filter { it.status in statuses }
             .sortedBy { it.updatedAtUtc }
+    }
+
+    override fun findUpdatedBetween(startInclusive: Instant, endExclusive: Instant): List<PaymentRecord> {
+        return recordsById.values
+            .filter { !it.updatedAtUtc.isBefore(startInclusive) && it.updatedAtUtc.isBefore(endExclusive) }
+            .sortedBy { it.updatedAtUtc }
+    }
+
+    override fun findAll(): List<PaymentRecord> {
+        return recordsById.values.sortedBy { it.id ?: Long.MAX_VALUE }
     }
 
     override fun clear() {

@@ -90,6 +90,15 @@
 - notifications read model and read state transitions
   - [NotificationServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/customer/NotificationServiceTest.kt)
   - [CustomerControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/customer/CustomerControllerIntegrationTest.kt)
+- payment webhook signature verification and replay-safe processing
+  - [PaymentWebhookServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/PaymentWebhookServiceTest.kt)
+  - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
+- refund ops queue and manual remediation
+  - [RefundOperationsServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/RefundOperationsServiceTest.kt)
+  - [RefundRetryServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/RefundRetryServiceTest.kt)
+- reconciliation daily summary and export
+  - [ReconciliationServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/ReconciliationServiceTest.kt)
+  - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
 
 ## 7. Known Coverage Gaps
 
@@ -98,4 +107,4 @@
 - OpenAPI parser 기반 contract validation
   - smoke/integration coverage는 있으나 spec parser 기반 자동 검증은 아직 없다.
 - richer review aggregation / operator reporting contract
-  - asset attachment와 customer calendar/export surface는 Sprint 12에서 구현됐지만, review aggregation by tour/instructor/org and operator reporting은 아직 없다.
+  - asset attachment와 customer calendar/export surface는 Sprint 12에서 구현됐고 payment ops reporting baseline은 Sprint 13에서 올라왔지만, review aggregation by tour/instructor/org and richer BI reporting은 아직 없다.

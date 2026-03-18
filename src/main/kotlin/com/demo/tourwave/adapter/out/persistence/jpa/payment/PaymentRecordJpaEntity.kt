@@ -26,12 +26,28 @@ data class PaymentRecordJpaEntity(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 48)
     val status: PaymentRecordStatus,
+    @Column(name = "provider_name", length = 64)
+    val providerName: String? = null,
+    @Column(name = "provider_payment_key", length = 128)
+    val providerPaymentKey: String? = null,
+    @Column(name = "provider_authorization_id", length = 128)
+    val providerAuthorizationId: String? = null,
+    @Column(name = "provider_capture_id", length = 128)
+    val providerCaptureId: String? = null,
     @Column(name = "last_refund_request_id", length = 128)
     val lastRefundRequestId: String? = null,
+    @Column(name = "last_provider_reference", length = 128)
+    val lastProviderReference: String? = null,
     @Column(name = "last_refund_reason_code", length = 128)
     val lastRefundReasonCode: String? = null,
     @Column(name = "last_error_code", length = 128)
     val lastErrorCode: String? = null,
+    @Column(name = "refund_retry_count", nullable = false)
+    val refundRetryCount: Int = 0,
+    @Column(name = "last_refund_attempted_at_utc")
+    val lastRefundAttemptedAtUtc: Instant? = null,
+    @Column(name = "last_webhook_event_id", length = 128)
+    val lastWebhookEventId: String? = null,
     @Column(name = "created_at_utc", nullable = false)
     val createdAtUtc: Instant,
     @Column(name = "updated_at_utc", nullable = false)

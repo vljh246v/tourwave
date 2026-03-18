@@ -32,9 +32,11 @@ import com.demo.tourwave.application.review.ReviewQueryService
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.user.UserCommandService
 import com.demo.tourwave.application.user.port.UserRepository
+import com.demo.tourwave.application.payment.PaymentProviderPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
+import java.time.Duration
 
 @Configuration
 class UseCaseConfig {
@@ -67,11 +69,13 @@ class UseCaseConfig {
     @Bean
     fun paymentLedgerService(
         paymentRecordRepository: PaymentRecordRepository,
+        paymentProviderPort: PaymentProviderPort,
         refundExecutionPort: RefundExecutionPort,
         clock: Clock
     ): PaymentLedgerService {
         return PaymentLedgerService(
             paymentRecordRepository = paymentRecordRepository,
+            paymentProviderPort = paymentProviderPort,
             refundExecutionPort = refundExecutionPort,
             clock = clock
         )
@@ -83,6 +87,8 @@ class UseCaseConfig {
         bookingRepository: BookingRepository,
         refundExecutionPort: RefundExecutionPort,
         auditEventPort: AuditEventPort,
+        @org.springframework.beans.factory.annotation.Value("\${tourwave.payment.refund.max-retry-attempts:5}") maxRetryAttempts: Int,
+        @org.springframework.beans.factory.annotation.Value("\${tourwave.payment.refund.retry-cooldown-seconds:600}") retryCooldownSeconds: Long,
         clock: Clock
     ): RefundRetryService {
         return RefundRetryService(
@@ -90,6 +96,8 @@ class UseCaseConfig {
             bookingRepository = bookingRepository,
             refundExecutionPort = refundExecutionPort,
             auditEventPort = auditEventPort,
+            maxRetryAttempts = maxRetryAttempts,
+            retryCooldown = Duration.ofSeconds(retryCooldownSeconds),
             clock = clock
         )
     }
