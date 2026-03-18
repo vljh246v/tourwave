@@ -11,26 +11,29 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaWorkerJobLockRepositoryAdapter(
-    private val workerJobLockJpaRepository: WorkerJobLockJpaRepository
+    private val workerJobLockJpaRepository: WorkerJobLockJpaRepository,
 ) : WorkerJobLockRepository {
     @Transactional
-    override fun tryAcquire(lockName: String, ownerId: String, lockedAtUtc: Instant, leaseExpiresAtUtc: Instant): Boolean {
-        val current = workerJobLockJpaRepository.findLockedByLockName(lockName)
-        if (current == null) {
-            return try {
+    override fun tryAcquire(
+        lockName: String,
+        ownerId: String,
+        lockedAtUtc: Instant,
+        leaseExpiresAtUtc: Instant,
+    ): Boolean {
+        val current =
+            workerJobLockJpaRepository.findLockedByLockName(lockName) ?: return try {
                 workerJobLockJpaRepository.save(
                     WorkerJobLockJpaEntity(
                         lockName = lockName,
                         ownerId = ownerId,
                         lockedAtUtc = lockedAtUtc,
-                        leaseExpiresAtUtc = leaseExpiresAtUtc
-                    )
+                        leaseExpiresAtUtc = leaseExpiresAtUtc,
+                    ),
                 )
                 true
             } catch (_: DataIntegrityViolationException) {
                 false
             }
-        }
         if (current.ownerId != ownerId && current.leaseExpiresAtUtc.isAfter(lockedAtUtc)) {
             return false
         }
@@ -38,14 +41,17 @@ class JpaWorkerJobLockRepositoryAdapter(
             current.copy(
                 ownerId = ownerId,
                 lockedAtUtc = lockedAtUtc,
-                leaseExpiresAtUtc = leaseExpiresAtUtc
-            )
+                leaseExpiresAtUtc = leaseExpiresAtUtc,
+            ),
         )
         return true
     }
 
     @Transactional
-    override fun release(lockName: String, ownerId: String) {
+    override fun release(
+        lockName: String,
+        ownerId: String,
+    ) {
         val current = workerJobLockJpaRepository.findLockedByLockName(lockName) ?: return
         if (current.ownerId == ownerId) {
             workerJobLockJpaRepository.delete(current)
@@ -53,7 +59,8 @@ class JpaWorkerJobLockRepositoryAdapter(
     }
 
     override fun findAll(): List<WorkerJobLock> =
-        workerJobLockJpaRepository.findAll()
+        workerJobLockJpaRepository
+            .findAll()
             .sortedBy { it.lockName }
             .map { it.toDomain() }
 
@@ -67,5 +74,5 @@ private fun WorkerJobLockJpaEntity.toDomain(): WorkerJobLock =
         lockName = lockName,
         ownerId = ownerId,
         lockedAtUtc = lockedAtUtc,
-        leaseExpiresAtUtc = leaseExpiresAtUtc
+        leaseExpiresAtUtc = leaseExpiresAtUtc,
     )

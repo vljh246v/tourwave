@@ -14,9 +14,12 @@ class InstructorProfileService(
     private val instructorProfileRepository: InstructorProfileRepository,
     private val instructorRegistrationRepository: InstructorRegistrationRepository,
     private val userRepository: UserRepository,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
-    fun getMyProfile(actorUserId: Long, organizationId: Long): InstructorProfile {
+    fun getMyProfile(
+        actorUserId: Long,
+        organizationId: Long,
+    ): InstructorProfile {
         userRepository.findById(actorUserId) ?: throw unauthorized()
         return instructorProfileRepository.findByOrganizationIdAndUserId(organizationId, actorUserId)
             ?: throw notFound(organizationId, actorUserId)
@@ -28,16 +31,18 @@ class InstructorProfileService(
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 409,
-                message = "instructor profile already exists"
+                message = "instructor profile already exists",
             )
         }
-        val registration = instructorRegistrationRepository.findByOrganizationIdAndUserId(command.organizationId, command.actorUserId)
-            ?.takeIf { it.status == InstructorRegistrationStatus.APPROVED }
-            ?: throw DomainException(
-                errorCode = ErrorCode.FORBIDDEN,
-                status = 403,
-                message = "approved instructor registration is required"
-            )
+        val registration =
+            instructorRegistrationRepository
+                .findByOrganizationIdAndUserId(command.organizationId, command.actorUserId)
+                ?.takeIf { it.status == InstructorRegistrationStatus.APPROVED }
+                ?: throw DomainException(
+                    errorCode = ErrorCode.FORBIDDEN,
+                    status = 403,
+                    message = "approved instructor registration is required",
+                )
 
         return instructorProfileRepository.save(
             InstructorProfile.create(
@@ -45,27 +50,30 @@ class InstructorProfileService(
                 organizationId = command.organizationId,
                 headline = normalizeOptionalHeadline(command.headline ?: registration.headline),
                 bio = normalizeOptionalInstructorBio(command.bio ?: registration.bio),
-                languages = normalizeStringList(
-                    if (command.languages.isEmpty()) registration.languages else command.languages,
-                    "languages"
-                ),
-                specialties = normalizeStringList(
-                    if (command.specialties.isEmpty()) registration.specialties else command.specialties,
-                    "specialties"
-                ),
+                languages =
+                    normalizeStringList(
+                        command.languages.ifEmpty { registration.languages },
+                        "languages",
+                    ),
+                specialties =
+                    normalizeStringList(
+                        command.specialties.ifEmpty { registration.specialties },
+                        "specialties",
+                    ),
                 certifications = normalizeStringList(command.certifications, "certifications"),
                 yearsOfExperience = normalizeYearsOfExperience(command.yearsOfExperience),
                 internalNote = normalizeOptionalInternalNote(command.internalNote),
                 approvedAt = clock.instant(),
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
     fun updateMyProfile(command: UpsertInstructorProfileCommand): InstructorProfile {
         userRepository.findById(command.actorUserId) ?: throw unauthorized()
-        val profile = instructorProfileRepository.findByOrganizationIdAndUserId(command.organizationId, command.actorUserId)
-            ?: throw notFound(command.organizationId, command.actorUserId)
+        val profile =
+            instructorProfileRepository.findByOrganizationIdAndUserId(command.organizationId, command.actorUserId)
+                ?: throw notFound(command.organizationId, command.actorUserId)
         return instructorProfileRepository.save(
             profile.update(
                 headline = normalizeOptionalHeadline(command.headline),
@@ -75,8 +83,8 @@ class InstructorProfileService(
                 certifications = normalizeStringList(command.certifications, "certifications"),
                 yearsOfExperience = normalizeYearsOfExperience(command.yearsOfExperience),
                 internalNote = normalizeOptionalInternalNote(command.internalNote),
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
@@ -88,21 +96,26 @@ class InstructorProfileService(
         return profile
     }
 
-    private fun unauthorized() = DomainException(
-        errorCode = ErrorCode.UNAUTHORIZED,
-        status = 401,
-        message = "authenticated user does not exist"
-    )
+    private fun unauthorized() =
+        DomainException(
+            errorCode = ErrorCode.UNAUTHORIZED,
+            status = 401,
+            message = "authenticated user does not exist",
+        )
 
-    private fun notFound(organizationId: Long, actorUserId: Long) = DomainException(
+    private fun notFound(
+        organizationId: Long,
+        actorUserId: Long,
+    ) = DomainException(
         errorCode = ErrorCode.VALIDATION_ERROR,
         status = 404,
-        message = "instructor profile for organization $organizationId and user $actorUserId not found"
+        message = "instructor profile for organization $organizationId and user $actorUserId not found",
     )
 
-    private fun publicNotFound(instructorProfileId: Long) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = "instructor profile $instructorProfileId not found"
-    )
+    private fun publicNotFound(instructorProfileId: Long) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = "instructor profile $instructorProfileId not found",
+        )
 }

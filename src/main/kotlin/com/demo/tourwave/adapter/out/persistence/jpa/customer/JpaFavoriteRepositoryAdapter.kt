@@ -8,18 +8,20 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaFavoriteRepositoryAdapter(
-    private val favoriteJpaRepository: FavoriteJpaRepository
+    private val favoriteJpaRepository: FavoriteJpaRepository,
 ) : FavoriteRepository {
     override fun save(favorite: Favorite): Favorite {
         val existing = favoriteJpaRepository.findByUserIdAndTourId(favorite.userId, favorite.tourId)
-        return if (existing != null) existing.toDomain() else favoriteJpaRepository.save(favorite.toEntity()).toDomain()
+        return existing?.toDomain() ?: favoriteJpaRepository.save(favorite.toEntity()).toDomain()
     }
 
     override fun findByUserId(userId: Long): List<Favorite> =
         favoriteJpaRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDomain() }
 
-    override fun findByUserIdAndTourId(userId: Long, tourId: Long): Favorite? =
-        favoriteJpaRepository.findByUserIdAndTourId(userId, tourId)?.toDomain()
+    override fun findByUserIdAndTourId(
+        userId: Long,
+        tourId: Long,
+    ): Favorite? = favoriteJpaRepository.findByUserIdAndTourId(userId, tourId)?.toDomain()
 
     override fun delete(favoriteId: Long) {
         favoriteJpaRepository.deleteById(favoriteId)
@@ -35,7 +37,7 @@ private fun Favorite.toEntity(): FavoriteJpaEntity =
         id = id,
         userId = userId,
         tourId = tourId,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun FavoriteJpaEntity.toDomain(): Favorite =
@@ -43,5 +45,5 @@ private fun FavoriteJpaEntity.toDomain(): Favorite =
         id = id,
         userId = userId,
         tourId = tourId,
-        createdAt = createdAt
+        createdAt = createdAt,
     )

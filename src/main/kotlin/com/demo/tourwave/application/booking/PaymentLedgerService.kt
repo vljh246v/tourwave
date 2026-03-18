@@ -24,18 +24,23 @@ class PaymentLedgerService(
     private val paymentRecordRepository: PaymentRecordRepository,
     private val paymentProviderPort: PaymentProviderPort,
     private val refundExecutionPort: RefundExecutionPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
-    fun initialize(booking: Booking, occurrence: Occurrence, actorUserId: Long): PaymentRecord {
+    fun initialize(
+        booking: Booking,
+        occurrence: Occurrence,
+        actorUserId: Long,
+    ): PaymentRecord {
         val now = clock.instant()
-        val authorization = paymentProviderPort.authorize(
-            PaymentAuthorizationRequest(
-                bookingId = requireNotNull(booking.id),
-                actorUserId = actorUserId,
-                amount = occurrence.unitPrice * booking.partySize,
-                currency = occurrence.currency
+        val authorization =
+            paymentProviderPort.authorize(
+                PaymentAuthorizationRequest(
+                    bookingId = requireNotNull(booking.id),
+                    actorUserId = actorUserId,
+                    amount = occurrence.unitPrice * booking.partySize,
+                    currency = occurrence.currency,
+                ),
             )
-        )
         return paymentRecordRepository.save(
             PaymentRecord(
                 bookingId = requireNotNull(booking.id),
@@ -44,28 +49,32 @@ class PaymentLedgerService(
                 providerPaymentKey = authorization.providerPaymentKey,
                 providerAuthorizationId = authorization.authorizationId,
                 createdAtUtc = now,
-                updatedAtUtc = now
-            )
+                updatedAtUtc = now,
+            ),
         )
     }
 
-    fun capture(booking: Booking, actorUserId: Long): Booking {
+    fun capture(
+        booking: Booking,
+        actorUserId: Long,
+    ): Booking {
         val existing = paymentRecordRepository.findByBookingId(requireNotNull(booking.id))
         val providerPaymentKey = existing?.providerPaymentKey ?: "legacy-${requireNotNull(booking.id)}"
-        val capture = paymentProviderPort.capture(
-            PaymentCaptureRequest(
-                bookingId = requireNotNull(booking.id),
-                actorUserId = actorUserId,
-                providerPaymentKey = providerPaymentKey
+        val capture =
+            paymentProviderPort.capture(
+                PaymentCaptureRequest(
+                    bookingId = requireNotNull(booking.id),
+                    actorUserId = actorUserId,
+                    providerPaymentKey = providerPaymentKey,
+                ),
             )
-        )
         upsertRecord(
             bookingId = requireNotNull(booking.id),
             status = PaymentRecordStatus.CAPTURED,
             providerName = capture.providerName,
             providerPaymentKey = providerPaymentKey,
             providerCaptureId = capture.captureId,
-            providerReference = capture.providerReference
+            providerReference = capture.providerReference,
         )
         return booking.copy(paymentStatus = PaymentStatus.PAID)
     }
@@ -74,58 +83,56 @@ class PaymentLedgerService(
         booking: Booking,
         occurrence: Occurrence,
         action: RefundPolicyAction,
-        actorUserId: Long
+        actorUserId: Long,
     ): Booking {
-        val decision = BookingRefundPolicy.evaluate(
-            RefundPolicyContext(
-                action = action,
-                bookingStatus = booking.status,
-                paymentStatus = booking.paymentStatus,
-                occurrenceStartsAtUtc = occurrence.startsAtUtc,
-                occurrenceTimezone = occurrence.timezone,
-                evaluatedAtUtc = clock.instant()
+        val decision =
+            BookingRefundPolicy.evaluate(
+                RefundPolicyContext(
+                    action = action,
+                    bookingStatus = booking.status,
+                    paymentStatus = booking.paymentStatus,
+                    occurrenceStartsAtUtc = occurrence.startsAtUtc,
+                    occurrenceTimezone = occurrence.timezone,
+                    evaluatedAtUtc = clock.instant(),
+                ),
             )
-        )
 
         return applyDecision(
             booking = booking,
             decision = decision,
-            actorUserId = actorUserId
+            actorUserId = actorUserId,
         )
     }
 
     fun decisionFor(
         booking: Booking,
         occurrence: Occurrence,
-        action: RefundPolicyAction
-    ): RefundDecision {
-        return BookingRefundPolicy.evaluate(
+        action: RefundPolicyAction,
+    ): RefundDecision =
+        BookingRefundPolicy.evaluate(
             RefundPolicyContext(
                 action = action,
                 bookingStatus = booking.status,
                 paymentStatus = booking.paymentStatus,
                 occurrenceStartsAtUtc = occurrence.startsAtUtc,
                 occurrenceTimezone = occurrence.timezone,
-                evaluatedAtUtc = clock.instant()
-            )
+                evaluatedAtUtc = clock.instant(),
+            ),
         )
-    }
 
-    fun currentRecord(bookingId: Long): PaymentRecord? {
-        return paymentRecordRepository.findByBookingId(bookingId)
-    }
+    fun currentRecord(bookingId: Long): PaymentRecord? = paymentRecordRepository.findByBookingId(bookingId)
 
     private fun applyDecision(
         booking: Booking,
         decision: RefundDecision,
-        actorUserId: Long
-    ): Booking {
-        return when (decision.type) {
+        actorUserId: Long,
+    ): Booking =
+        when (decision.type) {
             com.demo.tourwave.domain.booking.RefundDecisionType.NO_REFUND -> {
                 upsertRecord(
                     bookingId = requireNotNull(booking.id),
                     status = PaymentRecordStatus.NO_REFUND,
-                    refundReasonCode = decision.reasonCode.name
+                    refundReasonCode = decision.reasonCode.name,
                 )
                 booking
             }
@@ -134,23 +141,24 @@ class PaymentLedgerService(
                 upsertRecord(
                     bookingId = requireNotNull(booking.id),
                     status = PaymentRecordStatus.REFUND_PENDING,
-                    refundReasonCode = decision.reasonCode.name
+                    refundReasonCode = decision.reasonCode.name,
                 )
                 booking.copy(paymentStatus = PaymentStatus.REFUND_PENDING)
             }
 
-            com.demo.tourwave.domain.booking.RefundDecisionType.FULL_REFUND -> executeRefund(
-                booking = booking,
-                decision = decision,
-                actorUserId = actorUserId
-            )
+            com.demo.tourwave.domain.booking.RefundDecisionType.FULL_REFUND -> {
+                executeRefund(
+                    booking = booking,
+                    decision = decision,
+                    actorUserId = actorUserId,
+                )
+            }
         }
-    }
 
     private fun executeRefund(
         booking: Booking,
         decision: RefundDecision,
-        actorUserId: Long
+        actorUserId: Long,
     ): Booking {
         val bookingId = requireNotNull(booking.id)
         val attemptedAt = clock.instant()
@@ -162,18 +170,19 @@ class PaymentLedgerService(
             refundRequestId = refundRequestId,
             refundReasonCode = decision.reasonCode.name,
             refundRetryCount = nextRetryCount,
-            refundAttemptedAtUtc = attemptedAt
+            refundAttemptedAtUtc = attemptedAt,
         )
 
         return when (
-            val result = refundExecutionPort.executeRefund(
-                RefundExecutionRequest(
-                    bookingId = bookingId,
-                    actorUserId = actorUserId,
-                    refundRequestId = refundRequestId,
-                    reasonCode = decision.reasonCode
+            val result =
+                refundExecutionPort.executeRefund(
+                    RefundExecutionRequest(
+                        bookingId = bookingId,
+                        actorUserId = actorUserId,
+                        refundRequestId = refundRequestId,
+                        reasonCode = decision.reasonCode,
+                    ),
                 )
-            )
         ) {
             is RefundExecutionResult.Success -> {
                 upsertRecord(
@@ -183,7 +192,7 @@ class PaymentLedgerService(
                     refundReasonCode = decision.reasonCode.name,
                     providerReference = result.externalReference,
                     refundRetryCount = nextRetryCount,
-                    refundAttemptedAtUtc = attemptedAt
+                    refundAttemptedAtUtc = attemptedAt,
                 )
                 booking.copy(paymentStatus = PaymentStatus.REFUNDED)
             }
@@ -196,7 +205,7 @@ class PaymentLedgerService(
                     refundReasonCode = decision.reasonCode.name,
                     errorCode = result.errorCode,
                     refundRetryCount = nextRetryCount,
-                    refundAttemptedAtUtc = attemptedAt
+                    refundAttemptedAtUtc = attemptedAt,
                 )
                 booking.copy(paymentStatus = PaymentStatus.REFUND_PENDING)
             }
@@ -209,7 +218,7 @@ class PaymentLedgerService(
                     refundReasonCode = decision.reasonCode.name,
                     errorCode = result.errorCode,
                     refundRetryCount = nextRetryCount,
-                    refundAttemptedAtUtc = attemptedAt
+                    refundAttemptedAtUtc = attemptedAt,
                 )
                 booking.copy(paymentStatus = PaymentStatus.REFUND_PENDING)
             }
@@ -233,34 +242,12 @@ class PaymentLedgerService(
         remediationAction: RefundRemediationAction? = null,
         remediatedByUserId: Long? = null,
         remediatedAtUtc: Instant? = null,
-        webhookEventId: String? = null
+        webhookEventId: String? = null,
     ): PaymentRecord {
         val now = clock.instant()
         val existing = paymentRecordRepository.findByBookingId(bookingId)
-        val record = if (existing == null) {
-            PaymentRecord(
-                bookingId = bookingId,
-                status = status,
-                providerName = providerName,
-                providerPaymentKey = providerPaymentKey,
-                providerAuthorizationId = providerAuthorizationId,
-                providerCaptureId = providerCaptureId,
-                lastRefundRequestId = refundRequestId,
-                lastProviderReference = providerReference,
-                lastRefundReasonCode = refundReasonCode,
-                lastErrorCode = errorCode,
-                refundRetryCount = refundRetryCount ?: 0,
-                lastRefundAttemptedAtUtc = refundAttemptedAtUtc,
-                nextRetryAtUtc = nextRetryAtUtc,
-                lastRemediationAction = remediationAction,
-                lastRemediatedByUserId = remediatedByUserId,
-                lastRemediatedAtUtc = remediatedAtUtc,
-                lastWebhookEventId = webhookEventId,
-                createdAtUtc = now,
-                updatedAtUtc = now
-            )
-        } else {
-            existing.copy(
+        val record =
+            existing?.copy(
                 status = status,
                 providerName = providerName ?: existing.providerName,
                 providerPaymentKey = providerPaymentKey ?: existing.providerPaymentKey,
@@ -277,9 +264,29 @@ class PaymentLedgerService(
                 lastRemediatedByUserId = remediatedByUserId ?: existing.lastRemediatedByUserId,
                 lastRemediatedAtUtc = remediatedAtUtc ?: existing.lastRemediatedAtUtc,
                 lastWebhookEventId = webhookEventId ?: existing.lastWebhookEventId,
-                updatedAtUtc = now
+                updatedAtUtc = now,
             )
-        }
+                ?: PaymentRecord(
+                    bookingId = bookingId,
+                    status = status,
+                    providerName = providerName,
+                    providerPaymentKey = providerPaymentKey,
+                    providerAuthorizationId = providerAuthorizationId,
+                    providerCaptureId = providerCaptureId,
+                    lastRefundRequestId = refundRequestId,
+                    lastProviderReference = providerReference,
+                    lastRefundReasonCode = refundReasonCode,
+                    lastErrorCode = errorCode,
+                    refundRetryCount = refundRetryCount ?: 0,
+                    lastRefundAttemptedAtUtc = refundAttemptedAtUtc,
+                    nextRetryAtUtc = nextRetryAtUtc,
+                    lastRemediationAction = remediationAction,
+                    lastRemediatedByUserId = remediatedByUserId,
+                    lastRemediatedAtUtc = remediatedAtUtc,
+                    lastWebhookEventId = webhookEventId,
+                    createdAtUtc = now,
+                    updatedAtUtc = now,
+                )
         return paymentRecordRepository.save(record)
     }
 
@@ -291,9 +298,9 @@ class PaymentLedgerService(
         providerCaptureId: String? = null,
         providerAuthorizationId: String? = null,
         errorCode: String? = null,
-        webhookEventId: String
-    ): PaymentRecord {
-        return upsertRecord(
+        webhookEventId: String,
+    ): PaymentRecord =
+        upsertRecord(
             bookingId = bookingId,
             status = status,
             providerName = providerName,
@@ -301,11 +308,8 @@ class PaymentLedgerService(
             providerCaptureId = providerCaptureId,
             providerReference = providerReference,
             errorCode = errorCode,
-            webhookEventId = webhookEventId
+            webhookEventId = webhookEventId,
         )
-    }
 
-    private fun currentRetryCount(bookingId: Long): Int {
-        return paymentRecordRepository.findByBookingId(bookingId)?.refundRetryCount?.plus(1) ?: 1
-    }
+    private fun currentRetryCount(bookingId: Long): Int = paymentRecordRepository.findByBookingId(bookingId)?.refundRetryCount?.plus(1) ?: 1
 }

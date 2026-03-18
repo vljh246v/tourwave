@@ -215,14 +215,13 @@ class PaymentWebhookService(
                 paymentRecordStatus = record.status,
             )
         } catch (exception: Exception) {
-            persisted =
-                paymentProviderEventRepository.save(
-                    persisted.copy(
-                        status = PaymentProviderEventStatus.POISONED,
-                        note = exception.message?.take(255) ?: exception::class.simpleName,
-                        processedAtUtc = clock.instant(),
-                    ),
-                )
+            paymentProviderEventRepository.save(
+                persisted.copy(
+                    status = PaymentProviderEventStatus.POISONED,
+                    note = exception.message?.take(255) ?: exception::class.simpleName,
+                    processedAtUtc = clock.instant(),
+                ),
+            )
             throw exception
         }
     }

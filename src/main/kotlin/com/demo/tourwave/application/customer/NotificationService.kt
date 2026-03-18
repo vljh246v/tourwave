@@ -80,8 +80,8 @@ class NotificationService(
     }
 
     private fun project(event: AuditEventCommand): NotificationProjection? {
-        return when {
-            event.resourceType == "BOOKING" -> {
+        return when (event.resourceType) {
+            "BOOKING" -> {
                 val booking = bookingRepository.findById(event.resourceId) ?: return null
                 val type = if (event.action.contains("REFUND")) NotificationType.REFUND else NotificationType.BOOKING
                 NotificationProjection(
@@ -96,7 +96,7 @@ class NotificationService(
                 )
             }
 
-            event.resourceType == "INQUIRY" -> {
+            "INQUIRY" -> {
                 val inquiry = inquiryRepository.findById(event.resourceId) ?: return null
                 NotificationProjection(
                     userId = inquiry.createdByUserId,
@@ -106,7 +106,7 @@ class NotificationService(
                 )
             }
 
-            event.resourceType == "INQUIRY_MESSAGE" -> {
+            "INQUIRY_MESSAGE" -> {
                 val message = inquiryRepository.findMessageById(event.resourceId) ?: return null
                 val inquiry = inquiryRepository.findById(message.inquiryId) ?: return null
                 if (inquiry.createdByUserId == message.senderUserId) return null
@@ -118,7 +118,7 @@ class NotificationService(
                 )
             }
 
-            event.resourceType == "PAYMENT_RECORD" -> {
+            "PAYMENT_RECORD" -> {
                 val bookingId = (event.afterJson?.get("bookingId") as? Number)?.toLong()
                 val booking = bookingId?.let(bookingRepository::findById) ?: return null
                 NotificationProjection(
