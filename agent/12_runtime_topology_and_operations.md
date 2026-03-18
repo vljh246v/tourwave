@@ -72,10 +72,11 @@
 - `alpha`, `beta`, `real`
   - asset: HTTP real storage adapter with presign + HEAD verification
   - notification: HTTP email provider adapter
+  - payment: HTTP provider adapter for authorize/capture/refund
   - auth fallback: disabled by profile policy
   - required secrets:
     - datasource URL / username / password
-    - payment base URL / API key
+    - payment base URL / API key / provider name / webhook secrets
     - notification base URL / API key / sender email
     - asset base URL / public base URL / bucket / access key / secret key
     - app base URL
@@ -126,7 +127,7 @@
 
 - alert routing and dashboard standardization
 - dead-letter style operator queue
-- refund retry/operator queue expansion
+- webhook invalid-signature / poison-event alert automation
 
 ## 7. Practical Commands
 
@@ -148,4 +149,4 @@
 - Gradle true multi-module split
 - alert routing / dashboard automation
 - worker schedule ownership standardization
-- observability / operational queue deepening
+- observability / webhook alerting deepening

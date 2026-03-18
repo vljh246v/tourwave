@@ -170,9 +170,9 @@
 - favorites는 published tour만 허용한다.
 - notifications는 booking/inquiry/refund 관련 audit event에서 read model로 축적되고, `read`/`read-all` API를 지원한다. 동시에 email delivery log를 outbound channel로 분리해 retryable/non-retryable failure를 기록한다.
 - organization membership invitation은 초대 시 email delivery를 만들고, accept API는 authenticated user 기준에 더해 optional invitation token payload를 받아 link 기반 UX를 지원한다.
-- payment webhook intake는 `X-Payment-Signature` HMAC 검증을 수행하고, `providerEventId` 기준 replay-safe 처리로 중복 이벤트를 무시한다.
-- refund ops queue는 `REFUND_PENDING`, `REFUND_FAILED_RETRYABLE`, `REFUND_REVIEW_REQUIRED` 상태를 운영자가 조회하고 booking 단위 manual retry를 수행할 수 있다.
-- reconciliation daily summary는 booking 생성 건수와 payment ledger status 업데이트 건수를 일자별로 저장하고 JSON/CSV 조회를 지원한다.
+- payment webhook intake는 `X-Payment-Signature` HMAC 검증을 수행하고, `providerEventId` 기준 replay-safe 처리로 중복 이벤트를 무시한다. active/previous secret rotation, malformed payload persistence, poison event marking을 함께 지원한다.
+- refund ops queue는 `REFUND_PENDING`, `REFUND_FAILED_RETRYABLE`, `REFUND_REVIEW_REQUIRED` 상태를 운영자가 조회하고 retry count, next retry, last error, remediation metadata를 함께 본다. remediation endpoint는 retry 또는 explicit review-required 전환을 받고 operator audit trail을 남긴다.
+- reconciliation daily summary는 booking 생성 건수와 payment ledger status 업데이트 건수뿐 아니라 provider captured/refunded count와 mismatch count를 일자별로 저장하고 JSON/CSV 조회를 지원한다. mismatch detail JSON/CSV export도 제공한다.
 - actuator health는 `workerJobs`, `workerJobLocks`, liveness, readiness component를 노출한다.
 - scheduled job은 distributed lock을 선점한 인스턴스만 실행하고, 나머지 인스턴스는 skip metric만 남긴다.
 - execution metric은 `tourwave.job.execution`, `tourwave.job.execution.duration`, `tourwave.job.lock.skipped`로 기록된다.
@@ -186,7 +186,6 @@
 - announcements API
 - moderation API
 - organization report APIs beyond finance reconciliation export
-- real payment provider authorize/capture/refund adapter
 
 ## 4. API Contract Handling Rule
 
