@@ -47,3 +47,5 @@ scripts/overnight-autopilot.sh
 scripts/overnight-status.sh
 scripts/start-overnight.sh
 scripts/stop-overnight.sh
+
+qodana.yaml
