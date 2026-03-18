@@ -2,10 +2,8 @@ package com.demo.tourwave.adapter.out.persistence.user
 
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
-import com.demo.tourwave.domain.user.UserStatus
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
-import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -24,10 +22,10 @@ class UserQueryAdapter : UserRepository {
         val persisted = user.copy(
             id = userId,
             email = normalizedEmail,
-            status = existing?.status ?: user.status,
+            status = user.status,
             createdAt = existing?.createdAt ?: user.createdAt,
-            updatedAt = if (existing == null) user.updatedAt else Instant.now(),
-            emailVerifiedAt = existing?.emailVerifiedAt ?: user.emailVerifiedAt
+            updatedAt = if (existing == null) user.updatedAt else user.updatedAt,
+            emailVerifiedAt = user.emailVerifiedAt ?: existing?.emailVerifiedAt
         )
         usersById[userId] = persisted
         userIdByEmail[normalizedEmail] = userId

@@ -89,7 +89,6 @@
 
 ### Product Surface Missing
 
-- email verification / password reset
 - announcements / moderation / report APIs
 - public review summary by tour / instructor / organization
 - real outbound notification delivery
@@ -101,7 +100,11 @@
 - alert routing / SLO dashboarding
 - dead-letter style operator queue
 - Gradle true multi-module split
+
+### Recently Closed Gaps
+
 - perimeter security enforcement in Spring Security filter chain
+- email verification / password reset / account deactivation lifecycle
 
 ## 3. Current Runtime Truths
 

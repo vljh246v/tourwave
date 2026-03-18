@@ -13,7 +13,7 @@ tourwave:
     jwt-secret: ${TOURWAVE_JWT_SECRET:tourwave-dev-secret-key-change-me}
     access-token-ttl-seconds: ${TOURWAVE_ACCESS_TOKEN_TTL_SECONDS:3600}
     refresh-token-ttl-seconds: ${TOURWAVE_REFRESH_TOKEN_TTL_SECONDS:1209600}
-    allow-header-auth-fallback: ${TOURWAVE_ALLOW_HEADER_AUTH_FALLBACK:true}
+    allow-header-auth-fallback: ${TOURWAVE_ALLOW_HEADER_AUTH_FALLBACK:false}
   payment:
     webhook-secret: ${TOURWAVE_PAYMENT_WEBHOOK_SECRET:tourwave-webhook-secret}
     refund:

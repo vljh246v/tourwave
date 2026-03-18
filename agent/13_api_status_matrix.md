@@ -180,11 +180,6 @@
 
 다음 항목은 제품 비전에는 포함되지만 현재 코드에는 아직 없다.
 
-- `POST /auth/password/reset-request`
-- `POST /auth/password/reset-confirm`
-- `POST /auth/email/verify-request`
-- `POST /auth/email/verify-confirm`
-- `POST /me/deactivate`
 - `POST /me/delete`
 - `tourId` / `instructorProfileId` / `organizationId` 기반 공개 review summary
 - announcements API

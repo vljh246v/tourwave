@@ -7,6 +7,7 @@ import com.demo.tourwave.domain.user.User
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
@@ -15,6 +16,7 @@ import java.time.Instant
 @RestController
 class MeController(
     private val meService: MeService,
+    private val authCommandService: com.demo.tourwave.application.auth.AuthCommandService,
     private val authzGuardPort: AuthzGuardPort
 ) {
     @GetMapping("/me")
@@ -41,6 +43,14 @@ class MeController(
                 displayName = request.displayName
             ).toUserResponse()
         )
+    }
+
+    @PostMapping("/me/deactivate")
+    fun deactivateMe(
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        authCommandService.deactivate(authzGuardPort.requireActorUserId(actorUserId))
+        return ResponseEntity.noContent().build()
     }
 }
 

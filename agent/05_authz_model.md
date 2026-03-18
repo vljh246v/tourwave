@@ -455,6 +455,7 @@ Only the authenticated user may:
 - POST `/auth/login`
 - POST `/auth/refresh`
 - POST `/auth/password/reset-request`
+  - always returns 204 whether the account exists or not to reduce enumeration risk
 - POST `/auth/password/reset-confirm`
 - POST `/auth/email/verify-confirm`
 
@@ -463,6 +464,9 @@ Only the authenticated user may:
 - POST `/auth/email/verify-request`
 - POST `/me/deactivate`
 - DELETE `/me`
+
+Runtime security note:
+- deactivated accounts are denied at the security perimeter even if they still hold an older access token
 
 ---
 

@@ -1,0 +1,44 @@
+spring:
+  profiles:
+    default: local
+
+tourwave:
+  idempotency:
+    ttl-seconds: 86400
+  auth:
+    jwt-secret: tourwave-test-secret
+    access-token-ttl-seconds: 3600
+    refresh-token-ttl-seconds: 1209600
+    allow-header-auth-fallback: true
+  payment:
+    webhook-secret: tourwave-webhook-secret
+    refund:
+      max-retry-attempts: 5
+      retry-cooldown-seconds: 600
+  jobs:
+    lock:
+      owner-id:
+      lease-seconds: 120
+      stale-after-seconds: 300
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-components: always
+      show-details: always
+    prometheus:
+      enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: tourwave

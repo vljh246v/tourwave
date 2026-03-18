@@ -3,9 +3,12 @@ package com.demo.tourwave.bootstrap
 import com.demo.tourwave.application.auth.AuthCommandService
 import com.demo.tourwave.application.auth.AuthTokenLifecycleService
 import com.demo.tourwave.application.auth.JwtTokenService
+import com.demo.tourwave.application.auth.ActionTokenGenerator
+import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
 import com.demo.tourwave.application.auth.port.PasswordHasher
 import com.demo.tourwave.application.auth.port.UserActionTokenRepository
+import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.topology.OrganizationQueryService
 import com.demo.tourwave.application.user.MeService
 import com.demo.tourwave.application.user.port.UserRepository
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
+import java.util.UUID
 
 @Configuration
 class AuthConfig {
@@ -51,7 +55,8 @@ class AuthConfig {
         passwordHasher: PasswordHasher,
         jwtTokenService: JwtTokenService,
         authTokenLifecycleService: AuthTokenLifecycleService,
-        userActionTokenRepository: UserActionTokenRepository,
+        userActionTokenService: UserActionTokenService,
+        auditEventPort: AuditEventPort,
         clock: Clock
     ): AuthCommandService {
         return AuthCommandService(
@@ -59,7 +64,28 @@ class AuthConfig {
             passwordHasher = passwordHasher,
             jwtTokenService = jwtTokenService,
             authTokenLifecycleService = authTokenLifecycleService,
+            userActionTokenService = userActionTokenService,
+            auditEventPort = auditEventPort,
+            clock = clock
+        )
+    }
+
+    @Bean
+    fun actionTokenGenerator(): ActionTokenGenerator {
+        return ActionTokenGenerator {
+            "${UUID.randomUUID()}-${UUID.randomUUID()}"
+        }
+    }
+
+    @Bean
+    fun userActionTokenService(
+        userActionTokenRepository: UserActionTokenRepository,
+        actionTokenGenerator: ActionTokenGenerator,
+        clock: Clock
+    ): UserActionTokenService {
+        return UserActionTokenService(
             userActionTokenRepository = userActionTokenRepository,
+            actionTokenGenerator = actionTokenGenerator,
             clock = clock
         )
     }

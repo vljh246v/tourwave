@@ -56,6 +56,41 @@ class AuthController(
         authCommandService.logout(requiredActorUserId)
         return ResponseEntity.noContent().build()
     }
+
+    @PostMapping("/auth/email/verify-request")
+    fun requestEmailVerification(
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+    ): ResponseEntity<Void> {
+        authCommandService.requestEmailVerification(authzGuardPort.requireActorUserId(actorUserId))
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/auth/email/verify-confirm")
+    fun confirmEmailVerification(
+        @RequestBody request: EmailVerifyConfirmRequest
+    ): ResponseEntity<Void> {
+        authCommandService.confirmEmailVerification(request.token)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/auth/password/reset-request")
+    fun requestPasswordReset(
+        @RequestBody request: PasswordResetRequest
+    ): ResponseEntity<Void> {
+        authCommandService.requestPasswordReset(request.email)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/auth/password/reset-confirm")
+    fun confirmPasswordReset(
+        @RequestBody request: PasswordResetConfirmRequest
+    ): ResponseEntity<Void> {
+        authCommandService.confirmPasswordReset(
+            token = request.token,
+            newPassword = request.password
+        )
+        return ResponseEntity.noContent().build()
+    }
 }
 
 data class SignupRequest(
@@ -71,6 +106,19 @@ data class LoginRequest(
 
 data class RefreshRequest(
     val refreshToken: String
+)
+
+data class EmailVerifyConfirmRequest(
+    val token: String
+)
+
+data class PasswordResetRequest(
+    val email: String
+)
+
+data class PasswordResetConfirmRequest(
+    val token: String,
+    val password: String
 )
 
 data class AuthResponse(

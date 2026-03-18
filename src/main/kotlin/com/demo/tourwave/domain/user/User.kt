@@ -4,6 +4,7 @@ import java.time.Instant
 
 enum class UserStatus {
     ACTIVE,
+    DEACTIVATED,
     SUSPENDED,
     DELETED
 }
@@ -47,6 +48,33 @@ data class User(
     ): User {
         return copy(
             displayName = displayName,
+            updatedAt = now
+        )
+    }
+
+    fun verifyEmail(now: Instant): User {
+        if (emailVerifiedAt != null) {
+            return this
+        }
+        return copy(
+            emailVerifiedAt = now,
+            updatedAt = now
+        )
+    }
+
+    fun updatePassword(passwordHash: String, now: Instant): User {
+        return copy(
+            passwordHash = passwordHash,
+            updatedAt = now
+        )
+    }
+
+    fun deactivate(now: Instant): User {
+        if (status == UserStatus.DEACTIVATED) {
+            return this
+        }
+        return copy(
+            status = UserStatus.DEACTIVATED,
             updatedAt = now
         )
     }

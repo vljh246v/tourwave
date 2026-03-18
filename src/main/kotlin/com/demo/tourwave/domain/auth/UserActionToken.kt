@@ -15,4 +15,15 @@ data class UserActionToken(
     val expiresAtUtc: Instant,
     val createdAtUtc: Instant,
     val consumedAtUtc: Instant? = null
-)
+) {
+    fun isActive(now: Instant): Boolean {
+        return consumedAtUtc == null && expiresAtUtc.isAfter(now)
+    }
+
+    fun consume(now: Instant): UserActionToken {
+        if (consumedAtUtc != null) {
+            return this
+        }
+        return copy(consumedAtUtc = now)
+    }
+}
