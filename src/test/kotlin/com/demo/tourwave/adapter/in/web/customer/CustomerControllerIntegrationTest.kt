@@ -77,28 +77,31 @@ class CustomerControllerIntegrationTest {
         val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash"))
         val customer = userRepository.save(User.create(displayName = "Customer", email = "customer@test.com", passwordHash = "hash"))
 
-        mockMvc.perform(
-            post("/operator/organizations")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"slug":"cust-s12","name":"Customer Surface","timezone":"Asia/Seoul"}""")
-        ).andExpect(status().isCreated)
+        mockMvc
+            .perform(
+                post("/operator/organizations")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"slug":"cust-s12","name":"Customer Surface","timezone":"Asia/Seoul"}"""),
+            ).andExpect(status().isCreated)
         val organizationId = requireNotNull(organizationRepository.findBySlug("cust-s12")?.id)
 
-        mockMvc.perform(
-            post("/organizations/$organizationId/tours")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"title":"Han River Sunset","summary":"Evening route"}""")
-        ).andExpect(status().isCreated)
+        mockMvc
+            .perform(
+                post("/organizations/$organizationId/tours")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"title":"Han River Sunset","summary":"Evening route"}"""),
+            ).andExpect(status().isCreated)
         val tourId = requireNotNull(tourRepository.findByOrganizationId(organizationId).single().id)
 
-        mockMvc.perform(
-            post("/tours/$tourId/occurrences")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """{
+        mockMvc
+            .perform(
+                post("/tours/$tourId/occurrences")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """{
                       "capacity":10,
                       "startsAtUtc":"2026-04-20T09:00:00Z",
                       "endsAtUtc":"2026-04-20T11:00:00Z",
@@ -107,135 +110,148 @@ class CustomerControllerIntegrationTest {
                       "currency":"KRW",
                       "locationText":"Han River Park",
                       "meetingPoint":"Dock 3"
-                    }"""
-                )
-        ).andExpect(status().isCreated)
+                    }""",
+                    ),
+            ).andExpect(status().isCreated)
         val occurrenceId = requireNotNull(occurrenceRepository.findByTourId(tourId).single().id)
 
-        val uploadResult = mockMvc.perform(
-            post("/assets/uploads")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"organizationId":$organizationId,"fileName":"cover.jpg","contentType":"image/jpeg"}""")
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.status").value("UPLOADING"))
-            .andReturn()
-        val assetId = requireNotNull(com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().readTree(uploadResult.response.contentAsString).get("id")).asLong()
+        val uploadResult =
+            mockMvc
+                .perform(
+                    post("/assets/uploads")
+                        .header("X-Actor-User-Id", requireNotNull(owner.id))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""{"organizationId":$organizationId,"fileName":"cover.jpg","contentType":"image/jpeg"}"""),
+                ).andExpect(status().isCreated)
+                .andExpect(jsonPath("$.status").value("UPLOADING"))
+                .andReturn()
+        val assetId =
+            requireNotNull(
+                com.fasterxml.jackson.module.kotlin
+                    .jacksonObjectMapper()
+                    .readTree(uploadResult.response.contentAsString)
+                    .get("id"),
+            ).asLong()
 
-        mockMvc.perform(
-            post("/assets/$assetId/complete")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"sizeBytes":1234,"checksumSha256":"${"a".repeat(64)}"}""")
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/assets/$assetId/complete")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"sizeBytes":1234,"checksumSha256":"${"a".repeat(64)}"}"""),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("READY"))
 
-        mockMvc.perform(
-            put("/operator/organizations/$organizationId/assets")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"assetIds":[$assetId]}""")
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                put("/operator/organizations/$organizationId/assets")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"assetIds":[$assetId]}"""),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.assetIds[0]").value(assetId))
 
-        mockMvc.perform(
-            put("/tours/$tourId/assets")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"assetIds":[$assetId]}""")
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                put("/tours/$tourId/assets")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"assetIds":[$assetId]}"""),
+            ).andExpect(status().isOk)
 
-        mockMvc.perform(
-            put("/tours/$tourId/content")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"description":"Golden hour cruise"}""")
-        ).andExpect(status().isOk)
+        mockMvc
+            .perform(
+                put("/tours/$tourId/content")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"description":"Golden hour cruise"}"""),
+            ).andExpect(status().isOk)
 
-        mockMvc.perform(
-            post("/tours/$tourId/publish")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-        ).andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/tours/$tourId/publish")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id)),
+            ).andExpect(status().isOk)
 
-        mockMvc.perform(
-            post("/tours/$tourId/favorite")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.attachmentAssetIds[0]").value(assetId.toLong()))
+        mockMvc
+            .perform(
+                post("/tours/$tourId/favorite")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isCreated)
+            .andExpect(jsonPath("$.attachmentAssetIds[0]").value(assetId))
 
-        mockMvc.perform(
-            post("/occurrences/$occurrenceId/bookings")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-                .header("Idempotency-Key", "book-1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"partySize":2}""")
-        ).andExpect(status().isCreated)
+        mockMvc
+            .perform(
+                post("/occurrences/$occurrenceId/bookings")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id))
+                    .header("Idempotency-Key", "book-1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"partySize":2}"""),
+            ).andExpect(status().isCreated)
         val bookingId = requireNotNull(bookingRepository.findByLeaderUserId(requireNotNull(customer.id)).single().id)
 
-        mockMvc.perform(
-            post("/occurrences/$occurrenceId/inquiries")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-                .header("Idempotency-Key", "inq-1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"bookingId":$bookingId,"subject":"Pickup","message":"Can I board early?"}""")
-        ).andExpect(status().isCreated)
+        mockMvc
+            .perform(
+                post("/occurrences/$occurrenceId/inquiries")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id))
+                    .header("Idempotency-Key", "inq-1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"bookingId":$bookingId,"subject":"Pickup","message":"Can I board early?"}"""),
+            ).andExpect(status().isCreated)
 
-        mockMvc.perform(
-            get("/me/bookings")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                get("/me/bookings")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$[0].tourTitle").value("Han River Sunset"))
 
-        mockMvc.perform(
-            get("/bookings/$bookingId/calendar.ics")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                get("/bookings/$bookingId/calendar.ics")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", """attachment; filename="booking-$bookingId.ics""""))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("BEGIN:VCALENDAR")))
 
-        mockMvc.perform(get("/occurrences/$occurrenceId/calendar.ics"))
+        mockMvc
+            .perform(get("/occurrences/$occurrenceId/calendar.ics"))
             .andExpect(status().isOk)
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Han River Sunset")))
 
-        mockMvc.perform(
-            get("/me/favorites")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                get("/me/favorites")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$[0].title").value("Han River Sunset"))
 
-        mockMvc.perform(
-            get("/me/notifications")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                get("/me/notifications")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$[0].title").exists())
 
         val notificationId = requireNotNull(notificationRepository.findByUserId(requireNotNull(customer.id)).first().id)
 
-        mockMvc.perform(
-            post("/me/notifications/$notificationId/read")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/me/notifications/$notificationId/read")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.readAt").exists())
 
-        mockMvc.perform(
-            post("/me/notifications/read-all")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/me/notifications/read-all")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isOk)
 
-        mockMvc.perform(
-            delete("/tours/$tourId/favorite")
-                .header("X-Actor-User-Id", requireNotNull(customer.id))
-        ).andExpect(status().isNoContent)
+        mockMvc
+            .perform(
+                delete("/tours/$tourId/favorite")
+                    .header("X-Actor-User-Id", requireNotNull(customer.id)),
+            ).andExpect(status().isNoContent)
     }
 }

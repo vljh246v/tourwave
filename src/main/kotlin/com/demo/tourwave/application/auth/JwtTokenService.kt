@@ -6,7 +6,6 @@ import com.demo.tourwave.domain.common.ErrorCode
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.nio.charset.StandardCharsets
 import java.time.Clock
-import java.time.Instant
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -15,7 +14,7 @@ class JwtTokenService(
     secret: String,
     private val accessTokenTtlSeconds: Long,
     private val clock: Clock,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) {
     private val secretKey = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), "HmacSHA256")
     private val encoder = Base64.getUrlEncoder().withoutPadding()
@@ -24,16 +23,17 @@ class JwtTokenService(
     fun issueAccessToken(
         userId: Long,
         roles: Set<ActorRole>,
-        orgId: Long?
+        orgId: Long?,
     ): String {
         val now = clock.instant()
-        val payload = linkedMapOf(
-            "sub" to userId.toString(),
-            "roles" to roles.map { it.name },
-            "orgId" to orgId,
-            "iat" to now.epochSecond,
-            "exp" to now.plusSeconds(accessTokenTtlSeconds).epochSecond
-        )
+        val payload =
+            linkedMapOf(
+                "sub" to userId.toString(),
+                "roles" to roles.map { it.name },
+                "orgId" to orgId,
+                "iat" to now.epochSecond,
+                "exp" to now.plusSeconds(accessTokenTtlSeconds).epochSecond,
+            )
         return encode(payload)
     }
 
@@ -49,16 +49,18 @@ class JwtTokenService(
             throw unauthorized("jwt signature is invalid")
         }
 
-        val payloadJson = runCatching {
-            String(decoder.decode(parts[1]), StandardCharsets.UTF_8)
-        }.getOrElse {
-            throw unauthorized("jwt payload is invalid")
-        }
-        val payload = runCatching {
-            objectMapper.readValue(payloadJson, Map::class.java)
-        }.getOrElse {
-            throw unauthorized("jwt payload is invalid")
-        }
+        val payloadJson =
+            runCatching {
+                String(decoder.decode(parts[1]), StandardCharsets.UTF_8)
+            }.getOrElse {
+                throw unauthorized("jwt payload is invalid")
+            }
+        val payload =
+            runCatching {
+                objectMapper.readValue(payloadJson, Map::class.java)
+            }.getOrElse {
+                throw unauthorized("jwt payload is invalid")
+            }
 
         val userId = (payload["sub"] as? String)?.toLongOrNull() ?: throw unauthorized("jwt subject is invalid")
         val iat = (payload["iat"] as? Number)?.toLong() ?: throw unauthorized("jwt iat is invalid")
@@ -67,10 +69,11 @@ class JwtTokenService(
         if (exp <= nowEpoch) {
             throw unauthorized("jwt is expired")
         }
-        val roles = ((payload["roles"] as? Collection<*>) ?: emptyList<Any>())
-            .mapNotNull { ActorRole.parseActorRole(it?.toString()) ?: ActorRole.parseOrgRole(it?.toString()) }
-            .toSet()
-            .ifEmpty { setOf(ActorRole.USER) }
+        val roles =
+            ((payload["roles"] as? Collection<*>) ?: emptyList<Any>())
+                .mapNotNull { ActorRole.parseActorRole(it?.toString()) ?: ActorRole.parseOrgRole(it?.toString()) }
+                .toSet()
+                .ifEmpty { setOf(ActorRole.USER) }
         val orgId = (payload["orgId"] as? Number)?.toLong()
 
         return AccessTokenClaims(
@@ -78,7 +81,7 @@ class JwtTokenService(
             roles = roles,
             orgId = orgId,
             issuedAtEpochSeconds = iat,
-            expiresAtEpochSeconds = exp
+            expiresAtEpochSeconds = exp,
         )
     }
 
@@ -96,11 +99,10 @@ class JwtTokenService(
         return encoder.encodeToString(mac.doFinal(signingInput.toByteArray(StandardCharsets.UTF_8)))
     }
 
-    private fun unauthorized(message: String): DomainException {
-        return DomainException(
+    private fun unauthorized(message: String): DomainException =
+        DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = message
+            message = message,
         )
-    }
 }

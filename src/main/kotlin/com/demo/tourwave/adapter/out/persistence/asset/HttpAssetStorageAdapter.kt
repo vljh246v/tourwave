@@ -16,7 +16,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.time.Clock
-import java.time.Instant
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -30,11 +29,16 @@ class HttpAssetStorageAdapter(
     @Value("\${integration.asset.access-key}") private val accessKey: String,
     @Value("\${integration.asset.secret-key}") private val secretKey: String,
     @Value("\${integration.asset.presign-ttl-seconds:900}") private val presignTtlSeconds: Long,
-    private val clock: Clock
+    private val clock: Clock,
 ) : AssetStoragePort {
     private val httpClient = HttpClient.newBuilder().build()
 
-    override fun issueUpload(ownerUserId: Long, assetIdHint: Long?, fileName: String, contentType: String): AssetUploadDescriptor {
+    override fun issueUpload(
+        ownerUserId: Long,
+        assetIdHint: Long?,
+        fileName: String,
+        contentType: String,
+    ): AssetUploadDescriptor {
         val assetToken = assetIdHint?.toString() ?: UUID.randomUUID().toString()
         val encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
         val storageKey = "users/$ownerUserId/assets/$assetToken/$encodedFileName"
@@ -45,7 +49,7 @@ class HttpAssetStorageAdapter(
         return AssetUploadDescriptor(
             storageKey = storageKey,
             uploadUrl = "$normalizedBaseUrl/$bucket/$storageKey?expires=$expiresAtEpochSeconds&accessKey=$accessKey&signature=$signature",
-            publicUrl = "$normalizedPublicBaseUrl/$bucket/$storageKey"
+            publicUrl = "$normalizedPublicBaseUrl/$bucket/$storageKey",
         )
     }
 
@@ -53,15 +57,17 @@ class HttpAssetStorageAdapter(
         val timestamp = clock.instant().epochSecond
         val signature = sign("HEAD\n$bucket\n${request.storageKey}\n$timestamp")
         val target = URI.create("${baseUrl.trimEnd('/')}/$bucket/${request.storageKey}")
-        val response = httpClient.send(
-            HttpRequest.newBuilder(target)
-                .header("X-Storage-Access-Key", accessKey)
-                .header("X-Storage-Signature", signature)
-                .header("X-Storage-Timestamp", timestamp.toString())
-                .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                .build(),
-            HttpResponse.BodyHandlers.discarding()
-        )
+        val response =
+            httpClient.send(
+                HttpRequest
+                    .newBuilder(target)
+                    .header("X-Storage-Access-Key", accessKey)
+                    .header("X-Storage-Signature", signature)
+                    .header("X-Storage-Timestamp", timestamp.toString())
+                    .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                    .build(),
+                HttpResponse.BodyHandlers.discarding(),
+            )
         if (response.statusCode() == 404) {
             throw validation("uploaded asset object does not exist")
         }
@@ -69,37 +75,57 @@ class HttpAssetStorageAdapter(
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 503,
-                message = "asset storage verification is temporarily unavailable"
+                message = "asset storage verification is temporarily unavailable",
             )
         }
         if (response.statusCode() !in 200..299) {
             throw validation("asset storage rejected upload verification")
         }
-        val contentType = response.headers().firstValue("Content-Type").orElse("").trim().lowercase()
+        val contentType =
+            response
+                .headers()
+                .firstValue("Content-Type")
+                .orElse("")
+                .trim()
+                .lowercase()
         if (contentType.isBlank()) {
             throw validation("uploaded asset metadata is missing content type")
         }
-        val sizeBytes = response.headers().firstValue("Content-Length").orElse("").toLongOrNull()
-            ?: throw validation("uploaded asset metadata is missing content length")
-        val checksum = response.headers().firstValue("X-Checksum-Sha256").orElse(null)?.trim()?.lowercase()?.ifBlank { null }
+        val sizeBytes =
+            response
+                .headers()
+                .firstValue("Content-Length")
+                .orElse("")
+                .toLongOrNull()
+                ?: throw validation("uploaded asset metadata is missing content length")
+        val checksum =
+            response
+                .headers()
+                .firstValue("X-Checksum-Sha256")
+                .orElse(null)
+                ?.trim()
+                ?.lowercase()
+                ?.ifBlank { null }
         return StoredAssetMetadata(
             publicUrl = "${publicBaseUrl.trimEnd('/')}/$bucket/${request.storageKey}",
             contentType = contentType,
             sizeBytes = sizeBytes,
-            checksumSha256 = checksum
+            checksumSha256 = checksum,
         )
     }
 
     private fun sign(payload: String): String {
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec(secretKey.toByteArray(StandardCharsets.UTF_8), "HmacSHA256"))
-        return mac.doFinal(payload.toByteArray(StandardCharsets.UTF_8))
+        return mac
+            .doFinal(payload.toByteArray(StandardCharsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
     }
 
-    private fun validation(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 422,
-        message = message
-    )
+    private fun validation(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 422,
+            message = message,
+        )
 }

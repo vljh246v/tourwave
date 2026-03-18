@@ -8,8 +8,8 @@ import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.auth.AuthRefreshToken
 import com.demo.tourwave.domain.auth.UserActionToken
 import com.demo.tourwave.domain.auth.UserActionTokenPurpose
-import com.demo.tourwave.domain.user.UserStatus
 import com.demo.tourwave.domain.user.User
+import com.demo.tourwave.domain.user.UserStatus
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -34,31 +34,37 @@ class AuthCommandServiceTest {
     private val userActionTokenRepository: UserActionTokenRepository = mock()
     private val auditEventPort: AuditEventPort = mock()
     private val clock = Clock.fixed(Instant.parse("2026-03-17T00:00:00Z"), ZoneOffset.UTC)
-    private val userActionTokenService = UserActionTokenService(
-        userActionTokenRepository = userActionTokenRepository,
-        actionTokenGenerator = ActionTokenGenerator { "fixed-action-token" },
-        clock = clock
-    )
-    private val jwtTokenService = JwtTokenService(
-        secret = "auth-command-secret",
-        accessTokenTtlSeconds = 3600,
-        clock = clock,
-        objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
-    )
-    private val authTokenLifecycleService = AuthTokenLifecycleService(
-        authRefreshTokenRepository = authRefreshTokenRepository,
-        refreshTokenTtlSeconds = 600,
-        clock = clock
-    )
-    private val service = AuthCommandService(
-        userRepository = userRepository,
-        passwordHasher = passwordHasher,
-        jwtTokenService = jwtTokenService,
-        authTokenLifecycleService = authTokenLifecycleService,
-        userActionTokenService = userActionTokenService,
-        auditEventPort = auditEventPort,
-        clock = clock
-    )
+    private val userActionTokenService =
+        UserActionTokenService(
+            userActionTokenRepository = userActionTokenRepository,
+            actionTokenGenerator = { "fixed-action-token" },
+            clock = clock,
+        )
+    private val jwtTokenService =
+        JwtTokenService(
+            secret = "auth-command-secret",
+            accessTokenTtlSeconds = 3600,
+            clock = clock,
+            objectMapper =
+                com.fasterxml.jackson.databind
+                    .ObjectMapper(),
+        )
+    private val authTokenLifecycleService =
+        AuthTokenLifecycleService(
+            authRefreshTokenRepository = authRefreshTokenRepository,
+            refreshTokenTtlSeconds = 600,
+            clock = clock,
+        )
+    private val service =
+        AuthCommandService(
+            userRepository = userRepository,
+            passwordHasher = passwordHasher,
+            jwtTokenService = jwtTokenService,
+            authTokenLifecycleService = authTokenLifecycleService,
+            userActionTokenService = userActionTokenService,
+            auditEventPort = auditEventPort,
+            clock = clock,
+        )
 
     @Test
     fun `signup creates user and verification token`() {
@@ -75,8 +81,8 @@ class AuthCommandServiceTest {
             userActionTokenRepository.findActiveByUserIdAndPurpose(
                 11L,
                 UserActionTokenPurpose.EMAIL_VERIFICATION,
-                clock.instant()
-            )
+                clock.instant(),
+            ),
         ).thenReturn(emptyList())
         whenever(authRefreshTokenRepository.save(any())).thenAnswer { invocation ->
             val token = invocation.arguments[0] as AuthRefreshToken
@@ -96,18 +102,20 @@ class AuthCommandServiceTest {
     @Test
     fun `login rejects invalid password`() {
         whenever(userRepository.findByEmail("user@test.com")).thenReturn(
-            User.create(
-                displayName = "User",
-                email = "user@test.com",
-                passwordHash = "hashed",
-                now = clock.instant()
-            ).copy(id = 15L)
+            User
+                .create(
+                    displayName = "User",
+                    email = "user@test.com",
+                    passwordHash = "hashed",
+                    now = clock.instant(),
+                ).copy(id = 15L),
         )
         whenever(passwordHasher.matches("Password12", "hashed")).thenReturn(false)
 
-        val exception = assertThrows<com.demo.tourwave.domain.common.DomainException> {
-            service.login("user@test.com", "Password12")
-        }
+        val exception =
+            assertThrows<com.demo.tourwave.domain.common.DomainException> {
+                service.login("user@test.com", "Password12")
+            }
 
         assertEquals(401, exception.status)
         verify(authRefreshTokenRepository, never()).save(any())
@@ -115,12 +123,14 @@ class AuthCommandServiceTest {
 
     @Test
     fun `confirm password reset updates password and revokes refresh tokens`() {
-        val user = User.create(
-            displayName = "User",
-            email = "user@test.com",
-            passwordHash = "old-hash",
-            now = clock.instant()
-        ).copy(id = 15L)
+        val user =
+            User
+                .create(
+                    displayName = "User",
+                    email = "user@test.com",
+                    passwordHash = "old-hash",
+                    now = clock.instant(),
+                ).copy(id = 15L)
         whenever(userActionTokenRepository.findByTokenHash(any())).thenReturn(
             UserActionToken(
                 id = 9L,
@@ -128,8 +138,8 @@ class AuthCommandServiceTest {
                 tokenHash = "hashed",
                 purpose = UserActionTokenPurpose.PASSWORD_RESET,
                 expiresAtUtc = clock.instant().plusSeconds(3600),
-                createdAtUtc = clock.instant()
-            )
+                createdAtUtc = clock.instant(),
+            ),
         )
         whenever(userActionTokenRepository.save(any())).thenAnswer { it.arguments[0] as UserActionToken }
         whenever(userRepository.findById(15L)).thenReturn(user)
@@ -139,41 +149,49 @@ class AuthCommandServiceTest {
         service.confirmPasswordReset("fixed-action-token", "Password99")
 
         verify(passwordHasher).hash("Password99")
-        verify(userRepository).save(check {
-            assertEquals("new-hash", it.passwordHash)
-        })
+        verify(userRepository).save(
+            check {
+                assertEquals("new-hash", it.passwordHash)
+            },
+        )
         verify(authRefreshTokenRepository).revokeAllByUserId(eq(15L), any())
         verify(auditEventPort).append(any())
     }
 
     @Test
     fun `deactivate marks user as deactivated and revokes sessions`() {
-        val user = User.create(
-            displayName = "User",
-            email = "user@test.com",
-            passwordHash = "hash",
-            now = clock.instant()
-        ).copy(id = 21L)
+        val user =
+            User
+                .create(
+                    displayName = "User",
+                    email = "user@test.com",
+                    passwordHash = "hash",
+                    now = clock.instant(),
+                ).copy(id = 21L)
         whenever(userRepository.findById(21L)).thenReturn(user)
         whenever(userRepository.save(any())).thenAnswer { it.arguments[0] as User }
 
         service.deactivate(21L)
 
-        verify(userRepository).save(check {
-            assertEquals(UserStatus.DEACTIVATED, it.status)
-        })
+        verify(userRepository).save(
+            check {
+                assertEquals(UserStatus.DEACTIVATED, it.status)
+            },
+        )
         verify(authRefreshTokenRepository).revokeAllByUserId(eq(21L), any())
         verify(auditEventPort).append(any())
     }
 
     @Test
     fun `confirm email verification persists verified timestamp`() {
-        val user = User.create(
-            displayName = "User",
-            email = "user@test.com",
-            passwordHash = "hash",
-            now = clock.instant()
-        ).copy(id = 31L)
+        val user =
+            User
+                .create(
+                    displayName = "User",
+                    email = "user@test.com",
+                    passwordHash = "hash",
+                    now = clock.instant(),
+                ).copy(id = 31L)
         whenever(userActionTokenRepository.findByTokenHash(any())).thenReturn(
             UserActionToken(
                 id = 10L,
@@ -181,8 +199,8 @@ class AuthCommandServiceTest {
                 tokenHash = "hashed",
                 purpose = UserActionTokenPurpose.EMAIL_VERIFICATION,
                 expiresAtUtc = clock.instant().plusSeconds(3600),
-                createdAtUtc = clock.instant()
-            )
+                createdAtUtc = clock.instant(),
+            ),
         )
         whenever(userActionTokenRepository.save(any())).thenAnswer { it.arguments[0] as UserActionToken }
         whenever(userRepository.findById(31L)).thenReturn(user)
@@ -190,9 +208,11 @@ class AuthCommandServiceTest {
 
         service.confirmEmailVerification("fixed-action-token")
 
-        verify(userRepository).save(check {
-            assertTrue(it.emailVerifiedAt != null)
-        })
+        verify(userRepository).save(
+            check {
+                assertTrue(it.emailVerifiedAt != null)
+            },
+        )
         verify(auditEventPort).append(any())
     }
 }

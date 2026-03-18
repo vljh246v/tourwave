@@ -4,14 +4,13 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventSubscriber
-import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
-import com.demo.tourwave.domain.customer.NotificationChannel
 import com.demo.tourwave.domain.customer.Notification
+import com.demo.tourwave.domain.customer.NotificationChannel
 import com.demo.tourwave.domain.customer.NotificationType
 import java.time.Clock
 
@@ -23,17 +22,20 @@ class NotificationService(
     private val paymentRecordRepository: PaymentRecordRepository,
     private val userRepository: UserRepository,
     private val notificationTemplateFactory: NotificationTemplateFactory,
-    private val clock: Clock
+    private val clock: Clock,
 ) : AuditEventSubscriber {
     fun list(userId: Long): List<Notification> = notificationRepository.findByUserId(userId)
 
-    fun markRead(userId: Long, notificationId: Long): Notification {
+    fun markRead(
+        userId: Long,
+        notificationId: Long,
+    ): Notification {
         val notification = notificationRepository.findById(notificationId) ?: throw notFound("notification $notificationId not found")
         if (notification.userId != userId) {
             throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,
-                message = "notification does not belong to actor"
+                message = "notification does not belong to actor",
             )
         }
         val updated = notification.markRead(clock.instant())
@@ -49,17 +51,18 @@ class NotificationService(
 
     override fun handle(event: AuditEventCommand) {
         val projection = project(event) ?: return
-        val notification = notificationRepository.save(
-            Notification(
-                userId = projection.userId,
-                type = projection.type,
-                title = projection.title,
-                body = projection.body,
-                resourceType = event.resourceType,
-                resourceId = event.resourceId,
-                createdAt = event.occurredAtUtc
+        val notification =
+            notificationRepository.save(
+                Notification(
+                    userId = projection.userId,
+                    type = projection.type,
+                    title = projection.title,
+                    body = projection.body,
+                    resourceType = event.resourceType,
+                    resourceId = event.resourceId,
+                    createdAt = event.occurredAtUtc,
+                ),
             )
-        )
         val user = userRepository.findById(projection.userId) ?: return
         val template = notificationTemplateFactory.renderAuditEvent(event, projection.title, projection.body)
         notificationDeliveryService.deliver(
@@ -71,8 +74,8 @@ class NotificationService(
                 body = template.body,
                 resourceType = notification.resourceType,
                 resourceId = notification.resourceId,
-                idempotencyKey = "notification:${event.resourceType}:${event.resourceId}:${event.action}:${projection.userId}"
-            )
+                idempotencyKey = "notification:${event.resourceType}:${event.resourceId}:${event.action}:${projection.userId}",
+            ),
         )
     }
 
@@ -84,11 +87,12 @@ class NotificationService(
                 NotificationProjection(
                     userId = booking.leaderUserId,
                     type = type,
-                    title = when (type) {
-                        NotificationType.REFUND -> "Refund update"
-                        else -> "Booking update"
-                    },
-                    body = "${event.action.replace('_', ' ')} for booking ${booking.id}"
+                    title =
+                        when (type) {
+                            NotificationType.REFUND -> "Refund update"
+                            else -> "Booking update"
+                        },
+                    body = "${event.action.replace('_', ' ')} for booking ${booking.id}",
                 )
             }
 
@@ -98,7 +102,7 @@ class NotificationService(
                     userId = inquiry.createdByUserId,
                     type = NotificationType.INQUIRY,
                     title = "Inquiry update",
-                    body = "${event.action.replace('_', ' ')} on inquiry ${inquiry.id}"
+                    body = "${event.action.replace('_', ' ')} on inquiry ${inquiry.id}",
                 )
             }
 
@@ -110,7 +114,7 @@ class NotificationService(
                     userId = inquiry.createdByUserId,
                     type = NotificationType.INQUIRY,
                     title = "New inquiry message",
-                    body = "A new inquiry message was posted on inquiry ${inquiry.id}"
+                    body = "A new inquiry message was posted on inquiry ${inquiry.id}",
                 )
             }
 
@@ -121,24 +125,27 @@ class NotificationService(
                     userId = booking.leaderUserId,
                     type = NotificationType.REFUND,
                     title = "Refund processing update",
-                    body = "${event.action.replace('_', ' ')} for booking ${booking.id}"
+                    body = "${event.action.replace('_', ' ')} for booking ${booking.id}",
                 )
             }
 
-            else -> null
+            else -> {
+                null
+            }
         }
     }
 
-    private fun notFound(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = message
-    )
+    private fun notFound(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = message,
+        )
 }
 
 private data class NotificationProjection(
     val userId: Long,
     val type: NotificationType,
     val title: String,
-    val body: String
+    val body: String,
 )

@@ -13,43 +13,53 @@ import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import com.demo.tourwave.domain.review.ReviewType
 import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.domain.tour.TourStatus
-import java.time.Instant
 
 class CatalogQueryService(
     private val tourRepository: TourRepository,
     private val occurrenceRepository: OccurrenceRepository,
     private val bookingRepository: BookingRepository,
     private val reviewRepository: ReviewRepository,
-    private val timeWindowPolicyService: TimeWindowPolicyService
+    private val timeWindowPolicyService: TimeWindowPolicyService,
 ) {
     fun listPublicTours(query: PublicTourListQuery): Pair<List<PublicTourView>, String?> {
         val cursor = parseCursor(query.cursor)
         val limit = requireValidLimit(query.limit)
-        val searchTerm = query.q?.trim()?.lowercase().takeUnless { it.isNullOrBlank() }
-        val items = tourRepository.findAllPublished()
-            .asSequence()
-            .filter { cursor == null || requireNotNull(it.id) > cursor }
-            .filter { query.organizationId == null || it.organizationId == query.organizationId }
-            .filter { tour ->
-                searchTerm == null || listOfNotNull(
-                    tour.title,
-                    tour.summary,
-                    tour.content.description
-                ).any { it.lowercase().contains(searchTerm) }
-            }
-            .sortedBy { requireNotNull(it.id) }
-            .toList()
+        val searchTerm =
+            query.q
+                ?.trim()
+                ?.lowercase()
+                .takeUnless { it.isNullOrBlank() }
+        val items =
+            tourRepository
+                .findAllPublished()
+                .asSequence()
+                .filter { cursor == null || requireNotNull(it.id) > cursor }
+                .filter { query.organizationId == null || it.organizationId == query.organizationId }
+                .filter { tour ->
+                    searchTerm == null ||
+                        listOfNotNull(
+                            tour.title,
+                            tour.summary,
+                            tour.content.description,
+                        ).any { it.lowercase().contains(searchTerm) }
+                }.sortedBy { requireNotNull(it.id) }
+                .toList()
         val page = items.take(limit)
-        val nextCursor = items.drop(limit).firstOrNull()?.id?.toString()
+        val nextCursor =
+            items
+                .drop(limit)
+                .firstOrNull()
+                ?.id
+                ?.toString()
         return page.map { it.toPublicView() } to nextCursor
     }
 
-    fun getPublicTour(tourId: Long): PublicTourView =
-        requirePublishedTour(tourId).toPublicView()
+    fun getPublicTour(tourId: Long): PublicTourView = requirePublishedTour(tourId).toPublicView()
 
     fun listPublicOccurrences(query: TourOccurrenceListQuery): List<PublicOccurrenceView> {
         requirePublishedTour(query.tourId)
-        return occurrenceRepository.findByTourId(query.tourId)
+        return occurrenceRepository
+            .findByTourId(query.tourId)
             .asSequence()
             .filter { it.status == OccurrenceStatus.SCHEDULED }
             .filter { query.dateFrom == null || (it.startsAtUtc != null && !it.startsAtUtc.isBefore(query.dateFrom)) }
@@ -76,7 +86,7 @@ class CatalogQueryService(
             heldCount = heldCount,
             available = available,
             canConfirm = available >= partySize,
-            willWaitlist = available < partySize
+            willWaitlist = available < partySize,
         )
     }
 
@@ -91,7 +101,7 @@ class CatalogQueryService(
             canConfirm = availability.canConfirm,
             willWaitlist = availability.willWaitlist,
             refundPolicySummary = "Leader cancellation keeps full refund until 48 hours before start.",
-            fullRefundDeadlineUtc = timeWindowPolicyService.fullRefundDeadline(occurrence)
+            fullRefundDeadlineUtc = timeWindowPolicyService.fullRefundDeadline(occurrence),
         )
     }
 
@@ -99,48 +109,60 @@ class CatalogQueryService(
         val cursor = parseCursor(query.cursor)
         val limit = requireValidLimit(query.limit)
         val normalizedTimezone = query.timezone?.let(::requireValidTimezone)
-        val normalizedLocation = query.locationText?.trim()?.lowercase().takeUnless { it.isNullOrBlank() }
+        val normalizedLocation =
+            query.locationText
+                ?.trim()
+                ?.lowercase()
+                .takeUnless { it.isNullOrBlank() }
         val partySize = query.partySize?.let(::requireValidPartySize)
-        val occurrencesById = occurrenceRepository.findAll()
-            .filter { it.status == OccurrenceStatus.SCHEDULED }
-            .associateBy { it.id }
+        val occurrencesById =
+            occurrenceRepository
+                .findAll()
+                .filter { it.status == OccurrenceStatus.SCHEDULED }
+                .associateBy { it.id }
         val publishedTours = tourRepository.findAllPublished().associateBy { requireNotNull(it.id) }
-        val items = occurrencesById.values
-            .asSequence()
-            .filter { publishedTours.containsKey(requireNotNull(it.tourId)) }
-            .filter { cursor == null || it.id > cursor }
-            .filter { query.dateFrom == null || (it.startsAtUtc != null && !it.startsAtUtc.isBefore(query.dateFrom)) }
-            .filter { query.dateTo == null || (it.startsAtUtc != null && !it.startsAtUtc.isAfter(query.dateTo)) }
-            .filter { normalizedTimezone == null || it.timezone == normalizedTimezone }
-            .filter { occurrence ->
-                if (normalizedLocation == null) {
-                    true
-                } else {
-                    listOfNotNull(
-                        occurrence.locationText,
-                        occurrence.meetingPoint,
-                        publishedTours[requireNotNull(occurrence.tourId)]?.title,
-                        publishedTours[requireNotNull(occurrence.tourId)]?.summary
-                    ).any { it.lowercase().contains(normalizedLocation) }
-                }
-            }
-            .map { occurrence ->
-                val tour = publishedTours.getValue(requireNotNull(occurrence.tourId))
-                val availability = partySize?.let { getAvailability(AvailabilityQuery(occurrence.id, it)) }
-                OccurrenceSearchItemView(
-                    occurrence = occurrence.toPublicView(),
-                    tour = tour.toPublicView(),
-                    ratingSummary = ratingSummary(occurrence.id)
-                ) to availability
-            }
-            .filter { (_, availability) -> !query.onlyAvailable || availability?.canConfirm == true }
-            .sortedWith(searchComparator(query.sort))
-            .toList()
+        val items =
+            occurrencesById.values
+                .asSequence()
+                .filter { publishedTours.containsKey(requireNotNull(it.tourId)) }
+                .filter { cursor == null || it.id > cursor }
+                .filter { query.dateFrom == null || (it.startsAtUtc != null && !it.startsAtUtc.isBefore(query.dateFrom)) }
+                .filter { query.dateTo == null || (it.startsAtUtc != null && !it.startsAtUtc.isAfter(query.dateTo)) }
+                .filter { normalizedTimezone == null || it.timezone == normalizedTimezone }
+                .filter { occurrence ->
+                    if (normalizedLocation == null) {
+                        true
+                    } else {
+                        listOfNotNull(
+                            occurrence.locationText,
+                            occurrence.meetingPoint,
+                            publishedTours[requireNotNull(occurrence.tourId)]?.title,
+                            publishedTours[requireNotNull(occurrence.tourId)]?.summary,
+                        ).any { it.lowercase().contains(normalizedLocation) }
+                    }
+                }.map { occurrence ->
+                    val tour = publishedTours.getValue(requireNotNull(occurrence.tourId))
+                    val availability = partySize?.let { getAvailability(AvailabilityQuery(occurrence.id, it)) }
+                    OccurrenceSearchItemView(
+                        occurrence = occurrence.toPublicView(),
+                        tour = tour.toPublicView(),
+                        ratingSummary = ratingSummary(occurrence.id),
+                    ) to availability
+                }.filter { (_, availability) -> !query.onlyAvailable || availability?.canConfirm == true }
+                .sortedWith(searchComparator(query.sort))
+                .toList()
         val page = items.take(limit).map { it.first }
-        val nextCursor = items.drop(limit).firstOrNull()?.first?.occurrence?.id?.toString()
+        val nextCursor =
+            items
+                .drop(limit)
+                .firstOrNull()
+                ?.first
+                ?.occurrence
+                ?.id
+                ?.toString()
         return OccurrenceSearchResult(
             items = page,
-            nextCursor = nextCursor
+            nextCursor = nextCursor,
         )
     }
 
@@ -163,16 +185,18 @@ class CatalogQueryService(
     }
 
     private fun occupiedSeats(occurrenceId: Long): Int =
-        bookingRepository.findByOccurrenceAndStatuses(
-            occurrenceId = occurrenceId,
-            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.COMPLETED)
-        ).sumOf { it.partySize }
+        bookingRepository
+            .findByOccurrenceAndStatuses(
+                occurrenceId = occurrenceId,
+                statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.COMPLETED),
+            ).sumOf { it.partySize }
 
     private fun heldSeats(occurrenceId: Long): Int =
-        bookingRepository.findByOccurrenceAndStatuses(
-            occurrenceId = occurrenceId,
-            statuses = setOf(BookingStatus.OFFERED)
-        ).sumOf { it.partySize }
+        bookingRepository
+            .findByOccurrenceAndStatuses(
+                occurrenceId = occurrenceId,
+                statuses = setOf(BookingStatus.OFFERED),
+            ).sumOf { it.partySize }
 
     private fun ratingSummary(occurrenceId: Long): RatingSummaryView? {
         val reviews = reviewRepository.findByOccurrenceAndType(occurrenceId, ReviewType.TOUR)
@@ -181,21 +205,31 @@ class CatalogQueryService(
         }
         return RatingSummaryView(
             avgRating = reviews.map { it.rating }.average(),
-            reviewCount = reviews.size
+            reviewCount = reviews.size,
         )
     }
 
-    private fun searchComparator(sort: String?): Comparator<Pair<OccurrenceSearchItemView, AvailabilityView?>> {
-        return when (sort?.trim()?.lowercase()) {
-            "price_asc" -> compareBy({ it.first.occurrence.unitPrice }, { it.first.occurrence.id })
-            "price_desc" -> compareByDescending<Pair<OccurrenceSearchItemView, AvailabilityView?>> { it.first.occurrence.unitPrice }
-                .thenBy { it.first.occurrence.id }
-            "start_desc" -> compareByDescending<Pair<OccurrenceSearchItemView, AvailabilityView?>> { it.first.occurrence.startsAtUtc }
-                .thenByDescending { it.first.occurrence.id }
-            else -> compareBy<Pair<OccurrenceSearchItemView, AvailabilityView?>> { it.first.occurrence.startsAtUtc }
-                .thenBy { it.first.occurrence.id }
+    private fun searchComparator(sort: String?): Comparator<Pair<OccurrenceSearchItemView, AvailabilityView?>> =
+        when (sort?.trim()?.lowercase()) {
+            "price_asc" -> {
+                compareBy({ it.first.occurrence.unitPrice }, { it.first.occurrence.id })
+            }
+
+            "price_desc" -> {
+                compareByDescending<Pair<OccurrenceSearchItemView, AvailabilityView?>> { it.first.occurrence.unitPrice }
+                    .thenBy { it.first.occurrence.id }
+            }
+
+            "start_desc" -> {
+                compareByDescending<Pair<OccurrenceSearchItemView, AvailabilityView?>> { it.first.occurrence.startsAtUtc }
+                    .thenByDescending { it.first.occurrence.id }
+            }
+
+            else -> {
+                compareBy<Pair<OccurrenceSearchItemView, AvailabilityView?>> { it.first.occurrence.startsAtUtc }
+                    .thenBy { it.first.occurrence.id }
+            }
         }
-    }
 
     private fun Tour.toPublicView(): PublicTourView =
         PublicTourView(
@@ -206,7 +240,7 @@ class CatalogQueryService(
             description = content.description,
             highlights = content.highlights,
             attachmentAssetIds = attachmentAssetIds,
-            publishedAt = publishedAt
+            publishedAt = publishedAt,
         )
 
     private fun Occurrence.toPublicView(): PublicOccurrenceView =
@@ -224,12 +258,13 @@ class CatalogQueryService(
             locationText = locationText,
             meetingPoint = meetingPoint,
             status = status.name,
-            createdAt = createdAt
+            createdAt = createdAt,
         )
 
-    private fun notFound(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = message
-    )
+    private fun notFound(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = message,
+        )
 }
