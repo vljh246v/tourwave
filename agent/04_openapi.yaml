@@ -2364,6 +2364,52 @@ paths:
               schema: { type: string }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /operator/operations/remediation-queue:
+    get:
+      tags: [Operations]
+      summary: List cross-surface operator remediation queue
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperatorRemediationQueueItem'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /operator/operations/remediation-queue/{sourceType}/{sourceKey}:
+    post:
+      tags: [Operations]
+      summary: Retry or resolve one remediation queue item
+      parameters:
+        - name: sourceType
+          in: path
+          required: true
+          schema: { type: string, enum: [REFUND, NOTIFICATION_DELIVERY, PAYMENT_WEBHOOK] }
+        - name: sourceKey
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperatorRemediationRequest'
+      responses:
+        '200':
+          description: Queue item updated or resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorRemediationQueueItem'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   securitySchemes:
     bearerAuth:
@@ -2371,6 +2417,79 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    OperatorRemediationRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [RETRY, RESOLVE]
+        note:
+          type: string
+
+    OperatorRemediationQueueItem:
+      type: object
+      required:
+        - sourceType
+        - sourceKey
+        - queueStatus
+        - failureCategory
+        - resourceType
+        - detail
+        - retryable
+        - availableActions
+        - sourceOccurredAtUtc
+        - sourceUpdatedAtUtc
+        - actionRetryCount
+      properties:
+        sourceType:
+          type: string
+          enum: [REFUND, NOTIFICATION_DELIVERY, PAYMENT_WEBHOOK]
+        sourceKey:
+          type: string
+        queueStatus:
+          type: string
+          enum: [OPEN, RESOLVED]
+        failureCategory:
+          type: string
+        resourceType:
+          type: string
+        resourceId:
+          type: integer
+          format: int64
+          nullable: true
+        detail:
+          type: string
+        retryable:
+          type: boolean
+        availableActions:
+          type: array
+          items:
+            type: string
+            enum: [RETRY, RESOLVE]
+        sourceOccurredAtUtc:
+          type: string
+          format: date-time
+        sourceUpdatedAtUtc:
+          type: string
+          format: date-time
+        actionRetryCount:
+          type: integer
+        lastQueueAction:
+          type: string
+          nullable: true
+        lastActionByUserId:
+          type: integer
+          format: int64
+          nullable: true
+        lastActionAtUtc:
+          type: string
+          format: date-time
+          nullable: true
+        lastActionNote:
+          type: string
+          nullable: true
+
     # -----------------------------
     # Tour
     # -----------------------------

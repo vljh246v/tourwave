@@ -20,6 +20,8 @@ class InMemoryNotificationDeliveryRepositoryAdapter : NotificationDeliveryReposi
         return saved
     }
 
+    override fun findById(id: Long): NotificationDelivery? = deliveries[id]
+
     override fun findAll(): List<NotificationDelivery> = deliveries.values.sortedByDescending { it.createdAt }
 
     override fun clear() {

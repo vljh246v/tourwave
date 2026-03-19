@@ -8,6 +8,7 @@ import com.demo.tourwave.application.common.port.IdempotencyDecision
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.common.port.WorkerJobLockRepository
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
+import com.demo.tourwave.application.operations.port.OperatorFailureRecordRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
@@ -39,6 +40,10 @@ import com.demo.tourwave.domain.instructor.InstructorRegistrationStatus
 import com.demo.tourwave.domain.inquiry.Inquiry
 import com.demo.tourwave.domain.inquiry.InquiryMessage
 import com.demo.tourwave.domain.occurrence.Occurrence
+import com.demo.tourwave.domain.operations.OperatorFailureAction
+import com.demo.tourwave.domain.operations.OperatorFailureRecord
+import com.demo.tourwave.domain.operations.OperatorFailureRecordStatus
+import com.demo.tourwave.domain.operations.OperatorFailureSourceType
 import com.demo.tourwave.domain.participant.BookingParticipant
 import com.demo.tourwave.domain.payment.PaymentRecord
 import com.demo.tourwave.domain.payment.PaymentProviderEvent
@@ -131,8 +136,12 @@ class MysqlPersistenceIntegrationTest {
     @Autowired
     private lateinit var workerJobLockRepository: WorkerJobLockRepository
 
+    @Autowired
+    private lateinit var operatorFailureRecordRepository: OperatorFailureRecordRepository
+
     @BeforeEach
     fun setUp() {
+        operatorFailureRecordRepository.clear()
         workerJobLockRepository.clear()
         paymentReconciliationSummaryRepository.clear()
         paymentProviderEventRepository.clear()
@@ -544,5 +553,30 @@ class MysqlPersistenceIntegrationTest {
         workerJobLockRepository.release("offer-expiration", "mysql-test-worker")
 
         assertTrue(workerJobLockRepository.findAll().isEmpty())
+    }
+
+    @Test
+    fun `mysql adapters persist operator remediation metadata`() {
+        val saved = operatorFailureRecordRepository.save(
+            OperatorFailureRecord(
+                sourceType = OperatorFailureSourceType.PAYMENT_WEBHOOK,
+                sourceKey = "evt-operator-1",
+                status = OperatorFailureRecordStatus.RESOLVED,
+                lastAction = OperatorFailureAction.RESOLVE,
+                note = "resolved after partner confirmation",
+                lastActionByUserId = 9001L,
+                lastActionAtUtc = Instant.parse("2026-03-19T12:00:00Z"),
+                retryCount = 2,
+                createdAtUtc = Instant.parse("2026-03-19T11:50:00Z"),
+                updatedAtUtc = Instant.parse("2026-03-19T12:00:00Z")
+            )
+        )
+
+        val reloaded = operatorFailureRecordRepository.findBySource(OperatorFailureSourceType.PAYMENT_WEBHOOK, "evt-operator-1")
+
+        assertNotNull(saved.id)
+        assertEquals(OperatorFailureRecordStatus.RESOLVED, reloaded?.status)
+        assertEquals(2, reloaded?.retryCount)
+        assertEquals(1, operatorFailureRecordRepository.findAll().size)
     }
 }

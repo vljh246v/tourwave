@@ -59,6 +59,7 @@
   - [MysqlPersistenceIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/MysqlPersistenceIntegrationTest.kt)
 - real MySQL container smoke
   - [RealMysqlContainerSmokeTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/RealMysqlContainerSmokeTest.kt)
+  - [RealMysqlContainerRegressionTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/out/persistence/jpa/RealMysqlContainerRegressionTest.kt)
 - profile wiring / app boot
   - [ProfileConfigurationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/ProfileConfigurationTest.kt)
   - [TourwaveApplicationTests](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/TourwaveApplicationTests.kt)
@@ -109,6 +110,9 @@
 - refund ops queue and manual remediation
   - [RefundOperationsServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/RefundOperationsServiceTest.kt)
   - [RefundRetryServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/booking/RefundRetryServiceTest.kt)
+- cross-surface operator remediation queue
+  - [OperatorRemediationQueueServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/operations/OperatorRemediationQueueServiceTest.kt)
+  - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
 - reconciliation daily summary and export
   - [ReconciliationServiceTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/application/payment/ReconciliationServiceTest.kt)
   - [PaymentControllerIntegrationTest](/Users/jaehyeon/Documents/workspace/tourwave/src/test/kotlin/com/demo/tourwave/adapter/in/web/payment/PaymentControllerIntegrationTest.kt)
@@ -119,7 +123,7 @@
 
 ## 7. Known Coverage Gaps
 
-- real MySQL container full-suite expansion
-  - 현재는 smoke 수준까지 CI 대상이며, 더 넓은 회귀 범위 확장이 남아 있다.
-- alert routing / dashboard / operator remediation queue
-  - launch ops 관련 운영 회귀는 Sprint 20 범위로 남아 있다.
+- launch alert automation
+  - threshold/runbook 문서는 닫혔지만 실제 Pager/Slack wiring은 환경별 인프라 작업이 남아 있다.
+- Gradle multi-module split
+  - 런타임 분리는 되어 있지만 build module split은 아직 아니다.

@@ -60,7 +60,7 @@
 - 현재 환경에서는 H2 MySQL compatibility mode 사용
 - 이유
   - Docker provider가 항상 보장되지 않음
-- 별도로 real MySQL container smoke test를 CI에서 실행한다.
+- 별도로 real MySQL container smoke + regression test를 CI에서 실행한다.
 
 ## 3.1 Runtime Adapter Matrix
 
@@ -125,8 +125,6 @@
 
 추가로 필요한 것:
 
-- alert routing and dashboard standardization
-- dead-letter style operator queue
 - webhook invalid-signature / poison-event alert automation
 
 ## 7. Practical Commands
@@ -142,11 +140,11 @@
 - contract 회귀 핵심
   - `./gradlew test --tests 'com.demo.tourwave.agent.OpenApiContractVerificationTest'`
 - real MySQL smoke
+  - `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerRegressionTest'`
   - `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerSmokeTest'`
 
 ## 8. Next Infra Steps
 
 - Gradle true multi-module split
-- alert routing / dashboard automation
 - worker schedule ownership standardization
-- observability / webhook alerting deepening
+- observability automation deepening

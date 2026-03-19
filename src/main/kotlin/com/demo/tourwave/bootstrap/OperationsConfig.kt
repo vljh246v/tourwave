@@ -2,7 +2,16 @@ package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.common.JobExecutionMonitor
 import com.demo.tourwave.application.common.ScheduledJobCoordinator
+import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.common.port.WorkerJobLockRepository
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
+import com.demo.tourwave.application.operations.OperatorRemediationQueueService
+import com.demo.tourwave.application.operations.port.OperatorFailureRecordRepository
+import com.demo.tourwave.application.payment.PaymentWebhookService
+import com.demo.tourwave.application.payment.RefundOperationsService
+import com.demo.tourwave.application.booking.port.PaymentRecordRepository
+import com.demo.tourwave.application.payment.port.PaymentProviderEventRepository
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -35,6 +44,31 @@ class OperationsConfig {
             clock = clock,
             ownerId = resolveOwnerId(configuredOwnerId),
             leaseDuration = Duration.ofSeconds(leaseSeconds)
+        )
+    }
+
+    @Bean
+    fun operatorRemediationQueueService(
+        paymentRecordRepository: PaymentRecordRepository,
+        refundOperationsService: RefundOperationsService,
+        notificationDeliveryRepository: NotificationDeliveryRepository,
+        notificationDeliveryService: NotificationDeliveryService,
+        paymentProviderEventRepository: PaymentProviderEventRepository,
+        paymentWebhookService: PaymentWebhookService,
+        operatorFailureRecordRepository: OperatorFailureRecordRepository,
+        auditEventPort: AuditEventPort,
+        clock: Clock
+    ): OperatorRemediationQueueService {
+        return OperatorRemediationQueueService(
+            paymentRecordRepository = paymentRecordRepository,
+            refundOperationsService = refundOperationsService,
+            notificationDeliveryRepository = notificationDeliveryRepository,
+            notificationDeliveryService = notificationDeliveryService,
+            paymentProviderEventRepository = paymentProviderEventRepository,
+            paymentWebhookService = paymentWebhookService,
+            operatorFailureRecordRepository = operatorFailureRecordRepository,
+            auditEventPort = auditEventPort,
+            clock = clock
         )
     }
 

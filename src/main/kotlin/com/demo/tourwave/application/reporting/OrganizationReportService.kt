@@ -169,7 +169,7 @@ class OrganizationReportService(
                     compareByDescending<com.demo.tourwave.domain.occurrence.Occurrence> {
                         it.startsAtUtc ?: Instant.EPOCH
                     }.thenByDescending { it.id },
-                )
+                ).toList()
 
         val paged = filtered.pageAfter(query.cursor, safeLimit) { it.id }
         return CursorPage(

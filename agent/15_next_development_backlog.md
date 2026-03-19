@@ -1,40 +1,36 @@
 # Next Development Backlog
 
-이 문서는 Sprint 19 완료 이후 기준으로 "현재 제품 수준까지 남은 작업"을 handoff 용도로 정리한다. 구현 완료 구조는 `16_product_delivery_roadmap.md`, 남은 gap closure의 상세 sprint/epic/story/subtask 구조는 `17_release_gap_execution_plan.md`를 따른다.
+이 문서는 Sprint 20 완료 이후 기준으로 "현재 제품 수준까지 남은 작업"을 handoff 용도로 정리한다. 구현 완료 구조는 `16_product_delivery_roadmap.md`, 남은 gap closure의 상세 sprint/epic/story/subtask 구조는 `17_release_gap_execution_plan.md`를 따른다.
 
 ## 1. Priority Order
 
 ### P0
 
-- alert routing / dashboard / SLO baseline
-- real MySQL container suite 확대
-- operator DLQ / remediation queue hardening
+- `POST /me/delete`
+- backup / incident contact / rollback evidence automation
 
 ### P1
 
-- `POST /me/delete`
-- backup / incident contact / rollback evidence hardening
+- Gradle 멀티모듈 분리
+- alert/dashboard 실제 인프라 wiring
 
 ### P2
 
-- Gradle 멀티모듈 분리
 - future moderation 재검토 조건 정의 유지
 
 ## 2. Recommended Next Sprint Themes
 
-### Theme A. Launch Operations
+### Theme A. Final Product Surface Closure
 
-- alerting / dashboard / SLO
-- real MySQL suite expansion
-- dead-letter / remediation queue
+- account delete decision and implementation
+- release evidence automation
 
 ## 3. Immediate Actionable Tasks
 
-1. alert rule / dashboard / SLO baseline을 문서와 actuator metric 기준으로 닫는다.
-2. real MySQL suite를 smoke 이상 회귀로 확장하고 flaky policy를 고정한다.
-3. payment/notification/webhook 실패 projection을 operator remediation queue로 묶는다.
-4. `POST /me/delete`의 제품 필요성을 출시 범위에서 재확인한다.
-5. 새 구현 티켓은 `17_release_gap_execution_plan.md`의 sprint/stage 구조에 맞춰 생성한다.
+1. `POST /me/delete`의 제품 필요성을 출시 범위에서 재확인하고 구현 여부를 결정한다.
+2. backup / incident contact / rollback evidence를 실제 인프라 템플릿과 연결한다.
+3. Gradle 멀티모듈 분리 여부를 런타임 분리 전략과 함께 결정한다.
+4. 새 구현 티켓은 `17_release_gap_execution_plan.md`의 sprint/stage 구조에 맞춰 생성한다.
 
 ## 4. Rules For Future Tickets
 

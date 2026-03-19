@@ -17,6 +17,9 @@ class JpaPaymentProviderEventRepositoryAdapter(
     override fun findByProviderEventId(providerEventId: String): PaymentProviderEvent? =
         paymentProviderEventJpaRepository.findByProviderEventId(providerEventId)?.toDomain()
 
+    override fun findAll(): List<PaymentProviderEvent> =
+        paymentProviderEventJpaRepository.findAllByOrderByReceivedAtUtcDesc().map { it.toDomain() }
+
     override fun findReceivedBetween(startInclusive: Instant, endExclusive: Instant): List<PaymentProviderEvent> =
         paymentProviderEventJpaRepository
             .findByReceivedAtUtcGreaterThanEqualAndReceivedAtUtcLessThanOrderByReceivedAtUtcAsc(startInclusive, endExclusive)

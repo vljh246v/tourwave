@@ -13,6 +13,9 @@ class JpaNotificationDeliveryRepositoryAdapter(
     override fun save(delivery: NotificationDelivery): NotificationDelivery =
         notificationDeliveryJpaRepository.save(delivery.toEntity()).toDomain()
 
+    override fun findById(id: Long): NotificationDelivery? =
+        notificationDeliveryJpaRepository.findById(id).orElse(null)?.toDomain()
+
     override fun findAll(): List<NotificationDelivery> =
         notificationDeliveryJpaRepository.findAll().map { it.toDomain() }
 

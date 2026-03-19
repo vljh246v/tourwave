@@ -21,6 +21,8 @@ class OpenApiContractVerificationTest {
         assertTrue(paths.containsKey("/operator/finance/reconciliation/daily"))
         assertTrue(paths.containsKey("/operator/finance/reconciliation/daily/{summaryDate}/refresh"))
         assertTrue(paths.containsKey("/operator/finance/reconciliation/daily/export"))
+        assertTrue(paths.containsKey("/operator/operations/remediation-queue"))
+        assertTrue(paths.containsKey("/operator/operations/remediation-queue/{sourceType}/{sourceKey}"))
     }
 
     @Test

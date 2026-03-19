@@ -126,79 +126,7 @@ class PaymentWebhookService(
         }
 
         try {
-            val record =
-                when (command.eventType) {
-                    PaymentProviderEventType.AUTHORIZED -> {
-                        paymentLedgerService.applyWebhookStatus(
-                            bookingId = command.bookingId,
-                            status = PaymentRecordStatus.AUTHORIZED,
-                            providerName = command.providerName,
-                            providerAuthorizationId = command.providerAuthorizationId,
-                            providerReference = command.providerReference,
-                            webhookEventId = command.providerEventId,
-                        )
-                    }
-
-                    PaymentProviderEventType.CAPTURED -> {
-                        bookingRepository.save(booking.copy(paymentStatus = PaymentStatus.PAID))
-                        paymentLedgerService.applyWebhookStatus(
-                            bookingId = command.bookingId,
-                            status = PaymentRecordStatus.CAPTURED,
-                            providerName = command.providerName,
-                            providerCaptureId = command.providerCaptureId,
-                            providerReference = command.providerReference,
-                            webhookEventId = command.providerEventId,
-                        )
-                    }
-
-                    PaymentProviderEventType.CAPTURE_FAILED -> {
-                        paymentLedgerService.applyWebhookStatus(
-                            bookingId = command.bookingId,
-                            status = PaymentRecordStatus.AUTHORIZED,
-                            providerName = command.providerName,
-                            errorCode = command.errorCode,
-                            webhookEventId = command.providerEventId,
-                        )
-                    }
-
-                    PaymentProviderEventType.AUTHORIZATION_CANCELED -> {
-                        paymentLedgerService.applyWebhookStatus(
-                            bookingId = command.bookingId,
-                            status = PaymentRecordStatus.NO_REFUND,
-                            providerName = command.providerName,
-                            providerReference = command.providerReference,
-                            webhookEventId = command.providerEventId,
-                        )
-                    }
-
-                    PaymentProviderEventType.REFUNDED -> {
-                        bookingRepository.save(booking.copy(paymentStatus = PaymentStatus.REFUNDED))
-                        paymentLedgerService.applyWebhookStatus(
-                            bookingId = command.bookingId,
-                            status = PaymentRecordStatus.REFUNDED,
-                            providerName = command.providerName,
-                            providerReference = command.providerReference,
-                            webhookEventId = command.providerEventId,
-                        )
-                    }
-
-                    PaymentProviderEventType.REFUND_FAILED -> {
-                        val status =
-                            if (command.retryable) {
-                                PaymentRecordStatus.REFUND_FAILED_RETRYABLE
-                            } else {
-                                PaymentRecordStatus.REFUND_REVIEW_REQUIRED
-                            }
-                        paymentLedgerService.applyWebhookStatus(
-                            bookingId = command.bookingId,
-                            status = status,
-                            providerName = command.providerName,
-                            errorCode = command.errorCode,
-                            providerReference = command.providerReference,
-                            webhookEventId = command.providerEventId,
-                        )
-                    }
-                }
+            val record = applyEvent(command, booking)
 
             persisted =
                 paymentProviderEventRepository.save(
@@ -256,6 +184,129 @@ class PaymentWebhookService(
                 processedAtUtc = now,
             ),
         )
+    }
+
+    fun reprocessPoisonedEvent(providerEventId: String): PaymentWebhookResult {
+        val persisted = paymentProviderEventRepository.findByProviderEventId(providerEventId)
+            ?: throw IllegalArgumentException("Webhook event not found: $providerEventId")
+        require(persisted.status == PaymentProviderEventStatus.POISONED) {
+            "Only poisoned webhook events can be retried"
+        }
+        val bookingId = requireNotNull(persisted.bookingId) { "Poisoned webhook event is missing booking id" }
+        val booking = bookingRepository.findById(bookingId)
+            ?: throw IllegalArgumentException("Booking not found for webhook event: $providerEventId")
+        return try {
+            val record = applyEvent(
+                PaymentWebhookCommand(
+                    providerName = persisted.providerName,
+                    providerEventId = persisted.providerEventId,
+                    eventType = persisted.eventType,
+                    bookingId = persisted.bookingId,
+                    rawPayload = persisted.payloadJson,
+                    signature = persisted.signature,
+                ),
+                booking
+            )
+            paymentProviderEventRepository.save(
+                persisted.copy(
+                    status = PaymentProviderEventStatus.PROCESSED,
+                    note = record.status.name,
+                    processedAtUtc = clock.instant(),
+                )
+            )
+            PaymentWebhookResult(
+                duplicate = false,
+                eventStatus = PaymentProviderEventStatus.PROCESSED,
+                paymentRecordStatus = record.status
+            )
+        } catch (exception: Exception) {
+            paymentProviderEventRepository.save(
+                persisted.copy(
+                    status = PaymentProviderEventStatus.POISONED,
+                    note = exception.message?.take(255) ?: exception::class.simpleName,
+                    processedAtUtc = clock.instant(),
+                )
+            )
+            throw exception
+        }
+    }
+
+    private fun applyEvent(
+        command: PaymentWebhookCommand,
+        booking: com.demo.tourwave.domain.booking.Booking
+    ): com.demo.tourwave.domain.payment.PaymentRecord {
+        return when (command.eventType) {
+            PaymentProviderEventType.AUTHORIZED -> {
+                paymentLedgerService.applyWebhookStatus(
+                    bookingId = requireNotNull(command.bookingId),
+                    status = PaymentRecordStatus.AUTHORIZED,
+                    providerName = command.providerName,
+                    providerAuthorizationId = command.providerAuthorizationId,
+                    providerReference = command.providerReference,
+                    webhookEventId = command.providerEventId,
+                )
+            }
+
+            PaymentProviderEventType.CAPTURED -> {
+                bookingRepository.save(booking.copy(paymentStatus = PaymentStatus.PAID))
+                paymentLedgerService.applyWebhookStatus(
+                    bookingId = requireNotNull(command.bookingId),
+                    status = PaymentRecordStatus.CAPTURED,
+                    providerName = command.providerName,
+                    providerCaptureId = command.providerCaptureId,
+                    providerReference = command.providerReference,
+                    webhookEventId = command.providerEventId,
+                )
+            }
+
+            PaymentProviderEventType.CAPTURE_FAILED -> {
+                paymentLedgerService.applyWebhookStatus(
+                    bookingId = requireNotNull(command.bookingId),
+                    status = PaymentRecordStatus.AUTHORIZED,
+                    providerName = command.providerName,
+                    errorCode = command.errorCode,
+                    webhookEventId = command.providerEventId,
+                )
+            }
+
+            PaymentProviderEventType.AUTHORIZATION_CANCELED -> {
+                paymentLedgerService.applyWebhookStatus(
+                    bookingId = requireNotNull(command.bookingId),
+                    status = PaymentRecordStatus.NO_REFUND,
+                    providerName = command.providerName,
+                    providerReference = command.providerReference,
+                    webhookEventId = command.providerEventId,
+                )
+            }
+
+            PaymentProviderEventType.REFUNDED -> {
+                bookingRepository.save(booking.copy(paymentStatus = PaymentStatus.REFUNDED))
+                paymentLedgerService.applyWebhookStatus(
+                    bookingId = requireNotNull(command.bookingId),
+                    status = PaymentRecordStatus.REFUNDED,
+                    providerName = command.providerName,
+                    providerReference = command.providerReference,
+                    webhookEventId = command.providerEventId,
+                )
+            }
+
+            PaymentProviderEventType.REFUND_FAILED -> {
+                val status =
+                    if (command.retryable) {
+                        PaymentRecordStatus.REFUND_FAILED_RETRYABLE
+                    } else {
+                        PaymentRecordStatus.REFUND_REVIEW_REQUIRED
+                    }
+                paymentLedgerService.applyWebhookStatus(
+                    bookingId = requireNotNull(command.bookingId),
+                    status = status,
+                    providerName = command.providerName,
+                    errorCode = command.errorCode,
+                    providerReference = command.providerReference,
+                    webhookEventId = command.providerEventId,
+                )
+            }
+        }
     }
 
     fun expectedSignature(

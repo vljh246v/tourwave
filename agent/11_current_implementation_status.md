@@ -72,6 +72,8 @@
 - actuator metrics surface for job execution
 - structured audit payload support
 - timezone-aware time window policy
+- operator remediation queue baseline
+- launch ops baseline docs, SLO draft, alert routing draft
 
 ### Persistence / Infra
 
@@ -81,6 +83,7 @@
 - mysql-test profile
 - worker job lock persistence
 - real MySQL container smoke coverage
+- real MySQL container regression coverage
 - occurrence lock 기반 capacity guard
 
 ## 2. What Is Not Product-Ready Yet
@@ -93,8 +96,6 @@
 
 ### Infra / Ops Hardening Missing
 
-- alert routing / SLO dashboarding
-- dead-letter style operator queue
 - Gradle true multi-module split
 
 ### Recently Closed Gaps
@@ -106,6 +107,7 @@
 - organization booking report and occurrence ops report APIs with CSV export
 - public review summary by tour / instructor / organization and operator organization trust summary
 - moderation no-build policy and favorites/notifications UX rules
+- launch ops baseline with alert routing/SLO/runbook docs, operator remediation queue, and real MySQL regression suite
 
 ## 3. Current Runtime Truths
 
@@ -113,7 +115,7 @@
 - 현재 저장소는 단일 Gradle 모듈이다.
 - 실행 진입점은 API와 worker로 분리되어 있다.
 - `mysql-test`는 현재 환경에서 H2 MySQL compatibility mode로 테스트된다.
-- CI는 별도 real MySQL container smoke test를 추가로 실행하도록 설계됐다.
+- CI는 real MySQL smoke + regression class를 별도 job으로 실행하도록 설계됐다.
 - 인증 토큰은 JWT access token 기준이며, local/test 런타임만 request header fallback을 허용한다.
 - Spring Security filter chain은 공개 경로와 보호 경로를 분리하고 JWT 기준으로 perimeter enforcement를 수행한다.
 - organization, instructor, tour, occurrence까지 운영자 authoring이 가능하고, public catalog/search 및 customer self-service 일부가 구현됐다.
@@ -142,12 +144,12 @@
 - 배치 작업은 distributed lock까지 올라왔지만 alert routing과 stale lock 운영 기준은 계속 다듬어야 한다.
 - auth/account 영역은 아직 제품 표면 대비 비어 있다.
 - `SecurityConfig`는 공개 경로만 allowlist하고 나머지는 JWT perimeter로 보호한다.
-- true MySQL container 검증은 smoke 수준까지 올라왔고 더 넓은 suite 확장이 남아 있다.
+- true MySQL container 검증은 smoke + regression baseline까지 올라왔다.
 - 결제는 local/test에서 fake adapter를 유지하고 alpha/beta/real에서는 HTTP provider adapter로 authorize/capture/refund를 수행한다.
 - webhook은 active/previous secret rotation, malformed payload persistence, poison event marking을 지원한다.
 - asset upload는 local/test에서 fake storage를 유지하고, alpha/beta/real profile에서는 presigned URL + HEAD metadata verification 기반 real storage adapter를 사용한다.
 - notifications는 read model 조회와 함께 email outbound delivery log를 남기며, local/test fake channel과 alpha/beta/real HTTP provider adapter를 profile별로 분리한다.
-- 운영자는 refund retry metadata, review-required 구분, remediation audit trail, reconciliation mismatch export까지 조회할 수 있다. 다만 alert routing과 dashboarding은 여전히 추가 작업이 필요하다.
+- 운영자는 refund retry metadata, review-required 구분, remediation audit trail, reconciliation mismatch export, cross-surface remediation queue까지 조회할 수 있다.
 - organization membership invitation은 email delivery와 invite token link를 발급하고, 재초대 시 기존 pending token을 무효화한다.
 - review aggregation은 query-time 계산으로 유지하고, public scope는 published tour 기준, operator organization scope는 same-org 전체 occurrence 기준으로 분리한다.
 - moderation은 현재 MVP 범위에서 비활성화하며 public/runtime contract에 moderation API를 노출하지 않는다.

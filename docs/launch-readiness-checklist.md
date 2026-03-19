@@ -6,9 +6,19 @@
 
 - `./gradlew test`가 통과해야 한다.
 - `OpenApiContractVerificationTest`가 통과해야 한다.
-- real MySQL container smoke test가 CI에서 통과해야 한다.
+- real MySQL container smoke/regression test가 CI에서 통과해야 한다.
 - `GET /actuator/health`와 `GET /actuator/health/readiness`가 `UP`이어야 한다.
 - `GET /actuator/metrics/tourwave.job.execution`에서 worker execution metric이 노출되어야 한다.
+- `GET /operator/operations/remediation-queue`에서 launch-blocking failure source를 운영자가 조회할 수 있어야 한다.
+
+## 1.1 Evidence Owners
+
+- backend owner
+  - full regression, OpenAPI verification, smoke run log
+- platform owner
+  - secret rotation evidence, backup evidence, incident contact link
+- finance/operator owner
+  - reconciliation refresh evidence, remediation queue review evidence
 
 ## 2. Worker Runtime Checks
 
@@ -19,7 +29,7 @@
 
 ## 3. CI And Contract Checks
 
-- GitHub Actions CI에서 env validation, contract verification, real MySQL smoke, full regression이 순서대로 실행되어야 한다.
+- GitHub Actions CI에서 env validation, contract verification, real MySQL smoke, real MySQL regression, full regression이 순서대로 실행되어야 한다.
 - `agent/13_api_status_matrix.md`와 `agent/04_openapi.yaml` 간 drift가 새로 생기면 같은 PR 안에서 정리해야 한다.
 - 새 API를 추가하면 controller/integration test, status matrix, OpenAPI, API catalog를 함께 수정해야 한다.
 
@@ -29,3 +39,14 @@
 - `workerJobLocks`가 `DOWN`이면 stale lock과 DB 연결 상태를 우선 확인한다.
 - `workerJobs`가 `DOWN`이면 마지막 실패 job name과 최근 에러 메시지를 확인한다.
 - refund queue 증가나 reconciliation 누락이 보이면 `RefundRetryJob`, `FinanceReconciliationJob`, payment webhook 수신 로그를 함께 점검한다.
+- remediation queue의 `PAYMENT_WEBHOOK` item이 증가하면 invalid signature, malformed payload, poisoned event를 source별로 분리해 확인한다.
+- remediation queue의 `NOTIFICATION_DELIVERY` item이 증가하면 provider 장애와 permanent bounce를 분리해 본다.
+
+## 5. Post-Deploy Smoke Runbook
+
+- `GET /actuator/health`
+- `GET /actuator/health/readiness`
+- `GET /actuator/metrics/tourwave.job.execution`
+- `GET /operator/operations/remediation-queue`
+- `POST /operator/finance/reconciliation/daily/{summaryDate}/refresh`
+- evidence는 배포 시각, 호출 결과, operator reviewer를 함께 남긴다.

@@ -166,4 +166,43 @@ class PaymentWebhookServiceTest {
         assertEquals(PaymentProviderEventStatus.MALFORMED_PAYLOAD, event.status)
         assertEquals("current", event.signatureKeyId)
     }
+
+    @Test
+    fun `poisoned webhook can be reprocessed manually`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 12L,
+                organizationId = 1L,
+                leaderUserId = 102L,
+                partySize = 1,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = Instant.parse("2026-03-17T00:00:00Z")
+            )
+        )
+        paymentLedgerService.initialize(
+            booking = booking,
+            occurrence = Occurrence(id = 12L, organizationId = 1L, capacity = 10, unitPrice = 40000, currency = "KRW"),
+            actorUserId = 102L
+        )
+        paymentProviderEventRepository.save(
+            com.demo.tourwave.domain.payment.PaymentProviderEvent(
+                providerName = "stub-pay",
+                providerEventId = "evt-poison-reprocess",
+                eventType = PaymentProviderEventType.CAPTURED,
+                bookingId = requireNotNull(booking.id),
+                payloadJson = """{"providerName":"stub-pay"}""",
+                payloadSha256 = "hash",
+                status = PaymentProviderEventStatus.POISONED,
+                note = "transient-error",
+                receivedAtUtc = Instant.parse("2026-03-18T11:00:00Z"),
+                processedAtUtc = Instant.parse("2026-03-18T11:01:00Z")
+            )
+        )
+
+        val result = service.reprocessPoisonedEvent("evt-poison-reprocess")
+
+        assertEquals(PaymentProviderEventStatus.PROCESSED, result.eventStatus)
+        assertEquals(PaymentRecordStatus.CAPTURED, paymentRecordRepository.findByBookingId(requireNotNull(booking.id))?.status)
+    }
 }

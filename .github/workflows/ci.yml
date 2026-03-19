@@ -66,5 +66,8 @@ jobs:
       - name: Run real MySQL container smoke
         run: ./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerSmokeTest'
 
+      - name: Run real MySQL container regression
+        run: ./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerRegressionTest'
+
       - name: Build and test
         run: ./gradlew test

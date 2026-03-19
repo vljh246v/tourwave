@@ -61,4 +61,30 @@ class NotificationDeliveryService(
             )
         }
     }
+
+    fun redeliver(deliveryId: Long): NotificationDelivery {
+        val existing = notificationDeliveryRepository.findById(deliveryId)
+            ?: throw IllegalArgumentException("Notification delivery not found: $deliveryId")
+        return try {
+            val result = notificationChannelPort.send(
+                SendNotificationMessage(
+                    channel = existing.channel,
+                    recipient = existing.recipient,
+                    subject = existing.subject,
+                    body = existing.body,
+                    templateCode = existing.templateCode,
+                    idempotencyKey = "${existing.resourceType}:${existing.resourceId}:retry:$deliveryId:${existing.attemptCount + 1}"
+                )
+            )
+            notificationDeliveryRepository.save(existing.markSent(result.providerMessageId, clock.instant()))
+        } catch (ex: NotificationChannelException) {
+            notificationDeliveryRepository.save(
+                existing.markFailed(
+                    retryable = ex.retryable,
+                    message = ex.message,
+                    now = clock.instant()
+                )
+            )
+        }
+    }
 }

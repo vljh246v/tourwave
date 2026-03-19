@@ -34,8 +34,8 @@ Sprint 1~6 범위에서 이미 확보된 것은 다음과 같다.
 아직 제품 비전에 남아 있는 것은 다음과 같다.
 
 - `POST /me/delete`
-- alert routing / dashboard / SLO / broader real MySQL verification
-- operator remediation queue / launch ops hardening
+- Gradle 멀티모듈 분리
+- launch 운영 자동화 고도화
 
 ## Delivery Principle
 

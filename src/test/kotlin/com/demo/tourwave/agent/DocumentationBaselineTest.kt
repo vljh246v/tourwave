@@ -10,6 +10,7 @@ import com.demo.tourwave.adapter.`in`.web.instructor.InstructorProfileController
 import com.demo.tourwave.adapter.`in`.web.instructor.InstructorRegistrationController
 import com.demo.tourwave.adapter.`in`.web.organization.OrganizationOperatorController
 import com.demo.tourwave.adapter.`in`.web.organization.OrganizationPublicController
+import com.demo.tourwave.adapter.`in`.web.operations.OperatorRemediationQueueController
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrenceOperatorController
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrencePublicController
 import com.demo.tourwave.adapter.`in`.web.participant.ParticipantRosterController
@@ -85,6 +86,8 @@ class DocumentationBaselineTest {
         assertContains(doc, "GET /operator/finance/reconciliation/daily")
         assertContains(doc, "POST /operator/finance/reconciliation/daily/{summaryDate}/refresh")
         assertContains(doc, "GET /operator/finance/reconciliation/daily/export")
+        assertContains(doc, "GET /operator/operations/remediation-queue")
+        assertContains(doc, "POST /operator/operations/remediation-queue/{sourceType}/{sourceKey}")
         assertContains(doc, "GET /actuator/health")
         assertContains(doc, "GET /actuator/metrics/tourwave.job.execution")
         assertContains(doc, "/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.")
@@ -126,6 +129,7 @@ class DocumentationBaselineTest {
         assertContains(apiCatalog, "POST /payments/webhooks/provider")
         assertContains(apiCatalog, "GET /operator/payments/refunds/ops")
         assertContains(apiCatalog, "GET /operator/finance/reconciliation/daily")
+        assertContains(apiCatalog, "GET /operator/operations/remediation-queue")
         assertContains(apiCatalog, "Current runtime note:")
         assertContains(apiCatalog, "1차 확인: controller + integration test")
         assertContains(traceability, "DocumentationBaselineTest")
@@ -141,8 +145,11 @@ class DocumentationBaselineTest {
         assertContains(gapArchive, "현재 truth 확인 순서:")
         assertContains(runbook, "Launch Readiness Checklist")
         assertContains(runbook, "worker distributed lock")
+        assertContains(runbook, "operator/operations/remediation-queue")
         assertContains(readProjectFile("agent/18_trust_surface_policy.md"), "MVP 결정은 `no-build`다.")
         assertContains(readProjectFile("agent/18_trust_surface_policy.md"), "GET /operator/organizations/{organizationId}/reviews/summary")
+        assertContains(readProjectFile("agent/19_launch_ops_baseline.md"), "tourwave.job.execution")
+        assertContains(readProjectFile("agent/19_launch_ops_baseline.md"), "operator_failure_records")
     }
 
     @Test
@@ -206,6 +213,16 @@ class DocumentationBaselineTest {
             controller = OrganizationReportController::class.java,
             methodName = "getOccurrenceOpsReport",
             expectedPath = "/organizations/{organizationId}/reports/occurrences"
+        )
+        assertGetMapping(
+            controller = OperatorRemediationQueueController::class.java,
+            methodName = "listQueue",
+            expectedPath = "/operator/operations/remediation-queue"
+        )
+        assertPostMapping(
+            controller = OperatorRemediationQueueController::class.java,
+            methodName = "remediate",
+            expectedPath = "/operator/operations/remediation-queue/{sourceType}/{sourceKey}"
         )
         assertGetMapping(
             controller = ReviewController::class.java,

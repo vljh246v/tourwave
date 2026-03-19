@@ -89,6 +89,8 @@ Target-only as of 2026-03-19:
 - GET /operator/finance/reconciliation/daily?startDate={date}&endDate={date} (ORG_ADMIN/OWNER or finance operator)
 - POST /operator/finance/reconciliation/daily/{summaryDate}/refresh (ORG_ADMIN/OWNER or finance operator)
 - GET /operator/finance/reconciliation/daily/export?startDate={date}&endDate={date} (ORG_ADMIN/OWNER or finance operator)
+- GET /operator/operations/remediation-queue (ORG_ADMIN/OWNER or launch/operator reviewer)
+- POST /operator/operations/remediation-queue/{sourceType}/{sourceKey} (ORG_ADMIN/OWNER or launch/operator reviewer)
 
 ## Runtime Operations
 - GET /actuator/health
@@ -144,7 +146,7 @@ Public:
 - GET /tours (public)
 - GET /tours/{tourId} (public if PUBLISHED)
 - GET /tours/{tourId}/instructors (public)
-- GET /tours/{tourId}/rating-summary (public)
+- GET /tours/{tourId}/reviews/summary (public)
 
 Content:
 - GET /tours/{tourId}/content (public if PUBLISHED)
@@ -203,6 +205,7 @@ Current runtime note:
 - Sprint 12 current runtime supports `GET /me/bookings`, calendar ICS export, favorites, and notifications read model APIs.
 - Sprint 13 current runtime supports provider webhook intake with `X-Payment-Signature`, refund ops queue, booking-level manual refund retry, and reconciliation daily summary JSON/CSV export.
 - Sprint 14 current runtime supports distributed lock coordinated worker jobs and actuator health/metrics for operations.
+- Sprint 20 current runtime supports launch ops baseline docs, operator remediation queue, and real MySQL regression verification.
 
 ---
 

@@ -1,6 +1,8 @@
 package com.demo.tourwave.adapter.`in`.web.payment
 
 import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
+import com.demo.tourwave.application.operations.port.OperatorFailureRecordRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.payment.PaymentWebhookService
 import com.demo.tourwave.application.payment.port.PaymentProviderEventRepository
@@ -8,6 +10,12 @@ import com.demo.tourwave.application.payment.port.PaymentReconciliationSummaryRe
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
+import com.demo.tourwave.domain.customer.NotificationChannel
+import com.demo.tourwave.domain.customer.NotificationDelivery
+import com.demo.tourwave.domain.customer.NotificationDeliveryStatus
+import com.demo.tourwave.domain.payment.PaymentProviderEvent
+import com.demo.tourwave.domain.payment.PaymentProviderEventStatus
+import com.demo.tourwave.domain.payment.PaymentProviderEventType
 import com.demo.tourwave.domain.payment.PaymentRecord
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import org.junit.jupiter.api.BeforeEach
@@ -45,8 +53,16 @@ class PaymentControllerIntegrationTest {
     @Autowired
     private lateinit var paymentWebhookService: PaymentWebhookService
 
+    @Autowired
+    private lateinit var notificationDeliveryRepository: NotificationDeliveryRepository
+
+    @Autowired
+    private lateinit var operatorFailureRecordRepository: OperatorFailureRecordRepository
+
     @BeforeEach
     fun setUp() {
+        operatorFailureRecordRepository.clear()
+        notificationDeliveryRepository.clear()
         paymentReconciliationSummaryRepository.clear()
         paymentProviderEventRepository.clear()
         paymentRecordRepository.clear()
@@ -202,5 +218,86 @@ class PaymentControllerIntegrationTest {
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+    }
+
+    @Test
+    fun `operator remediation queue endpoint lists and resolves failures`() {
+        val booking = bookingRepository.save(
+            Booking(
+                occurrenceId = 202L,
+                organizationId = 10L,
+                leaderUserId = 1002L,
+                partySize = 1,
+                status = BookingStatus.CANCELED,
+                paymentStatus = PaymentStatus.REFUND_PENDING,
+                createdAt = Instant.parse("2026-03-18T00:00:00Z")
+            )
+        )
+        paymentRecordRepository.save(
+            PaymentRecord(
+                bookingId = requireNotNull(booking.id),
+                status = PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
+                lastErrorCode = "manual-review",
+                createdAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
+                updatedAtUtc = Instant.parse("2026-03-18T00:05:00Z")
+            )
+        )
+        val failedDelivery = notificationDeliveryRepository.save(
+            NotificationDelivery(
+                channel = NotificationChannel.EMAIL,
+                templateCode = "booking-update",
+                recipient = "user@example.com",
+                subject = "Update",
+                body = "Delivery failed",
+                resourceType = "BOOKING",
+                resourceId = requireNotNull(booking.id),
+                status = NotificationDeliveryStatus.FAILED_PERMANENT,
+                attemptCount = 1,
+                lastError = "mailbox-unavailable",
+                createdAt = Instant.parse("2026-03-18T00:10:00Z"),
+                updatedAt = Instant.parse("2026-03-18T00:10:00Z")
+            )
+        )
+        paymentProviderEventRepository.save(
+            PaymentProviderEvent(
+                providerName = "stub-pay",
+                providerEventId = "evt-remediation-1",
+                eventType = PaymentProviderEventType.CAPTURED,
+                bookingId = requireNotNull(booking.id),
+                payloadJson = """{"providerName":"stub-pay"}""",
+                payloadSha256 = "queue-hash",
+                status = PaymentProviderEventStatus.POISONED,
+                note = "apply-failed",
+                receivedAtUtc = Instant.parse("2026-03-18T00:20:00Z"),
+                processedAtUtc = Instant.parse("2026-03-18T00:21:00Z")
+            )
+        )
+
+        mockMvc.perform(
+            get("/operator/operations/remediation-queue")
+                .header("X-Actor-User-Id", 999L)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].sourceType").exists())
+            .andExpect(jsonPath("$[?(@.sourceType=='NOTIFICATION_DELIVERY')]").isNotEmpty)
+
+        mockMvc.perform(
+            post("/operator/operations/remediation-queue/NOTIFICATION_DELIVERY/${requireNotNull(failedDelivery.id)}")
+                .header("X-Actor-User-Id", 999L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"action":"RESOLVE","note":"accepted as manual case"}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.queueStatus").value("RESOLVED"))
+            .andExpect(jsonPath("$.sourceType").value("NOTIFICATION_DELIVERY"))
+
+        mockMvc.perform(
+            get("/operator/operations/remediation-queue")
+                .header("X-Actor-User-Id", 999L)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("NOTIFICATION_DELIVERY"))))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("REFUND")))
     }
 }

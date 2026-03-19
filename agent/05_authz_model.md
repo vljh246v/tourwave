@@ -697,6 +697,8 @@ Endpoints:
 - GET `/instructors/{instructorProfileId}/reviews/summary`
 - GET `/tours/{tourId}/reviews/summary`
 - GET `/organizations/{orgId}/reviews/summary`
+- GET `/operator/operations/remediation-queue`
+- POST `/operator/operations/remediation-queue/{sourceType}/{sourceKey}`
 
 ### Eligible participant only
 Review creation requires:
@@ -743,6 +745,7 @@ Current rule:
 MVP decision as of 2026-03-19:
 - keep platform moderation disabled
 - runtime and OpenAPI do not expose moderation endpoints
+- remediation queue는 generic operator surface이며 authenticated operator actor를 요구한다.
 - emergency handling stays in manual operational process, not public API contract
 
 ---
