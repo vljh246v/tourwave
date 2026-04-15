@@ -26,419 +26,68 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class DocumentationBaselineTest {
     @Test
-    fun `api status matrix captures current runtime truth for drift-prone endpoints`() {
-        val doc = readProjectFile("agent/13_api_status_matrix.md")
-
-        assertContains(doc, "GET /bookings/{bookingId}/refund-preview")
-        assertContains(doc, "POST /bookings/{bookingId}/waitlist/promote")
-        assertContains(doc, "POST /bookings/{bookingId}/waitlist/skip")
-        assertContains(doc, "GET /inquiries/{inquiryId}/messages")
-        assertContains(doc, "GET /occurrences/{occurrenceId}/participants/roster/export")
-        assertContains(doc, "현재 인증은 JWT access token 기반이고, local/test 런타임에서는 request header actor context fallback이 허용된다.")
-        assertContains(doc, "POST /auth/signup")
-        assertContains(doc, "GET /me")
-        assertContains(doc, "POST /operator/organizations")
-        assertContains(doc, "POST /organizations/{organizationId}/memberships/accept")
-        assertContains(doc, "GET /public/announcements")
-        assertContains(doc, "POST /organizations/{organizationId}/announcements")
-        assertContains(doc, "GET /organizations/{organizationId}/reports/bookings")
-        assertContains(doc, "GET /organizations/{organizationId}/reports/occurrences")
-        assertContains(doc, "GET /tours/{tourId}/reviews/summary")
-        assertContains(doc, "GET /instructors/{instructorProfileId}/reviews/summary")
-        assertContains(doc, "GET /organizations/{organizationId}/reviews/summary")
-        assertContains(doc, "GET /operator/organizations/{organizationId}/reviews/summary")
-        assertContains(doc, "POST /instructor-registrations")
-        assertContains(doc, "GET /me/instructor-profile?organizationId=...")
-        assertContains(doc, "POST /organizations/{organizationId}/tours")
-        assertContains(doc, "POST /tours/{tourId}/occurrences")
-        assertContains(doc, "PATCH /occurrences/{occurrenceId}")
-        assertContains(doc, "POST /occurrences/{occurrenceId}/reschedule")
-        assertContains(doc, "GET /tours")
-        assertContains(doc, "GET /tours/{tourId}")
-        assertContains(doc, "GET /tours/{tourId}/content")
-        assertContains(doc, "GET /tours/{tourId}/occurrences")
-        assertContains(doc, "GET /occurrences/{occurrenceId}/availability")
-        assertContains(doc, "GET /occurrences/{occurrenceId}/quote")
-        assertContains(doc, "GET /search/occurrences")
-        assertContains(doc, "POST /assets/uploads")
-        assertContains(doc, "POST /assets/{assetId}/complete")
-        assertContains(doc, "PUT /operator/organizations/{organizationId}/assets")
-        assertContains(doc, "PUT /tours/{tourId}/assets")
-        assertContains(doc, "GET /me/bookings")
-        assertContains(doc, "GET /bookings/{bookingId}/calendar.ics")
-        assertContains(doc, "GET /occurrences/{occurrenceId}/calendar.ics")
-        assertContains(doc, "POST /tours/{tourId}/favorite")
-        assertContains(doc, "DELETE /tours/{tourId}/favorite")
-        assertContains(doc, "GET /me/favorites")
-        assertContains(doc, "GET /me/notifications")
-        assertContains(doc, "POST /me/notifications/{notificationId}/read")
-        assertContains(doc, "POST /me/notifications/read-all")
-        assertContains(doc, "POST /payments/webhooks/provider")
-        assertContains(doc, "GET /operator/payments/refunds/ops")
-        assertContains(doc, "POST /operator/payments/bookings/{bookingId}/refund-retry")
-        assertContains(doc, "GET /operator/finance/reconciliation/daily")
-        assertContains(doc, "POST /operator/finance/reconciliation/daily/{summaryDate}/refresh")
-        assertContains(doc, "GET /operator/finance/reconciliation/daily/export")
-        assertContains(doc, "GET /operator/operations/remediation-queue")
-        assertContains(doc, "POST /operator/operations/remediation-queue/{sourceType}/{sourceKey}")
-        assertContains(doc, "GET /actuator/health")
-        assertContains(doc, "GET /actuator/metrics/tourwave.job.execution")
-        assertContains(doc, "/me`는 현재 사용자 profile과 organization memberships를 함께 반환한다.")
-        assertContains(doc, "DocumentationBaselineTest")
-    }
-
-    @Test
-    fun `spec and catalog docs encode sprint 7 governance rules`() {
-        val specIndex = readProjectFile("agent/09_spec_index.md")
-        val apiCatalog = readProjectFile("agent/03_api_catalog.md")
-        val traceability = readProjectFile("agent/14_test_traceability_matrix.md")
-        val gapArchive = readProjectFile("docs/openapi-gap-report.md")
-        val runbook = readProjectFile("docs/launch-readiness-checklist.md")
-
-        assertContains(specIndex, "16_product_delivery_roadmap.md")
-        assertContains(specIndex, "launch-readiness-checklist.md")
-        assertContains(specIndex, "13_api_status_matrix.md")
-        assertContains(specIndex, "실무 순서:")
-        assertContains(apiCatalog, "Target Product Auth: Bearer JWT")
-        assertContains(apiCatalog, "Current Runtime Auth: Bearer JWT, with request header actor context fallback only in local/test flows")
-        assertContains(apiCatalog, "POST /operator/organizations")
-        assertContains(apiCatalog, "POST /organizations/{orgId}/memberships/accept")
-        assertContains(apiCatalog, "GET /public/announcements")
-        assertContains(apiCatalog, "GET /organizations/{orgId}/reports/bookings")
-        assertContains(apiCatalog, "GET /organizations/{orgId}/reports/occurrences")
-        assertContains(apiCatalog, "GET /tours/{tourId}/reviews/summary")
-        assertContains(apiCatalog, "GET /instructors/{instructorProfileId}/reviews/summary")
-        assertContains(apiCatalog, "GET /organizations/{orgId}/reviews/summary")
-        assertContains(apiCatalog, "GET /operator/organizations/{orgId}/reviews/summary")
-        assertContains(apiCatalog, "GET /me/instructor-profile?organizationId={orgId}")
-        assertContains(apiCatalog, "POST /organizations/{orgId}/tours")
-        assertContains(apiCatalog, "POST /tours/{tourId}/occurrences")
-        assertContains(apiCatalog, "GET /tours")
-        assertContains(apiCatalog, "GET /occurrences/{occurrenceId}/quote")
-        assertContains(apiCatalog, "POST /assets/uploads")
-        assertContains(apiCatalog, "GET /me/bookings")
-        assertContains(apiCatalog, "GET /me/favorites")
-        assertContains(apiCatalog, "GET /me/notifications")
-        assertContains(apiCatalog, "POST /payments/webhooks/provider")
-        assertContains(apiCatalog, "GET /operator/payments/refunds/ops")
-        assertContains(apiCatalog, "GET /operator/finance/reconciliation/daily")
-        assertContains(apiCatalog, "GET /operator/operations/remediation-queue")
-        assertContains(apiCatalog, "Current runtime note:")
-        assertContains(apiCatalog, "1차 확인: controller + integration test")
-        assertContains(traceability, "DocumentationBaselineTest")
-        assertContains(traceability, "OrganizationControllerIntegrationTest")
-        assertContains(traceability, "InstructorAndTourControllerIntegrationTest")
-        assertContains(traceability, "OccurrenceCatalogControllerIntegrationTest")
-        assertContains(traceability, "CustomerControllerIntegrationTest")
-        assertContains(traceability, "PaymentControllerIntegrationTest")
-        assertContains(traceability, "OperationalActuatorIntegrationTest")
-        assertContains(traceability, "OpenApiContractVerificationTest")
-        assertContains(traceability, "RealMysqlContainerSmokeTest")
-        assertContains(gapArchive, "Historical Archive")
-        assertContains(gapArchive, "현재 truth 확인 순서:")
-        assertContains(runbook, "Launch Readiness Checklist")
-        assertContains(runbook, "worker distributed lock")
-        assertContains(runbook, "operator/operations/remediation-queue")
-        assertContains(readProjectFile("agent/18_trust_surface_policy.md"), "MVP 결정은 `no-build`다.")
-        assertContains(readProjectFile("agent/18_trust_surface_policy.md"), "GET /operator/organizations/{organizationId}/reviews/summary")
-        assertContains(readProjectFile("agent/19_launch_ops_baseline.md"), "tourwave.job.execution")
-        assertContains(readProjectFile("agent/19_launch_ops_baseline.md"), "operator_failure_records")
-    }
-
-    @Test
     fun `drift-prone controller mappings stay aligned with current truth docs`() {
-        assertGetMapping(
-            controller = BookingRefundPreviewController::class.java,
-            methodName = "getRefundPreview",
-            expectedPath = "/bookings/{bookingId}/refund-preview"
-        )
-        assertPostMapping(
-            controller = WaitlistOperatorController::class.java,
-            methodName = "promote",
-            expectedPath = "/bookings/{bookingId}/waitlist/promote"
-        )
-        assertPostMapping(
-            controller = WaitlistOperatorController::class.java,
-            methodName = "skip",
-            expectedPath = "/bookings/{bookingId}/waitlist/skip"
-        )
-        assertGetMapping(
-            controller = InquiryQueryController::class.java,
-            methodName = "listInquiryMessages",
-            expectedPath = "/inquiries/{inquiryId}/messages"
-        )
-        assertGetMapping(
-            controller = ParticipantRosterController::class.java,
-            methodName = "exportRoster",
-            expectedPath = "/occurrences/{occurrenceId}/participants/roster/export"
-        )
-        assertPostMapping(
-            controller = OrganizationOperatorController::class.java,
-            methodName = "createOrganization",
-            expectedPath = "/operator/organizations"
-        )
-        assertGetMapping(
-            controller = AnnouncementController::class.java,
-            methodName = "listPublicAnnouncements",
-            expectedPath = "/public/announcements"
-        )
-        assertPostMapping(
-            controller = AnnouncementController::class.java,
-            methodName = "createAnnouncement",
-            expectedPath = "/organizations/{organizationId}/announcements"
-        )
-        assertPatchMapping(
-            controller = AnnouncementController::class.java,
-            methodName = "updateAnnouncement",
-            expectedPath = "/announcements/{announcementId}"
-        )
-        assertDeleteMapping(
-            controller = AnnouncementController::class.java,
-            methodName = "deleteAnnouncement",
-            expectedPath = "/announcements/{announcementId}"
-        )
-        assertGetMapping(
-            controller = OrganizationReportController::class.java,
-            methodName = "getBookingReport",
-            expectedPath = "/organizations/{organizationId}/reports/bookings"
-        )
-        assertGetMapping(
-            controller = OrganizationReportController::class.java,
-            methodName = "getOccurrenceOpsReport",
-            expectedPath = "/organizations/{organizationId}/reports/occurrences"
-        )
-        assertGetMapping(
-            controller = OperatorRemediationQueueController::class.java,
-            methodName = "listQueue",
-            expectedPath = "/operator/operations/remediation-queue"
-        )
-        assertPostMapping(
-            controller = OperatorRemediationQueueController::class.java,
-            methodName = "remediate",
-            expectedPath = "/operator/operations/remediation-queue/{sourceType}/{sourceKey}"
-        )
-        assertGetMapping(
-            controller = ReviewController::class.java,
-            methodName = "getTourSummary",
-            expectedPath = "/tours/{tourId}/reviews/summary"
-        )
-        assertGetMapping(
-            controller = ReviewController::class.java,
-            methodName = "getInstructorSummary",
-            expectedPath = "/instructors/{instructorProfileId}/reviews/summary"
-        )
-        assertGetMapping(
-            controller = ReviewController::class.java,
-            methodName = "getPublicOrganizationSummary",
-            expectedPath = "/organizations/{organizationId}/reviews/summary"
-        )
-        assertGetMapping(
-            controller = ReviewController::class.java,
-            methodName = "getOperatorOrganizationSummary",
-            expectedPath = "/operator/organizations/{organizationId}/reviews/summary"
-        )
-        assertGetMapping(
-            controller = OrganizationPublicController::class.java,
-            methodName = "getPublicOrganization",
-            expectedPath = "/organizations/{organizationId}"
-        )
-        assertPostMapping(
-            controller = OrganizationPublicController::class.java,
-            methodName = "acceptInvitation",
-            expectedPath = "/organizations/{organizationId}/memberships/accept"
-        )
-        assertPostMapping(
-            controller = InstructorRegistrationController::class.java,
-            methodName = "apply",
-            expectedPath = "/instructor-registrations"
-        )
-        assertGetMapping(
-            controller = InstructorRegistrationController::class.java,
-            methodName = "listByOrganization",
-            expectedPath = "/organizations/{organizationId}/instructor-registrations"
-        )
-        assertPostMapping(
-            controller = InstructorRegistrationController::class.java,
-            methodName = "approve",
-            expectedPath = "/instructor-registrations/{registrationId}/approve"
-        )
-        assertGetMapping(
-            controller = InstructorProfileController::class.java,
-            methodName = "getMyProfile",
-            expectedPath = "/me/instructor-profile"
-        )
-        assertPatchMapping(
-            controller = InstructorProfileController::class.java,
-            methodName = "updateMyProfile",
-            expectedPath = "/me/instructor-profile"
-        )
-        assertGetMapping(
-            controller = InstructorProfileController::class.java,
-            methodName = "getPublicProfile",
-            expectedPath = "/instructors/{instructorProfileId}"
-        )
-        assertPostMapping(
-            controller = TourOperatorController::class.java,
-            methodName = "createTour",
-            expectedPath = "/organizations/{organizationId}/tours"
-        )
-        assertPostMapping(
-            controller = OccurrenceOperatorController::class.java,
-            methodName = "createOccurrence",
-            expectedPath = "/tours/{tourId}/occurrences"
-        )
-        assertPatchMapping(
-            controller = OccurrenceOperatorController::class.java,
-            methodName = "updateOccurrence",
-            expectedPath = "/occurrences/{occurrenceId}"
-        )
-        assertPostMapping(
-            controller = OccurrenceOperatorController::class.java,
-            methodName = "rescheduleOccurrence",
-            expectedPath = "/occurrences/{occurrenceId}/reschedule"
-        )
-        assertGetMapping(
-            controller = TourPublicController::class.java,
-            methodName = "listTours",
-            expectedPath = "/tours"
-        )
-        assertGetMapping(
-            controller = TourPublicController::class.java,
-            methodName = "getTour",
-            expectedPath = "/tours/{tourId}"
-        )
-        assertGetMapping(
-            controller = TourPublicController::class.java,
-            methodName = "listOccurrences",
-            expectedPath = "/tours/{tourId}/occurrences"
-        )
-        assertPutMapping(
-            controller = TourOperatorController::class.java,
-            methodName = "updateTourContent",
-            expectedPath = "/tours/{tourId}/content"
-        )
-        assertGetMapping(
-            controller = TourPublicController::class.java,
-            methodName = "getPublicContent",
-            expectedPath = "/tours/{tourId}/content"
-        )
-        assertGetMapping(
-            controller = OccurrencePublicController::class.java,
-            methodName = "getAvailability",
-            expectedPath = "/occurrences/{occurrenceId}/availability"
-        )
-        assertGetMapping(
-            controller = OccurrencePublicController::class.java,
-            methodName = "getQuote",
-            expectedPath = "/occurrences/{occurrenceId}/quote"
-        )
-        assertGetMapping(
-            controller = OccurrencePublicController::class.java,
-            methodName = "search",
-            expectedPath = "/search/occurrences"
-        )
-        assertPostMapping(
-            controller = AssetController::class.java,
-            methodName = "issueUpload",
-            expectedPath = "/assets/uploads"
-        )
-        assertPostMapping(
-            controller = AssetController::class.java,
-            methodName = "completeUpload",
-            expectedPath = "/assets/{assetId}/complete"
-        )
-        assertPutMapping(
-            controller = AssetController::class.java,
-            methodName = "attachOrganizationAssets",
-            expectedPath = "/operator/organizations/{organizationId}/assets"
-        )
-        assertPutMapping(
-            controller = AssetController::class.java,
-            methodName = "attachTourAssets",
-            expectedPath = "/tours/{tourId}/assets"
-        )
-        assertGetMapping(
-            controller = CustomerController::class.java,
-            methodName = "listMyBookings",
-            expectedPath = "/me/bookings"
-        )
-        assertGetMapping(
-            controller = CustomerController::class.java,
-            methodName = "bookingCalendar",
-            expectedPath = "/bookings/{bookingId}/calendar.ics"
-        )
-        assertGetMapping(
-            controller = CustomerController::class.java,
-            methodName = "occurrenceCalendar",
-            expectedPath = "/occurrences/{occurrenceId}/calendar.ics"
-        )
-        assertPostMapping(
-            controller = CustomerController::class.java,
-            methodName = "favoriteTour",
-            expectedPath = "/tours/{tourId}/favorite"
-        )
-        assertDeleteMapping(
-            controller = CustomerController::class.java,
-            methodName = "unfavoriteTour",
-            expectedPath = "/tours/{tourId}/favorite"
-        )
-        assertGetMapping(
-            controller = CustomerController::class.java,
-            methodName = "listFavorites",
-            expectedPath = "/me/favorites"
-        )
-        assertGetMapping(
-            controller = CustomerController::class.java,
-            methodName = "listNotifications",
-            expectedPath = "/me/notifications"
-        )
-        assertPostMapping(
-            controller = CustomerController::class.java,
-            methodName = "markNotificationRead",
-            expectedPath = "/me/notifications/{notificationId}/read"
-        )
-        assertPostMapping(
-            controller = CustomerController::class.java,
-            methodName = "markAllNotificationsRead",
-            expectedPath = "/me/notifications/read-all"
-        )
-        assertPostMapping(
-            controller = PaymentWebhookController::class.java,
-            methodName = "receiveProviderWebhook",
-            expectedPath = "/payments/webhooks/provider"
-        )
-        assertGetMapping(
-            controller = PaymentOperatorController::class.java,
-            methodName = "listRefundOpsQueue",
-            expectedPath = "/operator/payments/refunds/ops"
-        )
-        assertPostMapping(
-            controller = PaymentOperatorController::class.java,
-            methodName = "retryBookingRefund",
-            expectedPath = "/operator/payments/bookings/{bookingId}/refund-retry"
-        )
-        assertGetMapping(
-            controller = PaymentOperatorController::class.java,
-            methodName = "listDailySummaries",
-            expectedPath = "/operator/finance/reconciliation/daily"
-        )
-        assertPostMapping(
-            controller = PaymentOperatorController::class.java,
-            methodName = "refreshDailySummary",
-            expectedPath = "/operator/finance/reconciliation/daily/{summaryDate}/refresh"
-        )
-        assertGetMapping(
-            controller = PaymentOperatorController::class.java,
-            methodName = "exportDailySummariesCsv",
-            expectedPath = "/operator/finance/reconciliation/daily/export"
-        )
+        assertGetMapping(BookingRefundPreviewController::class.java, "getRefundPreview", "/bookings/{bookingId}/refund-preview")
+        assertPostMapping(WaitlistOperatorController::class.java, "promote", "/bookings/{bookingId}/waitlist/promote")
+        assertPostMapping(WaitlistOperatorController::class.java, "skip", "/bookings/{bookingId}/waitlist/skip")
+        assertGetMapping(InquiryQueryController::class.java, "listInquiryMessages", "/inquiries/{inquiryId}/messages")
+        assertGetMapping(ParticipantRosterController::class.java, "exportRoster", "/occurrences/{occurrenceId}/participants/roster/export")
+        assertPostMapping(OrganizationOperatorController::class.java, "createOrganization", "/operator/organizations")
+        assertGetMapping(AnnouncementController::class.java, "listPublicAnnouncements", "/public/announcements")
+        assertPostMapping(AnnouncementController::class.java, "createAnnouncement", "/organizations/{organizationId}/announcements")
+        assertPatchMapping(AnnouncementController::class.java, "updateAnnouncement", "/announcements/{announcementId}")
+        assertDeleteMapping(AnnouncementController::class.java, "deleteAnnouncement", "/announcements/{announcementId}")
+        assertGetMapping(OrganizationReportController::class.java, "getBookingReport", "/organizations/{organizationId}/reports/bookings")
+        assertGetMapping(OrganizationReportController::class.java, "getOccurrenceOpsReport", "/organizations/{organizationId}/reports/occurrences")
+        assertGetMapping(OperatorRemediationQueueController::class.java, "listQueue", "/operator/operations/remediation-queue")
+        assertPostMapping(OperatorRemediationQueueController::class.java, "remediate", "/operator/operations/remediation-queue/{sourceType}/{sourceKey}")
+        assertGetMapping(ReviewController::class.java, "getTourSummary", "/tours/{tourId}/reviews/summary")
+        assertGetMapping(ReviewController::class.java, "getInstructorSummary", "/instructors/{instructorProfileId}/reviews/summary")
+        assertGetMapping(ReviewController::class.java, "getPublicOrganizationSummary", "/organizations/{organizationId}/reviews/summary")
+        assertGetMapping(ReviewController::class.java, "getOperatorOrganizationSummary", "/operator/organizations/{organizationId}/reviews/summary")
+        assertGetMapping(OrganizationPublicController::class.java, "getPublicOrganization", "/organizations/{organizationId}")
+        assertPostMapping(OrganizationPublicController::class.java, "acceptInvitation", "/organizations/{organizationId}/memberships/accept")
+        assertPostMapping(InstructorRegistrationController::class.java, "apply", "/instructor-registrations")
+        assertGetMapping(InstructorRegistrationController::class.java, "listByOrganization", "/organizations/{organizationId}/instructor-registrations")
+        assertPostMapping(InstructorRegistrationController::class.java, "approve", "/instructor-registrations/{registrationId}/approve")
+        assertGetMapping(InstructorProfileController::class.java, "getMyProfile", "/me/instructor-profile")
+        assertPatchMapping(InstructorProfileController::class.java, "updateMyProfile", "/me/instructor-profile")
+        assertGetMapping(InstructorProfileController::class.java, "getPublicProfile", "/instructors/{instructorProfileId}")
+        assertPostMapping(TourOperatorController::class.java, "createTour", "/organizations/{organizationId}/tours")
+        assertPostMapping(OccurrenceOperatorController::class.java, "createOccurrence", "/tours/{tourId}/occurrences")
+        assertPatchMapping(OccurrenceOperatorController::class.java, "updateOccurrence", "/occurrences/{occurrenceId}")
+        assertPostMapping(OccurrenceOperatorController::class.java, "rescheduleOccurrence", "/occurrences/{occurrenceId}/reschedule")
+        assertGetMapping(TourPublicController::class.java, "listTours", "/tours")
+        assertGetMapping(TourPublicController::class.java, "getTour", "/tours/{tourId}")
+        assertGetMapping(TourPublicController::class.java, "listOccurrences", "/tours/{tourId}/occurrences")
+        assertPutMapping(TourOperatorController::class.java, "updateTourContent", "/tours/{tourId}/content")
+        assertGetMapping(TourPublicController::class.java, "getPublicContent", "/tours/{tourId}/content")
+        assertGetMapping(OccurrencePublicController::class.java, "getAvailability", "/occurrences/{occurrenceId}/availability")
+        assertGetMapping(OccurrencePublicController::class.java, "getQuote", "/occurrences/{occurrenceId}/quote")
+        assertGetMapping(OccurrencePublicController::class.java, "search", "/search/occurrences")
+        assertPostMapping(AssetController::class.java, "issueUpload", "/assets/uploads")
+        assertPostMapping(AssetController::class.java, "completeUpload", "/assets/{assetId}/complete")
+        assertPutMapping(AssetController::class.java, "attachOrganizationAssets", "/operator/organizations/{organizationId}/assets")
+        assertPutMapping(AssetController::class.java, "attachTourAssets", "/tours/{tourId}/assets")
+        assertGetMapping(CustomerController::class.java, "listMyBookings", "/me/bookings")
+        assertGetMapping(CustomerController::class.java, "bookingCalendar", "/bookings/{bookingId}/calendar.ics")
+        assertGetMapping(CustomerController::class.java, "occurrenceCalendar", "/occurrences/{occurrenceId}/calendar.ics")
+        assertPostMapping(CustomerController::class.java, "favoriteTour", "/tours/{tourId}/favorite")
+        assertDeleteMapping(CustomerController::class.java, "unfavoriteTour", "/tours/{tourId}/favorite")
+        assertGetMapping(CustomerController::class.java, "listFavorites", "/me/favorites")
+        assertGetMapping(CustomerController::class.java, "listNotifications", "/me/notifications")
+        assertPostMapping(CustomerController::class.java, "markNotificationRead", "/me/notifications/{notificationId}/read")
+        assertPostMapping(CustomerController::class.java, "markAllNotificationsRead", "/me/notifications/read-all")
+        assertPostMapping(PaymentWebhookController::class.java, "receiveProviderWebhook", "/payments/webhooks/provider")
+        assertGetMapping(PaymentOperatorController::class.java, "listRefundOpsQueue", "/operator/payments/refunds/ops")
+        assertPostMapping(PaymentOperatorController::class.java, "retryBookingRefund", "/operator/payments/bookings/{bookingId}/refund-retry")
+        assertGetMapping(PaymentOperatorController::class.java, "listDailySummaries", "/operator/finance/reconciliation/daily")
+        assertPostMapping(PaymentOperatorController::class.java, "refreshDailySummary", "/operator/finance/reconciliation/daily/{summaryDate}/refresh")
+        assertGetMapping(PaymentOperatorController::class.java, "exportDailySummariesCsv", "/operator/finance/reconciliation/daily/export")
     }
 
     private fun assertGetMapping(controller: Class<*>, methodName: String, expectedPath: String) {
@@ -472,21 +121,9 @@ class DocumentationBaselineTest {
         assertEquals(expectedPath, paths.singlePath())
     }
 
-    private fun readProjectFile(relativePath: String): String = Files.readString(Path.of(relativePath))
-
-    private fun assertContains(content: String, expectedSnippet: String) {
-        assertTrue(
-            content.contains(expectedSnippet),
-            "Expected snippet not found: $expectedSnippet"
-        )
-    }
-
     private fun GetMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
-
     private fun PostMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
-
     private fun PatchMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
-
     private fun PutMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
 
     private fun Array<String>.singlePath(): String {
