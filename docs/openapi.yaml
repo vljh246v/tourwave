@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: |
     REST API target contract for the Tour Booking Platform MVP.
-    Current implementation status and known drift are tracked in `agent/13_api_status_matrix.md`.
+    Current implementation status and known drift are tracked in `docs/architecture.md`.
     As of 2026-03-19, this file reflects the current target contract after Sprint 19 review aggregation closure
     and excludes moderation APIs by policy decision.
 servers:
