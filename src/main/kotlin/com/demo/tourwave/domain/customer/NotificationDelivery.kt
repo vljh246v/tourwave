@@ -3,14 +3,14 @@ package com.demo.tourwave.domain.customer
 import java.time.Instant
 
 enum class NotificationChannel {
-    EMAIL
+    EMAIL,
 }
 
 enum class NotificationDeliveryStatus {
     PENDING,
     SENT,
     FAILED_RETRYABLE,
-    FAILED_PERMANENT
+    FAILED_PERMANENT,
 }
 
 data class NotificationDelivery(
@@ -28,25 +28,32 @@ data class NotificationDelivery(
     val lastError: String? = null,
     val sentAt: Instant? = null,
     val createdAt: Instant,
-    val updatedAt: Instant = createdAt
+    val updatedAt: Instant = createdAt,
 ) {
-    fun markSent(providerMessageId: String?, now: Instant): NotificationDelivery {
+    fun markSent(
+        providerMessageId: String?,
+        now: Instant,
+    ): NotificationDelivery {
         return copy(
             status = NotificationDeliveryStatus.SENT,
             attemptCount = attemptCount + 1,
             providerMessageId = providerMessageId,
             lastError = null,
             sentAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun markFailed(retryable: Boolean, message: String, now: Instant): NotificationDelivery {
+    fun markFailed(
+        retryable: Boolean,
+        message: String,
+        now: Instant,
+    ): NotificationDelivery {
         return copy(
             status = if (retryable) NotificationDeliveryStatus.FAILED_RETRYABLE else NotificationDeliveryStatus.FAILED_PERMANENT,
             attemptCount = attemptCount + 1,
             lastError = message,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 }

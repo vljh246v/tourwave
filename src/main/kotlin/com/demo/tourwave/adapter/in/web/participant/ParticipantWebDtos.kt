@@ -5,7 +5,7 @@ import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import java.time.Instant
 
 data class ParticipantInvitationCreateWebRequest(
-    val inviteeUserId: Long
+    val inviteeUserId: Long,
 )
 
 data class ParticipantInvitationWebResponse(
@@ -13,7 +13,7 @@ data class ParticipantInvitationWebResponse(
     val bookingId: Long,
     val userId: Long,
     val status: BookingParticipantStatus,
-    val invitedAt: Instant
+    val invitedAt: Instant,
 )
 
 data class ParticipantInvitationResponseWebResponse(
@@ -21,22 +21,22 @@ data class ParticipantInvitationResponseWebResponse(
     val bookingId: Long,
     val userId: Long,
     val status: BookingParticipantStatus,
-    val respondedAt: Instant
+    val respondedAt: Instant,
 )
 
 data class ParticipantAttendanceRecordWebRequest(
-    val attendanceStatus: AttendanceStatus
+    val attendanceStatus: AttendanceStatus,
 )
 
 data class ParticipantAttendanceWebResponse(
     val id: Long,
     val bookingId: Long,
     val userId: Long,
-    val attendanceStatus: AttendanceStatus
+    val attendanceStatus: AttendanceStatus,
 )
 
 data class ParticipantListWebResponse(
-    val items: List<ParticipantDetailWebResponse>
+    val items: List<ParticipantDetailWebResponse>,
 )
 
 data class ParticipantDetailWebResponse(
@@ -46,5 +46,5 @@ data class ParticipantDetailWebResponse(
     val status: BookingParticipantStatus,
     val attendanceStatus: AttendanceStatus,
     val invitedAt: Instant?,
-    val respondedAt: Instant?
+    val respondedAt: Instant?,
 )

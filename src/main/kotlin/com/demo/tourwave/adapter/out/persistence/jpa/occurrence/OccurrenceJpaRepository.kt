@@ -9,7 +9,9 @@ import org.springframework.data.repository.query.Param
 interface OccurrenceJpaRepository : JpaRepository<OccurrenceJpaEntity, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from OccurrenceJpaEntity o where o.id = :id")
-    fun findLockedById(@Param("id") id: Long): OccurrenceJpaEntity?
+    fun findLockedById(
+        @Param("id") id: Long,
+    ): OccurrenceJpaEntity?
 
     fun findByTourIdOrderByStartsAtUtcAscIdAsc(tourId: Long): List<OccurrenceJpaEntity>
 

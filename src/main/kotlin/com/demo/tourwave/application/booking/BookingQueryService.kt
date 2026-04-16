@@ -14,7 +14,7 @@ import java.time.Instant
 
 data class GetBookingDetailQuery(
     val bookingId: Long,
-    val actor: ActorAuthContext
+    val actor: ActorAuthContext,
 )
 
 data class BookingDetailView(
@@ -28,7 +28,7 @@ data class BookingDetailView(
     val createdAt: Instant,
     val offerExpiresAtUtc: Instant?,
     val occurrence: BookingOccurrenceView,
-    val participants: List<BookingDetailParticipantView>
+    val participants: List<BookingDetailParticipantView>,
 )
 
 data class BookingOccurrenceView(
@@ -38,7 +38,7 @@ data class BookingOccurrenceView(
     val instructorProfileId: Long?,
     val capacity: Int,
     val startsAtUtc: Instant?,
-    val status: OccurrenceStatus
+    val status: OccurrenceStatus,
 )
 
 data class BookingDetailParticipantView(
@@ -48,37 +48,39 @@ data class BookingDetailParticipantView(
     val status: BookingParticipantStatus,
     val attendanceStatus: AttendanceStatus,
     val invitedAt: Instant?,
-    val respondedAt: Instant?
+    val respondedAt: Instant?,
 )
 
 class BookingQueryService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
     private val participantAccessPolicy: ParticipantAccessPolicy,
-    private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService
+    private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
 ) {
     fun getBookingDetail(query: GetBookingDetailQuery): BookingDetailView {
         participantAccessPolicy.authorizeBookingParticipants(
             bookingId = query.bookingId,
-            actor = query.actor
+            actor = query.actor,
         )
 
-        val booking = bookingRepository.findById(query.bookingId)
-            ?: error("Booking access policy must guarantee booking existence")
+        val booking =
+            bookingRepository.findById(query.bookingId)
+                ?: error("Booking access policy must guarantee booking existence")
         val occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId)
-        val participants = participantInvitationLifecycleService.refreshBookingParticipants(query.bookingId)
-            .sortedBy { requireNotNull(it.id) }
-            .map {
-                BookingDetailParticipantView(
-                    id = requireNotNull(it.id),
-                    bookingId = it.bookingId,
-                    userId = it.userId,
-                    status = it.status,
-                    attendanceStatus = it.attendanceStatus,
-                    invitedAt = it.invitedAt,
-                    respondedAt = it.respondedAt
-                )
-            }
+        val participants =
+            participantInvitationLifecycleService.refreshBookingParticipants(query.bookingId)
+                .sortedBy { requireNotNull(it.id) }
+                .map {
+                    BookingDetailParticipantView(
+                        id = requireNotNull(it.id),
+                        bookingId = it.bookingId,
+                        userId = it.userId,
+                        status = it.status,
+                        attendanceStatus = it.attendanceStatus,
+                        invitedAt = it.invitedAt,
+                        respondedAt = it.respondedAt,
+                    )
+                }
 
         return BookingDetailView(
             id = requireNotNull(booking.id),
@@ -90,16 +92,17 @@ class BookingQueryService(
             paymentStatus = booking.paymentStatus,
             createdAt = booking.createdAt,
             offerExpiresAtUtc = booking.offerExpiresAtUtc,
-            occurrence = BookingOccurrenceView(
-                id = occurrence.id,
-                organizationId = occurrence.organizationId,
-                tourId = occurrence.tourId,
-                instructorProfileId = occurrence.instructorProfileId,
-                capacity = occurrence.capacity,
-                startsAtUtc = occurrence.startsAtUtc,
-                status = occurrence.status
-            ),
-            participants = participants
+            occurrence =
+                BookingOccurrenceView(
+                    id = occurrence.id,
+                    organizationId = occurrence.organizationId,
+                    tourId = occurrence.tourId,
+                    instructorProfileId = occurrence.instructorProfileId,
+                    capacity = occurrence.capacity,
+                    startsAtUtc = occurrence.startsAtUtc,
+                    status = occurrence.status,
+                ),
+            participants = participants,
         )
     }
 }

@@ -12,11 +12,12 @@ class ParticipantInvitationLifecycleService(
     private val occurrenceRepository: OccurrenceRepository,
     private val bookingParticipantRepository: BookingParticipantRepository,
     private val timeWindowPolicyService: TimeWindowPolicyService,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun refreshBookingParticipants(bookingId: Long): List<BookingParticipant> {
-        val occurrence = bookingRepository.findById(bookingId)
-            ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId) }
+        val occurrence =
+            bookingRepository.findById(bookingId)
+                ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId) }
         val now = clock.instant()
 
         return bookingParticipantRepository.findByBookingId(bookingId)
@@ -29,7 +30,10 @@ class ParticipantInvitationLifecycleService(
             }
     }
 
-    fun refreshParticipant(bookingId: Long, participantId: Long): BookingParticipant? {
+    fun refreshParticipant(
+        bookingId: Long,
+        participantId: Long,
+    ): BookingParticipant? {
         return refreshBookingParticipants(bookingId).firstOrNull { it.id == participantId }
     }
 
@@ -37,8 +41,9 @@ class ParticipantInvitationLifecycleService(
         val now = clock.instant()
         return bookingParticipantRepository.findByStatus(com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED)
             .mapNotNull { participant ->
-                val occurrence = bookingRepository.findById(participant.bookingId)
-                    ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId) }
+                val occurrence =
+                    bookingRepository.findById(participant.bookingId)
+                        ?.let { booking -> occurrenceRepository.getOrCreate(booking.occurrenceId) }
                 if (!timeWindowPolicyService.isInvitationExpired(participant, occurrence, now)) {
                     return@mapNotNull null
                 }

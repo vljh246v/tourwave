@@ -3203,31 +3203,32 @@ class BookingControllerIntegrationTest {
                 tourId = 801L,
                 instructorProfileId = 901L,
                 capacity = 10,
-                startsAtUtc = Instant.parse("2026-03-20T09:00:00Z")
-            )
+                startsAtUtc = Instant.parse("2026-03-20T09:00:00Z"),
+            ),
         )
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 9920L,
-                organizationId = 31L,
-                leaderUserId = 1010L,
-                partySize = 2,
-                status = BookingStatus.CONFIRMED,
-                paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 9920L,
+                    organizationId = 31L,
+                    leaderUserId = 1010L,
+                    partySize = 2,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                    createdAt = Instant.parse("2026-03-12T00:00:00Z"),
+                ),
             )
-        )
         bookingParticipantRepository.save(
             BookingParticipant.leader(
                 bookingId = requireNotNull(booking.id),
                 userId = 1010L,
-                createdAt = booking.createdAt
-            )
+                createdAt = booking.createdAt,
+            ),
         )
 
         mockMvc.perform(
             get("/bookings/${booking.id}")
-                .header("X-Actor-User-Id", "1010")
+                .header("X-Actor-User-Id", "1010"),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.occurrence.tourId").value(801))
@@ -3236,17 +3237,18 @@ class BookingControllerIntegrationTest {
 
     @Test
     fun `waitlist operator endpoint rejects org member role`() {
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 9921L,
-                organizationId = 31L,
-                leaderUserId = 1011L,
-                partySize = 2,
-                status = BookingStatus.WAITLISTED,
-                paymentStatus = PaymentStatus.AUTHORIZED,
-                createdAt = Instant.parse("2026-03-12T00:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 9921L,
+                    organizationId = 31L,
+                    leaderUserId = 1011L,
+                    partySize = 2,
+                    status = BookingStatus.WAITLISTED,
+                    paymentStatus = PaymentStatus.AUTHORIZED,
+                    createdAt = Instant.parse("2026-03-12T00:00:00Z"),
+                ),
             )
-        )
 
         mockMvc.perform(
             post("/bookings/${booking.id}/waitlist/skip")
@@ -3254,7 +3256,7 @@ class BookingControllerIntegrationTest {
                 .header("X-Actor-Org-Role", "ORG_MEMBER")
                 .header("X-Actor-Org-Id", "31")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"note":"not enough permission"}""")
+                .content("""{"note":"not enough permission"}"""),
         )
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))

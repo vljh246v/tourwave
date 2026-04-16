@@ -6,12 +6,12 @@ import java.time.Instant
 data class InquiryCreateWebRequest(
     val bookingId: Long? = null,
     val subject: String? = null,
-    val message: String
+    val message: String,
 )
 
 data class InquiryMessageCreateWebRequest(
     val body: String? = null,
-    val attachmentAssetIds: List<Long>? = null
+    val attachmentAssetIds: List<Long>? = null,
 )
 
 data class InquiryMessageWebResponse(
@@ -20,12 +20,12 @@ data class InquiryMessageWebResponse(
     val senderUserId: Long,
     val body: String,
     val attachmentAssetIds: List<Long>? = null,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class InquiryMessageListWebResponse(
     val items: List<InquiryMessageWebResponse>,
-    val nextCursor: String? = null
+    val nextCursor: String? = null,
 )
 
 data class InquiryWebResponse(
@@ -36,7 +36,7 @@ data class InquiryWebResponse(
     val createdByUserId: Long,
     val subject: String? = null,
     val status: InquiryStatus,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class InquiryDetailWebResponse(
@@ -48,10 +48,10 @@ data class InquiryDetailWebResponse(
     val subject: String? = null,
     val status: InquiryStatus,
     val createdAt: Instant,
-    val lastMessageAt: Instant? = null
+    val lastMessageAt: Instant? = null,
 )
 
 data class InquiryListWebResponse(
     val items: List<InquiryDetailWebResponse>,
-    val nextCursor: String? = null
+    val nextCursor: String? = null,
 )

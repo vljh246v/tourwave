@@ -13,11 +13,15 @@ import java.util.Base64
 class UserActionTokenService(
     private val userActionTokenRepository: UserActionTokenRepository,
     private val actionTokenGenerator: ActionTokenGenerator,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     private val base64Encoder = Base64.getUrlEncoder().withoutPadding()
 
-    fun issue(userId: Long, purpose: UserActionTokenPurpose, ttl: Duration): String {
+    fun issue(
+        userId: Long,
+        purpose: UserActionTokenPurpose,
+        ttl: Duration,
+    ): String {
         val now = clock.instant()
         userActionTokenRepository.findActiveByUserIdAndPurpose(userId, purpose, now)
             .forEach { userActionTokenRepository.save(it.consume(now)) }
@@ -29,13 +33,16 @@ class UserActionTokenService(
                 tokenHash = hash(rawToken),
                 purpose = purpose,
                 expiresAtUtc = now.plus(ttl),
-                createdAtUtc = now
-            )
+                createdAtUtc = now,
+            ),
         )
         return rawToken
     }
 
-    fun consume(rawToken: String, purpose: UserActionTokenPurpose): UserActionToken {
+    fun consume(
+        rawToken: String,
+        purpose: UserActionTokenPurpose,
+    ): UserActionToken {
         val now = clock.instant()
         val token = requireActive(rawToken, purpose, now)
         val consumed = token.consume(now)
@@ -51,14 +58,15 @@ class UserActionTokenService(
     private fun requireActive(
         rawToken: String,
         purpose: UserActionTokenPurpose,
-        now: java.time.Instant
+        now: java.time.Instant,
     ): UserActionToken {
         val normalized = rawToken.trim()
         if (normalized.isBlank()) {
             throw invalidToken()
         }
-        val token = userActionTokenRepository.findByTokenHash(hash(normalized))
-            ?: throw invalidToken()
+        val token =
+            userActionTokenRepository.findByTokenHash(hash(normalized))
+                ?: throw invalidToken()
         if (token.purpose != purpose || !token.isActive(now)) {
             throw invalidToken()
         }
@@ -69,7 +77,7 @@ class UserActionTokenService(
         return DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 400,
-            message = "action token is invalid"
+            message = "action token is invalid",
         )
     }
 }

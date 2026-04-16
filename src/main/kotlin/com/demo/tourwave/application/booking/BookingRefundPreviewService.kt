@@ -17,7 +17,7 @@ import java.time.Instant
 
 data class GetBookingRefundPreviewQuery(
     val bookingId: Long,
-    val actor: ActorAuthContext
+    val actor: ActorAuthContext,
 )
 
 data class BookingRefundPreviewView(
@@ -29,7 +29,7 @@ data class BookingRefundPreviewView(
     val refundReasonCode: RefundReasonCode?,
     val refundable: Boolean,
     val occurrenceStartsAtUtc: Instant?,
-    val evaluatedAtUtc: Instant
+    val evaluatedAtUtc: Instant,
 )
 
 class BookingRefundPreviewService(
@@ -37,23 +37,25 @@ class BookingRefundPreviewService(
     private val occurrenceRepository: OccurrenceRepository,
     private val participantAccessPolicy: ParticipantAccessPolicy,
     private val paymentLedgerService: PaymentLedgerService,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun getPreview(query: GetBookingRefundPreviewQuery): BookingRefundPreviewView {
-        val accessType = participantAccessPolicy.authorizeBookingParticipants(
-            bookingId = query.bookingId,
-            actor = query.actor
-        )
+        val accessType =
+            participantAccessPolicy.authorizeBookingParticipants(
+                bookingId = query.bookingId,
+                actor = query.actor,
+            )
 
-        val booking = bookingRepository.findById(query.bookingId)
-            ?: error("Booking access policy must guarantee booking existence")
+        val booking =
+            bookingRepository.findById(query.bookingId)
+                ?: error("Booking access policy must guarantee booking existence")
 
         if (accessType == ParticipantAccessType.BOOKING_PARTICIPANT && booking.leaderUserId != query.actor.actorUserId) {
             throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,
                 message = "Only booking leader or org operator can preview cancellation refund",
-                details = mapOf("bookingId" to query.bookingId, "actorUserId" to query.actor.actorUserId)
+                details = mapOf("bookingId" to query.bookingId, "actorUserId" to query.actor.actorUserId),
             )
         }
 
@@ -70,15 +72,16 @@ class BookingRefundPreviewService(
                 refundReasonCode = null,
                 refundable = false,
                 occurrenceStartsAtUtc = occurrence.startsAtUtc,
-                evaluatedAtUtc = clock.instant()
+                evaluatedAtUtc = clock.instant(),
             )
         }
 
-        val decision = paymentLedgerService.decisionFor(
-            booking = booking,
-            occurrence = occurrence,
-            action = RefundPolicyAction.LEADER_CANCEL
-        )
+        val decision =
+            paymentLedgerService.decisionFor(
+                booking = booking,
+                occurrence = occurrence,
+                action = RefundPolicyAction.LEADER_CANCEL,
+            )
 
         return BookingRefundPreviewView(
             bookingId = requireNotNull(booking.id),
@@ -89,7 +92,7 @@ class BookingRefundPreviewService(
             refundReasonCode = decision.reasonCode,
             refundable = decision.refundable,
             occurrenceStartsAtUtc = occurrence.startsAtUtc,
-            evaluatedAtUtc = clock.instant()
+            evaluatedAtUtc = clock.instant(),
         )
     }
 }

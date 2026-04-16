@@ -35,7 +35,10 @@ class InMemoryPaymentRecordRepositoryAdapter : PaymentRecordRepository {
             .sortedBy { it.updatedAtUtc }
     }
 
-    override fun findUpdatedBetween(startInclusive: Instant, endExclusive: Instant): List<PaymentRecord> {
+    override fun findUpdatedBetween(
+        startInclusive: Instant,
+        endExclusive: Instant,
+    ): List<PaymentRecord> {
         return recordsById.values
             .filter { !it.updatedAtUtc.isBefore(startInclusive) && it.updatedAtUtc.isBefore(endExclusive) }
             .sortedBy { it.updatedAtUtc }

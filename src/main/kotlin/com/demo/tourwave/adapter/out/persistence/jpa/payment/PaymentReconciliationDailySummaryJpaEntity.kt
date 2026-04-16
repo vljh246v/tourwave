@@ -40,5 +40,5 @@ data class PaymentReconciliationDailySummaryJpaEntity(
     @Column(name = "internal_status_mismatch_count", nullable = false)
     val internalStatusMismatchCount: Int,
     @Column(name = "refreshed_at_utc", nullable = false)
-    val refreshedAtUtc: Instant
+    val refreshedAtUtc: Instant,
 )

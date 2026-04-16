@@ -24,8 +24,11 @@ class FakeOrganizationRepository : OrganizationRepository {
     }
 
     override fun findById(organizationId: Long): Organization? = organizations[organizationId]
+
     override fun findBySlug(slug: String): Organization? = organizations.values.firstOrNull { it.slug == slug }
+
     override fun findAll(): List<Organization> = organizations.values.sortedBy { it.id }
+
     override fun clear() {
         organizations.clear()
         sequence.set(0)
@@ -44,11 +47,12 @@ class FakeOrganizationMembershipRepository : OrganizationMembershipRepository {
     override fun findByOrganizationId(organizationId: Long): List<OrganizationMembership> =
         memberships.filter { it.organizationId == organizationId }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): OrganizationMembership? =
-        memberships.firstOrNull { it.organizationId == organizationId && it.userId == userId }
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): OrganizationMembership? = memberships.firstOrNull { it.organizationId == organizationId && it.userId == userId }
 
-    override fun findByUserId(userId: Long): List<OrganizationMembership> =
-        memberships.filter { it.userId == userId }
+    override fun findByUserId(userId: Long): List<OrganizationMembership> = memberships.filter { it.userId == userId }
 
     override fun clear() {
         memberships.clear()
@@ -67,8 +71,14 @@ class FakeTourRepository : TourRepository {
     }
 
     override fun findById(tourId: Long): Tour? = tours[tourId]
-    override fun findByOrganizationId(organizationId: Long): List<Tour> = tours.values.filter { it.organizationId == organizationId }.sortedBy { it.id }
+
+    override fun findByOrganizationId(organizationId: Long): List<Tour> =
+        tours.values.filter {
+            it.organizationId == organizationId
+        }.sortedBy { it.id }
+
     override fun findAllPublished(): List<Tour> = tours.values.filter { it.status == TourStatus.PUBLISHED }.sortedBy { it.id }
+
     override fun clear() {
         tours.clear()
         sequence.set(0)
@@ -87,8 +97,11 @@ class FakeUserRepository : UserRepository {
     }
 
     override fun findById(userId: Long): User? = users[userId]
+
     override fun findByEmail(email: String): User? = users.values.firstOrNull { it.email == email.trim().lowercase() }
+
     override fun findAll(): List<User> = users.values.sortedBy { it.id }
+
     override fun clear() {
         users.clear()
         sequence.set(0)

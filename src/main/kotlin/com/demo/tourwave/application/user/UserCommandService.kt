@@ -7,11 +7,14 @@ import java.time.Clock
 
 class UserCommandService(
     private val userRepository: UserRepository,
-    private val clock: Clock = Clock.systemUTC()
-): UserCommandHandler {
+    private val clock: Clock = Clock.systemUTC(),
+) : UserCommandHandler {
     private val passwordEncoder = BCryptPasswordEncoder()
 
-    override fun registerUser(name: String, email: String): User {
+    override fun registerUser(
+        name: String,
+        email: String,
+    ): User {
         if (userRepository.findByEmail(email) != null) {
             throw IllegalArgumentException("User with email $email already exists")
         }
@@ -21,8 +24,8 @@ class UserCommandService(
                 displayName = name,
                 email = email,
                 passwordHash = passwordEncoder.encode("temporary-password"),
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 }

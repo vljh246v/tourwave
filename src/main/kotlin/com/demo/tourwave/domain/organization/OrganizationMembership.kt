@@ -9,7 +9,7 @@ data class OrganizationMembership(
     val role: OrganizationRole,
     val status: OrganizationMembershipStatus,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     fun activate(now: Instant): OrganizationMembership {
         return copy(status = OrganizationMembershipStatus.ACTIVE, updatedAt = now)
@@ -19,7 +19,10 @@ data class OrganizationMembership(
         return copy(status = OrganizationMembershipStatus.INACTIVE, updatedAt = now)
     }
 
-    fun changeRole(role: OrganizationRole, now: Instant): OrganizationMembership {
+    fun changeRole(
+        role: OrganizationRole,
+        now: Instant,
+    ): OrganizationMembership {
         return copy(role = role, updatedAt = now)
     }
 
@@ -28,7 +31,7 @@ data class OrganizationMembership(
             organizationId: Long,
             userId: Long,
             role: OrganizationRole,
-            now: Instant
+            now: Instant,
         ): OrganizationMembership {
             return OrganizationMembership(
                 organizationId = organizationId,
@@ -36,7 +39,7 @@ data class OrganizationMembership(
                 role = role,
                 status = OrganizationMembershipStatus.INVITED,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
 
@@ -44,7 +47,7 @@ data class OrganizationMembership(
             organizationId: Long,
             userId: Long,
             role: OrganizationRole,
-            now: Instant
+            now: Instant,
         ): OrganizationMembership {
             return OrganizationMembership(
                 organizationId = organizationId,
@@ -52,7 +55,7 @@ data class OrganizationMembership(
                 role = role,
                 status = OrganizationMembershipStatus.ACTIVE,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }

@@ -187,37 +187,40 @@ class PaymentWebhookService(
     }
 
     fun reprocessPoisonedEvent(providerEventId: String): PaymentWebhookResult {
-        val persisted = paymentProviderEventRepository.findByProviderEventId(providerEventId)
-            ?: throw IllegalArgumentException("Webhook event not found: $providerEventId")
+        val persisted =
+            paymentProviderEventRepository.findByProviderEventId(providerEventId)
+                ?: throw IllegalArgumentException("Webhook event not found: $providerEventId")
         require(persisted.status == PaymentProviderEventStatus.POISONED) {
             "Only poisoned webhook events can be retried"
         }
         val bookingId = requireNotNull(persisted.bookingId) { "Poisoned webhook event is missing booking id" }
-        val booking = bookingRepository.findById(bookingId)
-            ?: throw IllegalArgumentException("Booking not found for webhook event: $providerEventId")
+        val booking =
+            bookingRepository.findById(bookingId)
+                ?: throw IllegalArgumentException("Booking not found for webhook event: $providerEventId")
         return try {
-            val record = applyEvent(
-                PaymentWebhookCommand(
-                    providerName = persisted.providerName,
-                    providerEventId = persisted.providerEventId,
-                    eventType = persisted.eventType,
-                    bookingId = persisted.bookingId,
-                    rawPayload = persisted.payloadJson,
-                    signature = persisted.signature,
-                ),
-                booking
-            )
+            val record =
+                applyEvent(
+                    PaymentWebhookCommand(
+                        providerName = persisted.providerName,
+                        providerEventId = persisted.providerEventId,
+                        eventType = persisted.eventType,
+                        bookingId = persisted.bookingId,
+                        rawPayload = persisted.payloadJson,
+                        signature = persisted.signature,
+                    ),
+                    booking,
+                )
             paymentProviderEventRepository.save(
                 persisted.copy(
                     status = PaymentProviderEventStatus.PROCESSED,
                     note = record.status.name,
                     processedAtUtc = clock.instant(),
-                )
+                ),
             )
             PaymentWebhookResult(
                 duplicate = false,
                 eventStatus = PaymentProviderEventStatus.PROCESSED,
-                paymentRecordStatus = record.status
+                paymentRecordStatus = record.status,
             )
         } catch (exception: Exception) {
             paymentProviderEventRepository.save(
@@ -225,7 +228,7 @@ class PaymentWebhookService(
                     status = PaymentProviderEventStatus.POISONED,
                     note = exception.message?.take(255) ?: exception::class.simpleName,
                     processedAtUtc = clock.instant(),
-                )
+                ),
             )
             throw exception
         }
@@ -233,7 +236,7 @@ class PaymentWebhookService(
 
     private fun applyEvent(
         command: PaymentWebhookCommand,
-        booking: com.demo.tourwave.domain.booking.Booking
+        booking: com.demo.tourwave.domain.booking.Booking,
     ): com.demo.tourwave.domain.payment.PaymentRecord {
         return when (command.eventType) {
             PaymentProviderEventType.AUTHORIZED -> {

@@ -19,8 +19,8 @@ import java.time.Instant
     indexes = [
         Index(name = "idx_bookings_occurrence", columnList = "occurrence_id"),
         Index(name = "idx_bookings_occurrence_status", columnList = "occurrence_id,status"),
-        Index(name = "idx_bookings_status_offer", columnList = "status,offer_expires_at_utc")
-    ]
+        Index(name = "idx_bookings_status_offer", columnList = "status,offer_expires_at_utc"),
+    ],
 )
 data class BookingJpaEntity(
     @Id
@@ -47,5 +47,5 @@ data class BookingJpaEntity(
     @Column(name = "last_waitlist_action_at_utc")
     val lastWaitlistActionAtUtc: Instant? = null,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

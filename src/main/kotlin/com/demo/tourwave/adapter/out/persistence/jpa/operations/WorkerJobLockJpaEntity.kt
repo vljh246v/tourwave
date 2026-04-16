@@ -11,8 +11,8 @@ import java.time.Instant
 @Table(
     name = "worker_job_locks",
     indexes = [
-        Index(name = "idx_worker_job_locks_lease_expires_at_utc", columnList = "lease_expires_at_utc")
-    ]
+        Index(name = "idx_worker_job_locks_lease_expires_at_utc", columnList = "lease_expires_at_utc"),
+    ],
 )
 data class WorkerJobLockJpaEntity(
     @Id
@@ -23,5 +23,5 @@ data class WorkerJobLockJpaEntity(
     @Column(name = "locked_at_utc", nullable = false)
     val lockedAtUtc: Instant,
     @Column(name = "lease_expires_at_utc", nullable = false)
-    val leaseExpiresAtUtc: Instant
+    val leaseExpiresAtUtc: Instant,
 )

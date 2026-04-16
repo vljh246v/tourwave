@@ -23,11 +23,12 @@ class InMemoryOperatorFailureRecordRepositoryAdapter : OperatorFailureRecordRepo
         return saved
     }
 
-    override fun findBySource(sourceType: OperatorFailureSourceType, sourceKey: String): OperatorFailureRecord? =
-        recordIndex[indexKey(sourceType, sourceKey)]?.let { recordsById[it] }
+    override fun findBySource(
+        sourceType: OperatorFailureSourceType,
+        sourceKey: String,
+    ): OperatorFailureRecord? = recordIndex[indexKey(sourceType, sourceKey)]?.let { recordsById[it] }
 
-    override fun findAll(): List<OperatorFailureRecord> =
-        recordsById.values.sortedByDescending { it.updatedAtUtc }
+    override fun findAll(): List<OperatorFailureRecord> = recordsById.values.sortedByDescending { it.updatedAtUtc }
 
     override fun clear() {
         recordsById.clear()
@@ -35,5 +36,8 @@ class InMemoryOperatorFailureRecordRepositoryAdapter : OperatorFailureRecordRepo
         sequence.set(0)
     }
 
-    private fun indexKey(sourceType: OperatorFailureSourceType, sourceKey: String): String = "${sourceType.name}:$sourceKey"
+    private fun indexKey(
+        sourceType: OperatorFailureSourceType,
+        sourceKey: String,
+    ): String = "${sourceType.name}:$sourceKey"
 }

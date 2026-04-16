@@ -8,16 +8,14 @@ import org.springframework.stereotype.Component
 @Component
 @Profile("mysql", "mysql-test")
 class JpaNotificationDeliveryRepositoryAdapter(
-    private val notificationDeliveryJpaRepository: NotificationDeliveryJpaRepository
+    private val notificationDeliveryJpaRepository: NotificationDeliveryJpaRepository,
 ) : NotificationDeliveryRepository {
     override fun save(delivery: NotificationDelivery): NotificationDelivery =
         notificationDeliveryJpaRepository.save(delivery.toEntity()).toDomain()
 
-    override fun findById(id: Long): NotificationDelivery? =
-        notificationDeliveryJpaRepository.findById(id).orElse(null)?.toDomain()
+    override fun findById(id: Long): NotificationDelivery? = notificationDeliveryJpaRepository.findById(id).orElse(null)?.toDomain()
 
-    override fun findAll(): List<NotificationDelivery> =
-        notificationDeliveryJpaRepository.findAll().map { it.toDomain() }
+    override fun findAll(): List<NotificationDelivery> = notificationDeliveryJpaRepository.findAll().map { it.toDomain() }
 
     override fun clear() {
         notificationDeliveryJpaRepository.deleteAllInBatch()
@@ -40,7 +38,7 @@ private fun NotificationDelivery.toEntity(): NotificationDeliveryJpaEntity =
         lastError = lastError,
         sentAt = sentAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun NotificationDeliveryJpaEntity.toDomain(): NotificationDelivery =
@@ -59,5 +57,5 @@ private fun NotificationDeliveryJpaEntity.toDomain(): NotificationDelivery =
         lastError = lastError,
         sentAt = sentAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

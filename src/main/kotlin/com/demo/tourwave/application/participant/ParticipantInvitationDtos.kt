@@ -8,7 +8,7 @@ data class CreateParticipantInvitationCommand(
     val actorUserId: Long,
     val inviteeUserId: Long,
     val idempotencyKey: String,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class ParticipantInvitationCreated(
@@ -16,17 +16,17 @@ data class ParticipantInvitationCreated(
     val bookingId: Long,
     val userId: Long,
     val status: BookingParticipantStatus,
-    val invitedAt: Instant
+    val invitedAt: Instant,
 )
 
 data class CreateParticipantInvitationResult(
     val status: Int,
-    val invitation: ParticipantInvitationCreated
+    val invitation: ParticipantInvitationCreated,
 )
 
 enum class ParticipantInvitationResponseType {
     ACCEPT,
-    DECLINE
+    DECLINE,
 }
 
 data class RespondParticipantInvitationCommand(
@@ -35,7 +35,7 @@ data class RespondParticipantInvitationCommand(
     val actorUserId: Long,
     val idempotencyKey: String,
     val responseType: ParticipantInvitationResponseType,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class ParticipantInvitationResponded(
@@ -43,12 +43,12 @@ data class ParticipantInvitationResponded(
     val bookingId: Long,
     val userId: Long,
     val status: BookingParticipantStatus,
-    val respondedAt: Instant
+    val respondedAt: Instant,
 )
 
 data class RespondParticipantInvitationResult(
     val status: Int,
-    val invitation: ParticipantInvitationResponded
+    val invitation: ParticipantInvitationResponded,
 )
 
 data class RecordParticipantAttendanceCommand(
@@ -57,17 +57,17 @@ data class RecordParticipantAttendanceCommand(
     val actorUserId: Long,
     val attendanceStatus: com.demo.tourwave.domain.booking.AttendanceStatus,
     val idempotencyKey: String,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class ParticipantAttendanceRecorded(
     val id: Long,
     val bookingId: Long,
     val userId: Long,
-    val attendanceStatus: com.demo.tourwave.domain.booking.AttendanceStatus
+    val attendanceStatus: com.demo.tourwave.domain.booking.AttendanceStatus,
 )
 
 data class RecordParticipantAttendanceResult(
     val status: Int,
-    val attendance: ParticipantAttendanceRecorded
+    val attendance: ParticipantAttendanceRecorded,
 )

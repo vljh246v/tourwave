@@ -13,20 +13,20 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
 data class WaitlistOperatorActionWebRequest(
-    val note: String? = null
+    val note: String? = null,
 )
 
 data class WaitlistOperatorActionWebResponse(
     val bookingId: Long,
     val status: String,
     val offerExpiresAtUtc: java.time.Instant?,
-    val waitlistSkipCount: Int
+    val waitlistSkipCount: Int,
 )
 
 @RestController
 class WaitlistOperatorController(
     private val waitlistOperatorService: WaitlistOperatorService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @PostMapping("/bookings/{bookingId}/waitlist/promote")
     fun promote(
@@ -35,7 +35,7 @@ class WaitlistOperatorController(
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
-        @RequestBody(required = false) request: WaitlistOperatorActionWebRequest?
+        @RequestBody(required = false) request: WaitlistOperatorActionWebRequest?,
     ): ResponseEntity<WaitlistOperatorActionWebResponse> {
         return execute(
             bookingId = bookingId,
@@ -44,7 +44,7 @@ class WaitlistOperatorController(
             actorOrgId = actorOrgId,
             requestId = requestId,
             note = request?.note,
-            action = waitlistOperatorService::promote
+            action = waitlistOperatorService::promote,
         )
     }
 
@@ -55,7 +55,7 @@ class WaitlistOperatorController(
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
-        @RequestBody(required = false) request: WaitlistOperatorActionWebRequest?
+        @RequestBody(required = false) request: WaitlistOperatorActionWebRequest?,
     ): ResponseEntity<WaitlistOperatorActionWebResponse> {
         return execute(
             bookingId = bookingId,
@@ -64,7 +64,7 @@ class WaitlistOperatorController(
             actorOrgId = actorOrgId,
             requestId = requestId,
             note = request?.note,
-            action = waitlistOperatorService::skip
+            action = waitlistOperatorService::skip,
         )
     }
 
@@ -75,21 +75,23 @@ class WaitlistOperatorController(
         actorOrgId: Long?,
         requestId: String?,
         note: String?,
-        action: (ManualWaitlistActionCommand) -> ManualWaitlistActionResult
+        action: (ManualWaitlistActionCommand) -> ManualWaitlistActionResult,
     ): ResponseEntity<WaitlistOperatorActionWebResponse> {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
-        )
-        val result = action(
-            ManualWaitlistActionCommand(
-                bookingId = bookingId,
-                actor = actor,
-                note = note,
-                requestId = requestId
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
             )
-        )
+        val result =
+            action(
+                ManualWaitlistActionCommand(
+                    bookingId = bookingId,
+                    actor = actor,
+                    note = note,
+                    requestId = requestId,
+                ),
+            )
         return ResponseEntity.status(result.status).body(result.booking.toWebResponse())
     }
 
@@ -98,7 +100,7 @@ class WaitlistOperatorController(
             bookingId = requireNotNull(id),
             status = status.name,
             offerExpiresAtUtc = offerExpiresAtUtc,
-            waitlistSkipCount = waitlistSkipCount
+            waitlistSkipCount = waitlistSkipCount,
         )
     }
 }

@@ -8,7 +8,6 @@ import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorRe
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
-import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
@@ -19,8 +18,6 @@ import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.OrganizationCommandService
 import com.demo.tourwave.application.organization.OrganizationInvitationDeliveryService
 import com.demo.tourwave.application.organization.OrganizationMembershipService
-import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
-import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.instructor.InstructorRegistrationStatus
 import com.demo.tourwave.domain.organization.OrganizationRole

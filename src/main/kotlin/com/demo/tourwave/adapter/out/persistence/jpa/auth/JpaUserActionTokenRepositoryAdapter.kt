@@ -10,7 +10,7 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaUserActionTokenRepositoryAdapter(
-    private val userActionTokenJpaRepository: UserActionTokenJpaRepository
+    private val userActionTokenJpaRepository: UserActionTokenJpaRepository,
 ) : UserActionTokenRepository {
     override fun save(token: UserActionToken): UserActionToken {
         return userActionTokenJpaRepository.save(token.toEntity()).toDomain()
@@ -23,7 +23,7 @@ class JpaUserActionTokenRepositoryAdapter(
     override fun findActiveByUserIdAndPurpose(
         userId: Long,
         purpose: UserActionTokenPurpose,
-        now: Instant
+        now: Instant,
     ): List<UserActionToken> {
         return userActionTokenJpaRepository
             .findAllByUserIdAndPurposeAndConsumedAtUtcIsNullOrderByCreatedAtUtcDesc(userId, purpose)
@@ -44,7 +44,7 @@ private fun UserActionToken.toEntity(): UserActionTokenJpaEntity =
         purpose = purpose,
         expiresAtUtc = expiresAtUtc,
         createdAtUtc = createdAtUtc,
-        consumedAtUtc = consumedAtUtc
+        consumedAtUtc = consumedAtUtc,
     )
 
 private fun UserActionTokenJpaEntity.toDomain(): UserActionToken =
@@ -55,5 +55,5 @@ private fun UserActionTokenJpaEntity.toDomain(): UserActionToken =
         purpose = purpose,
         expiresAtUtc = expiresAtUtc,
         createdAtUtc = createdAtUtc,
-        consumedAtUtc = consumedAtUtc
+        consumedAtUtc = consumedAtUtc,
     )

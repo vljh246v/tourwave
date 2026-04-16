@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class OperatorRemediationQueueController(
     private val operatorRemediationQueueService: OperatorRemediationQueueService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/operator/operations/remediation-queue")
     fun listQueue(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): List<OperatorRemediationQueueItemResponse> {
         authzGuardPort.requireActorUserId(actorUserId)
         return operatorRemediationQueueService.listOpenItems().map { it.toResponse() }
@@ -30,24 +30,25 @@ class OperatorRemediationQueueController(
         @PathVariable sourceType: OperatorFailureSourceType,
         @PathVariable sourceKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: OperatorRemediationRequest
+        @RequestBody request: OperatorRemediationRequest,
     ): OperatorRemediationQueueItemResponse {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return operatorRemediationQueueService.remediate(
             sourceType = sourceType,
             sourceKey = sourceKey,
-            command = OperatorRemediationCommand(
-                actorUserId = requiredActorUserId,
-                action = request.action,
-                note = request.note
-            )
+            command =
+                OperatorRemediationCommand(
+                    actorUserId = requiredActorUserId,
+                    action = request.action,
+                    note = request.note,
+                ),
         ).toResponse()
     }
 }
 
 data class OperatorRemediationRequest(
     val action: OperatorRemediationAction,
-    val note: String? = null
+    val note: String? = null,
 )
 
 data class OperatorRemediationQueueItemResponse(
@@ -66,7 +67,7 @@ data class OperatorRemediationQueueItemResponse(
     val lastQueueAction: String?,
     val lastActionByUserId: Long?,
     val lastActionAtUtc: String?,
-    val lastActionNote: String?
+    val lastActionNote: String?,
 )
 
 private fun com.demo.tourwave.application.operations.OperatorRemediationQueueItem.toResponse(): OperatorRemediationQueueItemResponse =
@@ -86,5 +87,5 @@ private fun com.demo.tourwave.application.operations.OperatorRemediationQueueIte
         lastQueueAction = lastQueueAction?.name,
         lastActionByUserId = lastActionByUserId,
         lastActionAtUtc = lastActionAtUtc?.toString(),
-        lastActionNote = lastActionNote
+        lastActionNote = lastActionNote,
     )

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaInstructorRegistrationRepositoryAdapter(
-    private val instructorRegistrationJpaRepository: InstructorRegistrationJpaRepository
+    private val instructorRegistrationJpaRepository: InstructorRegistrationJpaRepository,
 ) : InstructorRegistrationRepository {
     override fun save(registration: InstructorRegistration): InstructorRegistration {
         return instructorRegistrationJpaRepository.save(registration.toEntity()).toDomain()
@@ -21,8 +21,10 @@ class JpaInstructorRegistrationRepositoryAdapter(
     override fun findByOrganizationId(organizationId: Long): List<InstructorRegistration> =
         instructorRegistrationJpaRepository.findByOrganizationIdOrderByIdAsc(organizationId).map { it.toDomain() }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): InstructorRegistration? =
-        instructorRegistrationJpaRepository.findByOrganizationIdAndUserId(organizationId, userId)?.toDomain()
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): InstructorRegistration? = instructorRegistrationJpaRepository.findByOrganizationIdAndUserId(organizationId, userId)?.toDomain()
 
     override fun clear() {
         instructorRegistrationJpaRepository.deleteAllInBatch()
@@ -43,7 +45,7 @@ private fun InstructorRegistration.toEntity(): InstructorRegistrationJpaEntity =
         reviewedByUserId = reviewedByUserId,
         reviewedAt = reviewedAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun InstructorRegistrationJpaEntity.toDomain(): InstructorRegistration =
@@ -60,5 +62,5 @@ private fun InstructorRegistrationJpaEntity.toDomain(): InstructorRegistration =
         reviewedByUserId = reviewedByUserId,
         reviewedAt = reviewedAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

@@ -3,8 +3,8 @@ package com.demo.tourwave.application.reporting
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
-import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -231,7 +231,9 @@ class OrganizationReportService(
     fun exportOccurrenceOpsReportCsv(query: OccurrenceOpsReportQuery): String {
         val page = getOccurrenceOpsReport(query.copy(cursor = null, limit = Int.MAX_VALUE))
         val header =
-            "occurrenceId,organizationId,tourId,startsAtUtc,status,capacity,confirmedSeats,waitlistCount,seatUtilizationPercent,attendedCount,noShowCount,refundedBookingCount,refundPendingCount"
+            "occurrenceId,organizationId,tourId,startsAtUtc,status,capacity," +
+                "confirmedSeats,waitlistCount,seatUtilizationPercent," +
+                "attendedCount,noShowCount,refundedBookingCount,refundPendingCount"
         val lines =
             page.items.map {
                 listOf(

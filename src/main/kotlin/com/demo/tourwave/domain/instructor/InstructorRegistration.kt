@@ -15,14 +15,14 @@ data class InstructorRegistration(
     val reviewedByUserId: Long? = null,
     val reviewedAt: Instant? = null,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     fun resubmit(
         headline: String?,
         bio: String?,
         languages: List<String>,
         specialties: List<String>,
-        now: Instant
+        now: Instant,
     ): InstructorRegistration {
         return copy(
             headline = headline,
@@ -33,27 +33,34 @@ data class InstructorRegistration(
             rejectionReason = null,
             reviewedByUserId = null,
             reviewedAt = null,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun approve(reviewedByUserId: Long, now: Instant): InstructorRegistration {
+    fun approve(
+        reviewedByUserId: Long,
+        now: Instant,
+    ): InstructorRegistration {
         return copy(
             status = InstructorRegistrationStatus.APPROVED,
             rejectionReason = null,
             reviewedByUserId = reviewedByUserId,
             reviewedAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun reject(reviewedByUserId: Long, rejectionReason: String?, now: Instant): InstructorRegistration {
+    fun reject(
+        reviewedByUserId: Long,
+        rejectionReason: String?,
+        now: Instant,
+    ): InstructorRegistration {
         return copy(
             status = InstructorRegistrationStatus.REJECTED,
             rejectionReason = rejectionReason,
             reviewedByUserId = reviewedByUserId,
             reviewedAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -65,7 +72,7 @@ data class InstructorRegistration(
             bio: String?,
             languages: List<String>,
             specialties: List<String>,
-            now: Instant
+            now: Instant,
         ): InstructorRegistration {
             return InstructorRegistration(
                 organizationId = organizationId,
@@ -76,7 +83,7 @@ data class InstructorRegistration(
                 specialties = specialties,
                 status = InstructorRegistrationStatus.PENDING,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }

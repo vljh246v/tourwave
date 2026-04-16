@@ -13,7 +13,7 @@ import java.time.Instant
 @Entity
 @Table(
     name = "inquiry_messages",
-    indexes = [Index(name = "idx_inquiry_messages_inquiry", columnList = "inquiry_id,created_at")]
+    indexes = [Index(name = "idx_inquiry_messages_inquiry", columnList = "inquiry_id,created_at")],
 )
 data class InquiryMessageJpaEntity(
     @Id
@@ -29,5 +29,5 @@ data class InquiryMessageJpaEntity(
     @Column(name = "attachment_asset_ids_csv")
     val attachmentAssetIdsCsv: String? = null,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

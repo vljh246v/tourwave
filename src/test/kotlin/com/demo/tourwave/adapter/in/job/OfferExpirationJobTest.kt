@@ -21,7 +21,7 @@ class OfferExpirationJobTest {
         whenever(scheduledJobCoordinator.run(eq("offer-expiration"), any(), any<() -> OfferExpirationJobResult>()))
             .thenAnswer { invocation -> invocation.getArgument<() -> OfferExpirationJobResult>(2).invoke() }
         whenever(offerExpirationService.expireOffers()).thenReturn(
-            OfferExpirationJobResult(expiredBookingIds = listOf(1L, 2L))
+            OfferExpirationJobResult(expiredBookingIds = listOf(1L, 2L)),
         )
 
         val result = job.run()

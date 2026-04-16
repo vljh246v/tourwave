@@ -15,8 +15,8 @@ import java.time.Instant
     name = "occurrences",
     indexes = [
         Index(name = "idx_occurrences_org", columnList = "organization_id"),
-        Index(name = "idx_occurrences_status", columnList = "status")
-    ]
+        Index(name = "idx_occurrences_status", columnList = "status"),
+    ],
 )
 data class OccurrenceJpaEntity(
     @Id
@@ -49,5 +49,5 @@ data class OccurrenceJpaEntity(
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.EPOCH,
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant = Instant.EPOCH
+    val updatedAt: Instant = Instant.EPOCH,
 )

@@ -5,7 +5,8 @@ enum class ActorRole {
     INSTRUCTOR,
     ORG_MEMBER,
     ORG_ADMIN,
-    ORG_OWNER;
+    ORG_OWNER,
+    ;
 
     companion object {
         val ORG_ROLES = setOf(ORG_MEMBER, ORG_ADMIN, ORG_OWNER)
@@ -35,7 +36,7 @@ data class ActorAuthContext(
     val actorUserId: Long,
     val roles: Set<ActorRole> = setOf(ActorRole.USER),
     val actorOrgId: Long? = null,
-    val requestId: String? = null
+    val requestId: String? = null,
 ) {
     fun hasRole(role: ActorRole): Boolean = role in roles
 
@@ -54,7 +55,7 @@ interface AuthzGuardPort {
         actorRole: String? = null,
         actorOrgRole: String? = null,
         actorOrgId: Long? = null,
-        requestId: String? = null
+        requestId: String? = null,
     ): ActorAuthContext
 
     fun requireActorUserId(actorUserId: Long?): Long {

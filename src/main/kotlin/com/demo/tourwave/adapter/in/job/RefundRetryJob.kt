@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(
     prefix = "tourwave.jobs.refund-retry",
     name = ["enabled"],
-    havingValue = "true"
+    havingValue = "true",
 )
 class RefundRetryJob(
     private val refundRetryService: RefundRetryService,
-    private val scheduledJobCoordinator: ScheduledJobCoordinator
+    private val scheduledJobCoordinator: ScheduledJobCoordinator,
 ) {
     @Scheduled(fixedDelayString = "\${tourwave.jobs.refund-retry.fixed-delay-ms:60000}")
     fun run(): RefundRetryJobResult =
@@ -27,9 +27,9 @@ class RefundRetryJob(
                     eligibleCount = 0,
                     refundedCount = 0,
                     reviewRequiredCount = 0,
-                    stillRetryableCount = 0
+                    stillRetryableCount = 0,
                 )
-            }
+            },
         ) {
             refundRetryService.retryPendingRefunds()
         }

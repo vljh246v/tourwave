@@ -13,14 +13,15 @@ class RequestHeaderActorContextResolver {
         actorRole: String?,
         actorOrgRole: String?,
         actorOrgId: Long?,
-        requestId: String?
+        requestId: String?,
     ): ActorAuthContext {
-        val requiredActorUserId = actorUserId ?: throw DomainException(
-            errorCode = ErrorCode.UNAUTHORIZED,
-            status = 401,
-            message = "X-Actor-User-Id is required",
-            details = mapOf("header" to "X-Actor-User-Id")
-        )
+        val requiredActorUserId =
+            actorUserId ?: throw DomainException(
+                errorCode = ErrorCode.UNAUTHORIZED,
+                status = 401,
+                message = "X-Actor-User-Id is required",
+                details = mapOf("header" to "X-Actor-User-Id"),
+            )
 
         val resolvedActorRole = ActorRole.parseActorRole(actorRole)
         if (actorRole != null && resolvedActorRole == null) {
@@ -28,11 +29,12 @@ class RequestHeaderActorContextResolver {
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
                 message = "X-Actor-Role is invalid",
-                details = mapOf(
-                    "header" to "X-Actor-Role",
-                    "allowedRoles" to listOf(ActorRole.USER.name, ActorRole.INSTRUCTOR.name),
-                    "providedRole" to actorRole.trim().uppercase()
-                )
+                details =
+                    mapOf(
+                        "header" to "X-Actor-Role",
+                        "allowedRoles" to listOf(ActorRole.USER.name, ActorRole.INSTRUCTOR.name),
+                        "providedRole" to actorRole.trim().uppercase(),
+                    ),
             )
         }
 
@@ -42,11 +44,12 @@ class RequestHeaderActorContextResolver {
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
                 message = "X-Actor-Org-Role is invalid",
-                details = mapOf(
-                    "header" to "X-Actor-Org-Role",
-                    "allowedRoles" to ActorRole.ORG_ROLES.map { it.name },
-                    "providedRole" to actorOrgRole.trim().uppercase()
-                )
+                details =
+                    mapOf(
+                        "header" to "X-Actor-Org-Role",
+                        "allowedRoles" to ActorRole.ORG_ROLES.map { it.name },
+                        "providedRole" to actorOrgRole.trim().uppercase(),
+                    ),
             )
         }
 
@@ -55,10 +58,11 @@ class RequestHeaderActorContextResolver {
                 errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
                 status = 422,
                 message = "X-Actor-Org-Role is required when X-Actor-Org-Id is provided",
-                details = mapOf(
-                    "field" to "X-Actor-Org-Role",
-                    "header" to "X-Actor-Org-Role"
-                )
+                details =
+                    mapOf(
+                        "field" to "X-Actor-Org-Role",
+                        "header" to "X-Actor-Org-Role",
+                    ),
             )
         }
 
@@ -67,10 +71,11 @@ class RequestHeaderActorContextResolver {
                 errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
                 status = 422,
                 message = "X-Actor-Org-Id is required when X-Actor-Org-Role is provided",
-                details = mapOf(
-                    "field" to "X-Actor-Org-Id",
-                    "header" to "X-Actor-Org-Id"
-                )
+                details =
+                    mapOf(
+                        "field" to "X-Actor-Org-Id",
+                        "header" to "X-Actor-Org-Id",
+                    ),
             )
         }
 
@@ -79,7 +84,7 @@ class RequestHeaderActorContextResolver {
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
                 message = "X-Actor-Org-Id must be positive",
-                details = mapOf("header" to "X-Actor-Org-Id")
+                details = mapOf("header" to "X-Actor-Org-Id"),
             )
         }
 
@@ -93,7 +98,7 @@ class RequestHeaderActorContextResolver {
             actorUserId = requiredActorUserId,
             roles = roles,
             actorOrgId = actorOrgId,
-            requestId = requestId
+            requestId = requestId,
         )
     }
 }

@@ -17,8 +17,8 @@ import java.time.Instant
     name = "user_action_tokens",
     indexes = [
         Index(name = "idx_user_action_tokens_user_purpose", columnList = "user_id,purpose"),
-        Index(name = "uk_user_action_tokens_hash", columnList = "token_hash", unique = true)
-    ]
+        Index(name = "uk_user_action_tokens_hash", columnList = "token_hash", unique = true),
+    ],
 )
 data class UserActionTokenJpaEntity(
     @Id
@@ -36,5 +36,5 @@ data class UserActionTokenJpaEntity(
     @Column(name = "created_at_utc", nullable = false)
     val createdAtUtc: Instant,
     @Column(name = "consumed_at_utc")
-    val consumedAtUtc: Instant? = null
+    val consumedAtUtc: Instant? = null,
 )

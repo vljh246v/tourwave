@@ -5,7 +5,7 @@ import java.time.Instant
 enum class NotificationType {
     BOOKING,
     INQUIRY,
-    REFUND
+    REFUND,
 }
 
 data class Notification(
@@ -17,7 +17,7 @@ data class Notification(
     val resourceType: String,
     val resourceId: Long,
     val readAt: Instant? = null,
-    val createdAt: Instant
+    val createdAt: Instant,
 ) {
     fun markRead(now: Instant): Notification = copy(readAt = readAt ?: now)
 }

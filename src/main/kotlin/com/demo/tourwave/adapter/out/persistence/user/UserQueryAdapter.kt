@@ -19,14 +19,15 @@ class UserQueryAdapter : UserRepository {
         val existingId = user.id ?: userIdByEmail[normalizedEmail]
         val userId = existingId ?: sequence.incrementAndGet()
         val existing = usersById[userId]
-        val persisted = user.copy(
-            id = userId,
-            email = normalizedEmail,
-            status = user.status,
-            createdAt = existing?.createdAt ?: user.createdAt,
-            updatedAt = if (existing == null) user.updatedAt else user.updatedAt,
-            emailVerifiedAt = user.emailVerifiedAt ?: existing?.emailVerifiedAt
-        )
+        val persisted =
+            user.copy(
+                id = userId,
+                email = normalizedEmail,
+                status = user.status,
+                createdAt = existing?.createdAt ?: user.createdAt,
+                updatedAt = if (existing == null) user.updatedAt else user.updatedAt,
+                emailVerifiedAt = user.emailVerifiedAt ?: existing?.emailVerifiedAt,
+            )
         usersById[userId] = persisted
         userIdByEmail[normalizedEmail] = userId
         return persisted

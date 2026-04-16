@@ -6,5 +6,5 @@ data class Favorite(
     val id: Long? = null,
     val userId: Long,
     val tourId: Long,
-    val createdAt: Instant
+    val createdAt: Instant,
 )

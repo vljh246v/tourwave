@@ -5,9 +5,11 @@ import java.time.Instant
 
 interface PaymentProviderEventJpaRepository : JpaRepository<PaymentProviderEventJpaEntity, Long> {
     fun findByProviderEventId(providerEventId: String): PaymentProviderEventJpaEntity?
+
     fun findAllByOrderByReceivedAtUtcDesc(): List<PaymentProviderEventJpaEntity>
+
     fun findByReceivedAtUtcGreaterThanEqualAndReceivedAtUtcLessThanOrderByReceivedAtUtcAsc(
         startInclusive: Instant,
-        endExclusive: Instant
+        endExclusive: Instant,
     ): List<PaymentProviderEventJpaEntity>
 }

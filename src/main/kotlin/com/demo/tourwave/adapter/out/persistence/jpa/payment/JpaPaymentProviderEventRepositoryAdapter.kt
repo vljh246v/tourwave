@@ -9,7 +9,7 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaPaymentProviderEventRepositoryAdapter(
-    private val paymentProviderEventJpaRepository: PaymentProviderEventJpaRepository
+    private val paymentProviderEventJpaRepository: PaymentProviderEventJpaRepository,
 ) : PaymentProviderEventRepository {
     override fun save(event: PaymentProviderEvent): PaymentProviderEvent =
         paymentProviderEventJpaRepository.save(event.toEntity()).toDomain()
@@ -20,7 +20,10 @@ class JpaPaymentProviderEventRepositoryAdapter(
     override fun findAll(): List<PaymentProviderEvent> =
         paymentProviderEventJpaRepository.findAllByOrderByReceivedAtUtcDesc().map { it.toDomain() }
 
-    override fun findReceivedBetween(startInclusive: Instant, endExclusive: Instant): List<PaymentProviderEvent> =
+    override fun findReceivedBetween(
+        startInclusive: Instant,
+        endExclusive: Instant,
+    ): List<PaymentProviderEvent> =
         paymentProviderEventJpaRepository
             .findByReceivedAtUtcGreaterThanEqualAndReceivedAtUtcLessThanOrderByReceivedAtUtcAsc(startInclusive, endExclusive)
             .map { it.toDomain() }
@@ -44,7 +47,7 @@ private fun PaymentProviderEvent.toEntity(): PaymentProviderEventJpaEntity =
         status = status,
         note = note,
         receivedAtUtc = receivedAtUtc,
-        processedAtUtc = processedAtUtc
+        processedAtUtc = processedAtUtc,
     )
 
 private fun PaymentProviderEventJpaEntity.toDomain(): PaymentProviderEvent =
@@ -61,5 +64,5 @@ private fun PaymentProviderEventJpaEntity.toDomain(): PaymentProviderEvent =
         status = status,
         note = note,
         receivedAtUtc = receivedAtUtc,
-        processedAtUtc = processedAtUtc
+        processedAtUtc = processedAtUtc,
     )

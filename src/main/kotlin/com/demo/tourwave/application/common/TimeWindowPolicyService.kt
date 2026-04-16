@@ -13,18 +13,28 @@ class TimeWindowPolicyService {
         private const val LEADER_REFUND_WINDOW_HOURS = 48L
     }
 
-    fun isOfferExpired(now: Instant, offerExpiresAtUtc: Instant?): Boolean {
+    fun isOfferExpired(
+        now: Instant,
+        offerExpiresAtUtc: Instant?,
+    ): Boolean {
         return offerExpiresAtUtc?.let(now::isAfter) == true
     }
 
-    fun invitationExpiresAt(participant: BookingParticipant, occurrence: Occurrence?): Instant? {
+    fun invitationExpiresAt(
+        participant: BookingParticipant,
+        occurrence: Occurrence?,
+    ): Instant? {
         val invitedAt = participant.invitedAt ?: return null
         val invitationLimit = invitedAt.plusSeconds(INVITATION_EXPIRATION_HOURS * 60 * 60)
         val startsAtUtc = occurrence?.startsAtUtc ?: return invitationLimit
         return minOf(invitationLimit, startsAtUtc)
     }
 
-    fun isInvitationExpired(participant: BookingParticipant, occurrence: Occurrence?, now: Instant): Boolean {
+    fun isInvitationExpired(
+        participant: BookingParticipant,
+        occurrence: Occurrence?,
+        now: Instant,
+    ): Boolean {
         if (participant.status != BookingParticipantStatus.INVITED) {
             return false
         }
@@ -32,7 +42,10 @@ class TimeWindowPolicyService {
         return !now.isBefore(expiresAt)
     }
 
-    fun isInvitationWindowClosed(occurrence: Occurrence?, now: Instant): Boolean {
+    fun isInvitationWindowClosed(
+        occurrence: Occurrence?,
+        now: Instant,
+    ): Boolean {
         val startsAtUtc = occurrence?.startsAtUtc ?: return false
         val zoneId = ZoneId.of(occurrence.timezone)
         val closeAt = startsAtUtc.atZone(zoneId).minusHours(INVITATION_WINDOW_CLOSE_HOURS).toInstant()

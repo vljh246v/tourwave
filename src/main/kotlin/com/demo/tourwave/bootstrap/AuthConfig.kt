@@ -1,9 +1,9 @@
 package com.demo.tourwave.bootstrap
 
+import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.AuthCommandService
 import com.demo.tourwave.application.auth.AuthTokenLifecycleService
 import com.demo.tourwave.application.auth.JwtTokenService
-import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
 import com.demo.tourwave.application.auth.port.PasswordHasher
@@ -26,13 +26,13 @@ class AuthConfig {
         @Value("\${tourwave.auth.jwt-secret}") jwtSecret: String,
         @Value("\${tourwave.auth.access-token-ttl-seconds}") accessTokenTtlSeconds: Long,
         clock: Clock,
-        objectMapper: ObjectMapper
+        objectMapper: ObjectMapper,
     ): JwtTokenService {
         return JwtTokenService(
             secret = jwtSecret,
             accessTokenTtlSeconds = accessTokenTtlSeconds,
             clock = clock,
-            objectMapper = objectMapper
+            objectMapper = objectMapper,
         )
     }
 
@@ -40,12 +40,12 @@ class AuthConfig {
     fun authTokenLifecycleService(
         authRefreshTokenRepository: AuthRefreshTokenRepository,
         @Value("\${tourwave.auth.refresh-token-ttl-seconds}") refreshTokenTtlSeconds: Long,
-        clock: Clock
+        clock: Clock,
     ): AuthTokenLifecycleService {
         return AuthTokenLifecycleService(
             authRefreshTokenRepository = authRefreshTokenRepository,
             refreshTokenTtlSeconds = refreshTokenTtlSeconds,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -57,7 +57,7 @@ class AuthConfig {
         authTokenLifecycleService: AuthTokenLifecycleService,
         userActionTokenService: UserActionTokenService,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): AuthCommandService {
         return AuthCommandService(
             userRepository = userRepository,
@@ -66,7 +66,7 @@ class AuthConfig {
             authTokenLifecycleService = authTokenLifecycleService,
             userActionTokenService = userActionTokenService,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -81,12 +81,12 @@ class AuthConfig {
     fun userActionTokenService(
         userActionTokenRepository: UserActionTokenRepository,
         actionTokenGenerator: ActionTokenGenerator,
-        clock: Clock
+        clock: Clock,
     ): UserActionTokenService {
         return UserActionTokenService(
             userActionTokenRepository = userActionTokenRepository,
             actionTokenGenerator = actionTokenGenerator,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -94,12 +94,12 @@ class AuthConfig {
     fun meService(
         userRepository: UserRepository,
         organizationQueryService: OrganizationQueryService,
-        clock: Clock
+        clock: Clock,
     ): MeService {
         return MeService(
             userRepository = userRepository,
             organizationQueryService = organizationQueryService,
-            clock = clock
+            clock = clock,
         )
     }
 }

@@ -5,7 +5,7 @@ import java.time.Instant
 
 data class ReviewCreateWebRequest(
     val rating: Int,
-    val comment: String? = null
+    val comment: String? = null,
 )
 
 data class ReviewWebResponse(
@@ -15,30 +15,30 @@ data class ReviewWebResponse(
     val type: ReviewType,
     val rating: Int,
     val comment: String? = null,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class ReviewSummaryItemWebResponse(
     val count: Int,
-    val averageRating: Double? = null
+    val averageRating: Double? = null,
 )
 
 data class OccurrenceReviewSummaryWebResponse(
     val occurrenceId: Long,
     val tour: ReviewSummaryItemWebResponse,
-    val instructor: ReviewSummaryItemWebResponse
+    val instructor: ReviewSummaryItemWebResponse,
 )
 
 data class TourReviewSummaryWebResponse(
     val tourId: Long,
     val summary: ReviewSummaryItemWebResponse,
-    val aggregationMode: String
+    val aggregationMode: String,
 )
 
 data class InstructorReviewSummaryWebResponse(
     val instructorProfileId: Long,
     val summary: ReviewSummaryItemWebResponse,
-    val aggregationMode: String
+    val aggregationMode: String,
 )
 
 data class OrganizationReviewSummaryWebResponse(
@@ -46,5 +46,5 @@ data class OrganizationReviewSummaryWebResponse(
     val scope: String,
     val tour: ReviewSummaryItemWebResponse,
     val instructor: ReviewSummaryItemWebResponse,
-    val aggregationMode: String
+    val aggregationMode: String,
 )

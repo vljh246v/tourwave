@@ -8,7 +8,7 @@ data class AuthRefreshToken(
     val tokenHash: String,
     val expiresAtUtc: Instant,
     val issuedAtUtc: Instant,
-    val revokedAtUtc: Instant? = null
+    val revokedAtUtc: Instant? = null,
 ) {
     fun isActive(now: Instant): Boolean {
         return revokedAtUtc == null && expiresAtUtc.isAfter(now)
