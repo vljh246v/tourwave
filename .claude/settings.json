@@ -1,0 +1,41 @@
+{
+  "skills": {
+    "harness-task": ".claude/skills/harness-task/SKILL.md"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-tool-use.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-tool-use.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/*)",
+      "Bash(./gradlew *)",
+      "Bash(git *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(rm -rf /*)",
+      "Bash(git reset --hard HEAD~*)"
+    ]
+  }
+}
