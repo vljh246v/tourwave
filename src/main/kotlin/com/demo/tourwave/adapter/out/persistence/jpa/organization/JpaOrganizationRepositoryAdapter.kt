@@ -1,5 +1,6 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.organization
 
+import com.demo.tourwave.adapter.out.persistence.jpa.JpaJsonCodec
 import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.domain.organization.Organization
 import org.springframework.context.annotation.Profile
@@ -39,7 +40,7 @@ private fun Organization.toEntity(): OrganizationJpaEntity =
         websiteUrl = websiteUrl,
         businessName = businessName,
         businessRegistrationNumber = businessRegistrationNumber,
-        attachmentAssetIdsJson = TopologyJsonCodec.writeLongList(attachmentAssetIds),
+        attachmentAssetIdsJson = JpaJsonCodec.writeLongList(attachmentAssetIds),
         timezone = timezone,
         status = status,
         createdAt = createdAt,
@@ -58,7 +59,7 @@ private fun OrganizationJpaEntity.toDomain(): Organization =
         websiteUrl = websiteUrl,
         businessName = businessName,
         businessRegistrationNumber = businessRegistrationNumber,
-        attachmentAssetIds = TopologyJsonCodec.readLongList(attachmentAssetIdsJson),
+        attachmentAssetIds = JpaJsonCodec.readLongList(attachmentAssetIdsJson),
         timezone = timezone,
         status = status,
         createdAt = createdAt,

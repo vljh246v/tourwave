@@ -1,4 +1,4 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.organization
 
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.domain.organization.OrganizationMembership

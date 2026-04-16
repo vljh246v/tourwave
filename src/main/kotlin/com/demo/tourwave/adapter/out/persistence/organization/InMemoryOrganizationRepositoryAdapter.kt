@@ -1,4 +1,4 @@
-package com.demo.tourwave.adapter.out.persistence.topology
+package com.demo.tourwave.adapter.out.persistence.organization
 
 import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.domain.organization.Organization

@@ -1,4 +1,4 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.organization
 
 import com.demo.tourwave.domain.organization.OrganizationStatus
 import jakarta.persistence.Column
