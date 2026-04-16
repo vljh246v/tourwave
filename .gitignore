@@ -49,3 +49,7 @@ scripts/start-overnight.sh
 scripts/stop-overnight.sh
 
 qodana.yaml.worktrees/
+
+# Harness Engineering
+.worktrees/
+logs/sessions/
