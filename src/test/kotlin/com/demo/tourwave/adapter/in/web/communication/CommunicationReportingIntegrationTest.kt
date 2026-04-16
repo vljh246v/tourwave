@@ -7,7 +7,7 @@ import com.demo.tourwave.application.communication.port.AnnouncementRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.announcement.Announcement
 import com.demo.tourwave.domain.announcement.AnnouncementVisibility

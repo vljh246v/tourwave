@@ -2,7 +2,7 @@ package com.demo.tourwave.support
 
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.organization.OrganizationMembership

@@ -5,7 +5,7 @@ import com.demo.tourwave.adapter.`in`.web.occurrence.toResponse
 import com.demo.tourwave.application.topology.CatalogQueryService
 import com.demo.tourwave.application.topology.PublicTourListQuery
 import com.demo.tourwave.application.topology.TourOccurrenceListQuery
-import com.demo.tourwave.application.topology.TourQueryService
+import com.demo.tourwave.application.tour.TourQueryService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

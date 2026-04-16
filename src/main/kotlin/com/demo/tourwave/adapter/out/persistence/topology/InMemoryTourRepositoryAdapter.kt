@@ -1,6 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.topology
 
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.domain.tour.TourStatus
 import org.springframework.context.annotation.Profile

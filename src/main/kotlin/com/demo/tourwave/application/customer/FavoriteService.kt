@@ -1,7 +1,7 @@
 package com.demo.tourwave.application.customer
 
 import com.demo.tourwave.application.customer.port.FavoriteRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode

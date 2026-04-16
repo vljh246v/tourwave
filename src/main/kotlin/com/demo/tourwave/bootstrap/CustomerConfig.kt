@@ -20,7 +20,7 @@ import com.demo.tourwave.application.participant.ParticipantAccessPolicy
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

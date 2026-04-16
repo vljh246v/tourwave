@@ -7,7 +7,7 @@ import com.demo.tourwave.application.customer.port.FavoriteRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
 import org.junit.jupiter.api.BeforeEach

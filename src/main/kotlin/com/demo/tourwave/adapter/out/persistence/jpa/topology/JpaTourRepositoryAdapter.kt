@@ -1,6 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.jpa.topology
 
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.domain.tour.TourContent
 import com.demo.tourwave.domain.tour.TourStatus

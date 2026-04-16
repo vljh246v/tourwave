@@ -5,7 +5,7 @@ import com.demo.tourwave.application.asset.port.AssetStoragePort
 import com.demo.tourwave.application.asset.port.AssetUploadVerificationRequest
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.asset.Asset
 import com.demo.tourwave.domain.asset.AssetStatus

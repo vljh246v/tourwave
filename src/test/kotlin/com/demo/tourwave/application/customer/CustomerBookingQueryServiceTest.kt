@@ -6,7 +6,7 @@ import com.demo.tourwave.application.common.port.ActorAuthContext
 import com.demo.tourwave.application.participant.ParticipantAccessPolicy
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
