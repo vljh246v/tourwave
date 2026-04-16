@@ -7,8 +7,8 @@ import com.demo.tourwave.application.organization.OrganizationMembershipService
 import com.demo.tourwave.application.organization.OrganizationQueryService
 import com.demo.tourwave.application.instructor.InstructorProfileService
 import com.demo.tourwave.application.instructor.InstructorRegistrationService
-import com.demo.tourwave.application.topology.CatalogQueryService
-import com.demo.tourwave.application.topology.OccurrenceCommandService
+import com.demo.tourwave.application.occurrence.CatalogQueryService
+import com.demo.tourwave.application.occurrence.OccurrenceCommandService
 import com.demo.tourwave.application.tour.TourCommandService
 import com.demo.tourwave.application.tour.TourQueryService
 import com.demo.tourwave.application.booking.port.BookingRepository

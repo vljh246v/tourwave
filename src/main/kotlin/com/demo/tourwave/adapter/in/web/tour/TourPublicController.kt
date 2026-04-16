@@ -2,9 +2,9 @@ package com.demo.tourwave.adapter.`in`.web.tour
 
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrenceResponse
 import com.demo.tourwave.adapter.`in`.web.occurrence.toResponse
-import com.demo.tourwave.application.topology.CatalogQueryService
-import com.demo.tourwave.application.topology.PublicTourListQuery
-import com.demo.tourwave.application.topology.TourOccurrenceListQuery
+import com.demo.tourwave.application.occurrence.CatalogQueryService
+import com.demo.tourwave.application.occurrence.PublicTourListQuery
+import com.demo.tourwave.application.occurrence.TourOccurrenceListQuery
 import com.demo.tourwave.application.tour.TourQueryService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

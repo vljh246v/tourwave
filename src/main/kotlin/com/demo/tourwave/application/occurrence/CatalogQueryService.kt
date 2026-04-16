@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.occurrence
 
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository

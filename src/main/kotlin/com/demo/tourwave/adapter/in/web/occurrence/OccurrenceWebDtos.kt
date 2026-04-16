@@ -1,11 +1,11 @@
 package com.demo.tourwave.adapter.`in`.web.occurrence
 
-import com.demo.tourwave.application.topology.AvailabilityView
-import com.demo.tourwave.application.topology.OccurrenceSearchItemView
-import com.demo.tourwave.application.topology.OccurrenceSearchResult
-import com.demo.tourwave.application.topology.PublicOccurrenceView
-import com.demo.tourwave.application.topology.PublicTourView
-import com.demo.tourwave.application.topology.QuoteView
+import com.demo.tourwave.application.occurrence.AvailabilityView
+import com.demo.tourwave.application.occurrence.OccurrenceSearchItemView
+import com.demo.tourwave.application.occurrence.OccurrenceSearchResult
+import com.demo.tourwave.application.occurrence.PublicOccurrenceView
+import com.demo.tourwave.application.occurrence.PublicTourView
+import com.demo.tourwave.application.occurrence.QuoteView
 import com.demo.tourwave.adapter.`in`.web.tour.PublicTourResponse
 import com.demo.tourwave.domain.occurrence.Occurrence
 import java.time.Instant
