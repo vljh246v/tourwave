@@ -1,0 +1,20 @@
+root = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 160
+
+# adapter.in 패키지: Kotlin 예약어 'in' 사용 (헥사고날 아키텍처 규약)
+ktlint_standard_package-name = disabled
+
+# expression body 줄바꿈: 프로젝트 기존 코드 컨벤션 유지
+ktlint_standard_function-signature = disabled
+
+[*Test.kt]
+# 테스트 파일의 JSON 페이로드 문자열 등 긴 줄 허용
+max_line_length = off

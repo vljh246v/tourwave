@@ -24,14 +24,14 @@ class PaymentConfig {
         paymentLedgerService: PaymentLedgerService,
         @Value("\${tourwave.payment.webhook-secrets:}") webhookSecretsRaw: String,
         @Value("\${tourwave.payment.webhook-secret:tourwave-webhook-secret}") webhookSecret: String,
-        clock: Clock
+        clock: Clock,
     ): PaymentWebhookService {
         return PaymentWebhookService(
             paymentProviderEventRepository = paymentProviderEventRepository,
             bookingRepository = bookingRepository,
             paymentLedgerService = paymentLedgerService,
             webhookSecrets = webhookSecrets(webhookSecretsRaw, webhookSecret),
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -43,7 +43,7 @@ class PaymentConfig {
         auditEventPort: AuditEventPort,
         @Value("\${tourwave.payment.refund.max-retry-attempts:5}") maxRetryAttempts: Int,
         @Value("\${tourwave.payment.refund.retry-cooldown-seconds:600}") retryCooldownSeconds: Long,
-        clock: Clock
+        clock: Clock,
     ): RefundOperationsService {
         return RefundOperationsService(
             paymentRecordRepository = paymentRecordRepository,
@@ -52,7 +52,7 @@ class PaymentConfig {
             auditEventPort = auditEventPort,
             maxRetryAttempts = maxRetryAttempts,
             retryCooldown = java.time.Duration.ofSeconds(retryCooldownSeconds),
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -62,18 +62,21 @@ class PaymentConfig {
         paymentRecordRepository: PaymentRecordRepository,
         paymentProviderEventRepository: PaymentProviderEventRepository,
         paymentReconciliationSummaryRepository: PaymentReconciliationSummaryRepository,
-        clock: Clock
+        clock: Clock,
     ): ReconciliationService {
         return ReconciliationService(
             bookingRepository = bookingRepository,
             paymentRecordRepository = paymentRecordRepository,
             paymentProviderEventRepository = paymentProviderEventRepository,
             paymentReconciliationSummaryRepository = paymentReconciliationSummaryRepository,
-            clock = clock
+            clock = clock,
         )
     }
 
-    private fun webhookSecrets(webhookSecretsRaw: String, webhookSecret: String): List<String> {
+    private fun webhookSecrets(
+        webhookSecretsRaw: String,
+        webhookSecret: String,
+    ): List<String> {
         return webhookSecretsRaw.split(',')
             .map { it.trim() }
             .filter { it.isNotBlank() }

@@ -19,22 +19,23 @@ import java.time.Instant
 @RestController
 class AssetController(
     private val assetCommandService: AssetCommandService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @PostMapping("/assets/uploads")
     fun issueUpload(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: IssueAssetUploadRequest
+        @RequestBody request: IssueAssetUploadRequest,
     ): ResponseEntity<AssetResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val asset = assetCommandService.issueUpload(
-            IssueAssetUploadCommand(
-                actorUserId = requiredActorUserId,
-                organizationId = request.organizationId,
-                fileName = request.fileName,
-                contentType = request.contentType
+        val asset =
+            assetCommandService.issueUpload(
+                IssueAssetUploadCommand(
+                    actorUserId = requiredActorUserId,
+                    organizationId = request.organizationId,
+                    fileName = request.fileName,
+                    contentType = request.contentType,
+                ),
             )
-        )
         return ResponseEntity.status(201).body(asset.toResponse())
     }
 
@@ -42,7 +43,7 @@ class AssetController(
     fun completeUpload(
         @PathVariable assetId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: CompleteAssetUploadRequest
+        @RequestBody request: CompleteAssetUploadRequest,
     ): ResponseEntity<AssetResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
@@ -51,9 +52,9 @@ class AssetController(
                     actorUserId = requiredActorUserId,
                     assetId = assetId,
                     sizeBytes = request.sizeBytes,
-                    checksumSha256 = request.checksumSha256
-                )
-            ).toResponse()
+                    checksumSha256 = request.checksumSha256,
+                ),
+            ).toResponse(),
         )
     }
 
@@ -61,19 +62,20 @@ class AssetController(
     fun attachOrganizationAssets(
         @PathVariable organizationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: AssetAttachmentRequest
+        @RequestBody request: AssetAttachmentRequest,
     ): ResponseEntity<AssetAttachmentResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
             AssetAttachmentResponse(
-                assetIds = assetCommandService.attachOrganizationAssets(
-                    AttachOrganizationAssetsCommand(
-                        actorUserId = requiredActorUserId,
-                        organizationId = organizationId,
-                        assetIds = request.assetIds
-                    )
-                )
-            )
+                assetIds =
+                    assetCommandService.attachOrganizationAssets(
+                        AttachOrganizationAssetsCommand(
+                            actorUserId = requiredActorUserId,
+                            organizationId = organizationId,
+                            assetIds = request.assetIds,
+                        ),
+                    ),
+            ),
         )
     }
 
@@ -81,19 +83,20 @@ class AssetController(
     fun attachTourAssets(
         @PathVariable tourId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: AssetAttachmentRequest
+        @RequestBody request: AssetAttachmentRequest,
     ): ResponseEntity<AssetAttachmentResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
             AssetAttachmentResponse(
-                assetIds = assetCommandService.attachTourAssets(
-                    AttachTourAssetsCommand(
-                        actorUserId = requiredActorUserId,
-                        tourId = tourId,
-                        assetIds = request.assetIds
-                    )
-                )
-            )
+                assetIds =
+                    assetCommandService.attachTourAssets(
+                        AttachTourAssetsCommand(
+                            actorUserId = requiredActorUserId,
+                            tourId = tourId,
+                            assetIds = request.assetIds,
+                        ),
+                    ),
+            ),
         )
     }
 }
@@ -101,20 +104,20 @@ class AssetController(
 data class IssueAssetUploadRequest(
     val organizationId: Long? = null,
     val fileName: String,
-    val contentType: String
+    val contentType: String,
 )
 
 data class CompleteAssetUploadRequest(
     val sizeBytes: Long? = null,
-    val checksumSha256: String? = null
+    val checksumSha256: String? = null,
 )
 
 data class AssetAttachmentRequest(
-    val assetIds: List<Long> = emptyList()
+    val assetIds: List<Long> = emptyList(),
 )
 
 data class AssetAttachmentResponse(
-    val assetIds: List<Long>
+    val assetIds: List<Long>,
 )
 
 data class AssetResponse(
@@ -128,7 +131,7 @@ data class AssetResponse(
     val publicUrl: String?,
     val sizeBytes: Long?,
     val createdAt: Instant,
-    val completedAt: Instant?
+    val completedAt: Instant?,
 )
 
 private fun Asset.toResponse(): AssetResponse =
@@ -143,5 +146,5 @@ private fun Asset.toResponse(): AssetResponse =
         publicUrl = publicUrl,
         sizeBytes = sizeBytes,
         createdAt = createdAt,
-        completedAt = completedAt
+        completedAt = completedAt,
     )

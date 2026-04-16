@@ -6,7 +6,7 @@ enum class UserStatus {
     ACTIVE,
     DEACTIVATED,
     SUSPENDED,
-    DELETED
+    DELETED,
 }
 
 data class User(
@@ -17,14 +17,14 @@ data class User(
     val status: UserStatus = UserStatus.ACTIVE,
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = createdAt,
-    val emailVerifiedAt: Instant? = null
+    val emailVerifiedAt: Instant? = null,
 ) {
     companion object {
         fun create(
             displayName: String,
             email: String,
             passwordHash: String,
-            now: Instant = Instant.now()
+            now: Instant = Instant.now(),
         ): User {
             return User(
                 id = null,
@@ -33,7 +33,7 @@ data class User(
                 passwordHash = passwordHash,
                 status = UserStatus.ACTIVE,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }
@@ -44,11 +44,11 @@ data class User(
 
     fun updateProfile(
         displayName: String,
-        now: Instant
+        now: Instant,
     ): User {
         return copy(
             displayName = displayName,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -58,14 +58,17 @@ data class User(
         }
         return copy(
             emailVerifiedAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun updatePassword(passwordHash: String, now: Instant): User {
+    fun updatePassword(
+        passwordHash: String,
+        now: Instant,
+    ): User {
         return copy(
             passwordHash = passwordHash,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -75,7 +78,7 @@ data class User(
         }
         return copy(
             status = UserStatus.DEACTIVATED,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 }

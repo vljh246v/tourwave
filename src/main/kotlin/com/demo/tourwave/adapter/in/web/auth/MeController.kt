@@ -17,37 +17,37 @@ import java.time.Instant
 class MeController(
     private val meService: MeService,
     private val authCommandService: com.demo.tourwave.application.auth.AuthCommandService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/me")
     fun getMe(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<MeResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
             meService.getCurrentUser(requiredActorUserId).toMeResponse(
-                meService.getCurrentUserMemberships(requiredActorUserId)
-            )
+                meService.getCurrentUserMemberships(requiredActorUserId),
+            ),
         )
     }
 
     @PatchMapping("/me")
     fun updateMe(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: MeUpdateRequest
+        @RequestBody request: MeUpdateRequest,
     ): ResponseEntity<UserResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
             meService.updateCurrentUser(
                 userId = requiredActorUserId,
-                displayName = request.displayName
-            ).toUserResponse()
+                displayName = request.displayName,
+            ).toUserResponse(),
         )
     }
 
     @PostMapping("/me/deactivate")
     fun deactivateMe(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<Void> {
         authCommandService.deactivate(authzGuardPort.requireActorUserId(actorUserId))
         return ResponseEntity.noContent().build()
@@ -55,12 +55,12 @@ class MeController(
 }
 
 data class MeUpdateRequest(
-    val displayName: String
+    val displayName: String,
 )
 
 data class MeResponse(
     val user: UserResponse,
-    val memberships: List<MembershipResponse> = emptyList()
+    val memberships: List<MembershipResponse> = emptyList(),
 )
 
 data class UserResponse(
@@ -68,13 +68,13 @@ data class UserResponse(
     val email: String,
     val displayName: String,
     val status: String,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class MembershipResponse(
     val organizationId: Long,
     val roles: List<String>,
-    val status: String
+    val status: String,
 )
 
 private fun User.toUserResponse(): UserResponse =
@@ -83,17 +83,18 @@ private fun User.toUserResponse(): UserResponse =
         email = email,
         displayName = displayName,
         status = status.name,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun User.toMeResponse(memberships: List<OrganizationMembership>): MeResponse =
     MeResponse(
         user = toUserResponse(),
-        memberships = memberships.map {
-            MembershipResponse(
-                organizationId = it.organizationId,
-                roles = listOf(it.role.name),
-                status = it.status.name
-            )
-        }
+        memberships =
+            memberships.map {
+                MembershipResponse(
+                    organizationId = it.organizationId,
+                    roles = listOf(it.role.name),
+                    status = it.status.name,
+                )
+            },
     )

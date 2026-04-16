@@ -21,8 +21,8 @@ import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.customer.NotificationChannel
-import com.demo.tourwave.domain.operations.OperatorFailureSourceType
 import com.demo.tourwave.domain.occurrence.Occurrence
+import com.demo.tourwave.domain.operations.OperatorFailureSourceType
 import com.demo.tourwave.domain.payment.PaymentProviderEvent
 import com.demo.tourwave.domain.payment.PaymentProviderEventStatus
 import com.demo.tourwave.domain.payment.PaymentProviderEventType
@@ -48,53 +48,59 @@ class OperatorRemediationQueueServiceTest {
     private val refundExecutionAdapter = InMemoryRefundExecutionAdapter()
     private val notificationChannelPort = ScriptedNotificationChannelPort()
     private val clock = Clock.fixed(Instant.parse("2026-03-19T01:00:00Z"), ZoneOffset.UTC)
-    private val paymentLedgerService = PaymentLedgerService(
-        paymentRecordRepository = paymentRecordRepository,
-        paymentProviderPort = refundExecutionAdapter,
-        refundExecutionPort = refundExecutionAdapter,
-        clock = clock
-    )
-    private val refundRetryService = RefundRetryService(
-        paymentRecordRepository = paymentRecordRepository,
-        bookingRepository = bookingRepository,
-        refundExecutionPort = refundExecutionAdapter,
-        auditEventPort = auditEventAdapter,
-        maxRetryAttempts = 5,
-        retryCooldown = Duration.ZERO,
-        clock = clock
-    )
-    private val refundOperationsService = RefundOperationsService(
-        paymentRecordRepository = paymentRecordRepository,
-        bookingRepository = bookingRepository,
-        refundRetryService = refundRetryService,
-        auditEventPort = auditEventAdapter,
-        maxRetryAttempts = 5,
-        retryCooldown = Duration.ZERO,
-        clock = clock
-    )
-    private val notificationDeliveryService = NotificationDeliveryService(
-        notificationDeliveryRepository = notificationDeliveryRepository,
-        notificationChannelPort = notificationChannelPort,
-        clock = clock
-    )
-    private val paymentWebhookService = PaymentWebhookService(
-        paymentProviderEventRepository = paymentProviderEventRepository,
-        bookingRepository = bookingRepository,
-        paymentLedgerService = paymentLedgerService,
-        webhookSecrets = listOf("current:webhook-secret"),
-        clock = clock
-    )
-    private val service = OperatorRemediationQueueService(
-        paymentRecordRepository = paymentRecordRepository,
-        refundOperationsService = refundOperationsService,
-        notificationDeliveryRepository = notificationDeliveryRepository,
-        notificationDeliveryService = notificationDeliveryService,
-        paymentProviderEventRepository = paymentProviderEventRepository,
-        paymentWebhookService = paymentWebhookService,
-        operatorFailureRecordRepository = operatorFailureRecordRepository,
-        auditEventPort = auditEventAdapter,
-        clock = clock
-    )
+    private val paymentLedgerService =
+        PaymentLedgerService(
+            paymentRecordRepository = paymentRecordRepository,
+            paymentProviderPort = refundExecutionAdapter,
+            refundExecutionPort = refundExecutionAdapter,
+            clock = clock,
+        )
+    private val refundRetryService =
+        RefundRetryService(
+            paymentRecordRepository = paymentRecordRepository,
+            bookingRepository = bookingRepository,
+            refundExecutionPort = refundExecutionAdapter,
+            auditEventPort = auditEventAdapter,
+            maxRetryAttempts = 5,
+            retryCooldown = Duration.ZERO,
+            clock = clock,
+        )
+    private val refundOperationsService =
+        RefundOperationsService(
+            paymentRecordRepository = paymentRecordRepository,
+            bookingRepository = bookingRepository,
+            refundRetryService = refundRetryService,
+            auditEventPort = auditEventAdapter,
+            maxRetryAttempts = 5,
+            retryCooldown = Duration.ZERO,
+            clock = clock,
+        )
+    private val notificationDeliveryService =
+        NotificationDeliveryService(
+            notificationDeliveryRepository = notificationDeliveryRepository,
+            notificationChannelPort = notificationChannelPort,
+            clock = clock,
+        )
+    private val paymentWebhookService =
+        PaymentWebhookService(
+            paymentProviderEventRepository = paymentProviderEventRepository,
+            bookingRepository = bookingRepository,
+            paymentLedgerService = paymentLedgerService,
+            webhookSecrets = listOf("current:webhook-secret"),
+            clock = clock,
+        )
+    private val service =
+        OperatorRemediationQueueService(
+            paymentRecordRepository = paymentRecordRepository,
+            refundOperationsService = refundOperationsService,
+            notificationDeliveryRepository = notificationDeliveryRepository,
+            notificationDeliveryService = notificationDeliveryService,
+            paymentProviderEventRepository = paymentProviderEventRepository,
+            paymentWebhookService = paymentWebhookService,
+            operatorFailureRecordRepository = operatorFailureRecordRepository,
+            auditEventPort = auditEventAdapter,
+            clock = clock,
+        )
 
     @Test
     fun `queue lists refund notification and webhook failures and hides resolved items`() {
@@ -105,8 +111,8 @@ class OperatorRemediationQueueServiceTest {
                 status = PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
                 lastErrorCode = "manual-review",
                 createdAtUtc = Instant.parse("2026-03-19T00:00:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-19T00:10:00Z")
-            )
+                updatedAtUtc = Instant.parse("2026-03-19T00:10:00Z"),
+            ),
         )
         val failedNotification =
             notificationDeliveryRepository.save(
@@ -122,8 +128,8 @@ class OperatorRemediationQueueServiceTest {
                     attemptCount = 1,
                     lastError = "smtp-bounce",
                     createdAt = Instant.parse("2026-03-19T00:05:00Z"),
-                    updatedAt = Instant.parse("2026-03-19T00:15:00Z")
-                )
+                    updatedAt = Instant.parse("2026-03-19T00:15:00Z"),
+                ),
             )
         paymentProviderEventRepository.save(
             PaymentProviderEvent(
@@ -136,14 +142,14 @@ class OperatorRemediationQueueServiceTest {
                 status = PaymentProviderEventStatus.POISONED,
                 note = "database-timeout",
                 receivedAtUtc = Instant.parse("2026-03-19T00:20:00Z"),
-                processedAtUtc = Instant.parse("2026-03-19T00:21:00Z")
-            )
+                processedAtUtc = Instant.parse("2026-03-19T00:21:00Z"),
+            ),
         )
 
         service.remediate(
             sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
             sourceKey = requireNotNull(failedNotification.id).toString(),
-            command = OperatorRemediationCommand(actorUserId = 7L, action = OperatorRemediationAction.RESOLVE, note = "acknowledged")
+            command = OperatorRemediationCommand(actorUserId = 7L, action = OperatorRemediationAction.RESOLVE, note = "acknowledged"),
         )
 
         val items = service.listOpenItems()
@@ -156,25 +162,26 @@ class OperatorRemediationQueueServiceTest {
 
     @Test
     fun `retry on notification failure redelivers and closes queue item`() {
-        val delivery = notificationDeliveryService.deliver(
-            DeliverNotificationCommand(
-                channel = NotificationChannel.EMAIL,
-                templateCode = "booking-created",
-                recipient = "user@example.com",
-                subject = "Booked",
-                body = "Booked",
-                resourceType = "BOOKING",
-                resourceId = 900L,
-                idempotencyKey = "notify-900"
+        val delivery =
+            notificationDeliveryService.deliver(
+                DeliverNotificationCommand(
+                    channel = NotificationChannel.EMAIL,
+                    templateCode = "booking-created",
+                    recipient = "user@example.com",
+                    subject = "Booked",
+                    body = "Booked",
+                    resourceType = "BOOKING",
+                    resourceId = 900L,
+                    idempotencyKey = "notify-900",
+                ),
             )
-        )
         assertEquals(com.demo.tourwave.domain.customer.NotificationDeliveryStatus.FAILED_RETRYABLE, delivery.status)
 
         notificationChannelPort.failuresBeforeSuccess.set(0)
         service.remediate(
             sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
             sourceKey = requireNotNull(delivery.id).toString(),
-            command = OperatorRemediationCommand(actorUserId = 11L, action = OperatorRemediationAction.RETRY, note = "replay email")
+            command = OperatorRemediationCommand(actorUserId = 11L, action = OperatorRemediationAction.RETRY, note = "replay email"),
         )
 
         val saved = notificationDeliveryRepository.findById(requireNotNull(delivery.id))
@@ -189,7 +196,7 @@ class OperatorRemediationQueueServiceTest {
         paymentLedgerService.initialize(
             booking = booking,
             occurrence = Occurrence(id = 777L, organizationId = 1L, capacity = 10, unitPrice = 10000, currency = "KRW"),
-            actorUserId = 1L
+            actorUserId = 1L,
         )
         paymentProviderEventRepository.save(
             PaymentProviderEvent(
@@ -202,14 +209,14 @@ class OperatorRemediationQueueServiceTest {
                 status = PaymentProviderEventStatus.POISONED,
                 note = "transient-write-failure",
                 receivedAtUtc = Instant.parse("2026-03-19T00:40:00Z"),
-                processedAtUtc = Instant.parse("2026-03-19T00:41:00Z")
-            )
+                processedAtUtc = Instant.parse("2026-03-19T00:41:00Z"),
+            ),
         )
 
         service.remediate(
             sourceType = OperatorFailureSourceType.PAYMENT_WEBHOOK,
             sourceKey = "evt-poison-retry",
-            command = OperatorRemediationCommand(actorUserId = 15L, action = OperatorRemediationAction.RETRY, note = "reprocess")
+            command = OperatorRemediationCommand(actorUserId = 15L, action = OperatorRemediationAction.RETRY, note = "reprocess"),
         )
 
         assertEquals(PaymentProviderEventStatus.PROCESSED, paymentProviderEventRepository.findByProviderEventId("evt-poison-retry")?.status)
@@ -225,8 +232,8 @@ class OperatorRemediationQueueServiceTest {
                 partySize = 1,
                 status = BookingStatus.CANCELED,
                 paymentStatus = PaymentStatus.AUTHORIZED,
-                createdAt = Instant.parse("2026-03-18T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-18T00:00:00Z"),
+            ),
         )
 
     private class ScriptedNotificationChannelPort : NotificationChannelPort {

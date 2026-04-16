@@ -11,17 +11,17 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(
     prefix = "tourwave.jobs.idempotency-purge",
     name = ["enabled"],
-    havingValue = "true"
+    havingValue = "true",
 )
 class IdempotencyPurgeJob(
     private val idempotencyPurgeService: IdempotencyPurgeService,
-    private val scheduledJobCoordinator: ScheduledJobCoordinator
+    private val scheduledJobCoordinator: ScheduledJobCoordinator,
 ) {
     @Scheduled(fixedDelayString = "\${tourwave.jobs.idempotency-purge.fixed-delay-ms:300000}")
     fun run(): IdempotencyPurgeJobResult =
         scheduledJobCoordinator.run(
             jobName = "idempotency-purge",
-            onSkipped = { IdempotencyPurgeJobResult(purgedCount = 0) }
+            onSkipped = { IdempotencyPurgeJobResult(purgedCount = 0) },
         ) {
             idempotencyPurgeService.purgeExpired()
         }

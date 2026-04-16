@@ -6,7 +6,7 @@ import com.demo.tourwave.domain.user.User
 data class AuthResult(
     val accessToken: String,
     val refreshToken: String,
-    val user: User
+    val user: User,
 )
 
 data class AccessTokenClaims(
@@ -14,5 +14,5 @@ data class AccessTokenClaims(
     val roles: Set<ActorRole>,
     val orgId: Long?,
     val issuedAtEpochSeconds: Long,
-    val expiresAtEpochSeconds: Long
+    val expiresAtEpochSeconds: Long,
 )

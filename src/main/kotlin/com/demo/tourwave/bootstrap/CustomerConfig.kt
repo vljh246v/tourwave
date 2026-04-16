@@ -11,15 +11,15 @@ import com.demo.tourwave.application.customer.FavoriteService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
+import com.demo.tourwave.application.customer.port.FavoriteRepository
 import com.demo.tourwave.application.customer.port.NotificationChannelPort
 import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
-import com.demo.tourwave.application.customer.port.FavoriteRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.inquiry.port.InquiryRepository
-import com.demo.tourwave.application.participant.ParticipantAccessPolicy
-import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.port.OrganizationRepository
+import com.demo.tourwave.application.participant.ParticipantAccessPolicy
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import org.springframework.context.annotation.Bean
@@ -36,7 +36,7 @@ class CustomerConfig {
         tourRepository: TourRepository,
         organizationAccessGuard: OrganizationAccessGuard,
         userRepository: UserRepository,
-        clock: Clock
+        clock: Clock,
     ): AssetCommandService {
         return AssetCommandService(
             assetRepository = assetRepository,
@@ -45,7 +45,7 @@ class CustomerConfig {
             tourRepository = tourRepository,
             organizationAccessGuard = organizationAccessGuard,
             userRepository = userRepository,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -56,7 +56,7 @@ class CustomerConfig {
         bookingParticipantRepository: BookingParticipantRepository,
         participantAccessPolicy: ParticipantAccessPolicy,
         tourRepository: TourRepository,
-        organizationRepository: OrganizationRepository
+        organizationRepository: OrganizationRepository,
     ): CustomerBookingQueryService {
         return CustomerBookingQueryService(
             bookingRepository = bookingRepository,
@@ -64,7 +64,7 @@ class CustomerConfig {
             bookingParticipantRepository = bookingParticipantRepository,
             participantAccessPolicy = participantAccessPolicy,
             tourRepository = tourRepository,
-            organizationRepository = organizationRepository
+            organizationRepository = organizationRepository,
         )
     }
 
@@ -73,13 +73,13 @@ class CustomerConfig {
         favoriteRepository: FavoriteRepository,
         tourRepository: TourRepository,
         userRepository: UserRepository,
-        clock: Clock
+        clock: Clock,
     ): FavoriteService {
         return FavoriteService(
             favoriteRepository = favoriteRepository,
             tourRepository = tourRepository,
             userRepository = userRepository,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -92,7 +92,7 @@ class CustomerConfig {
         paymentRecordRepository: PaymentRecordRepository,
         userRepository: UserRepository,
         notificationTemplateFactory: NotificationTemplateFactory,
-        clock: Clock
+        clock: Clock,
     ): NotificationService {
         return NotificationService(
             notificationRepository = notificationRepository,
@@ -102,7 +102,7 @@ class CustomerConfig {
             paymentRecordRepository = paymentRecordRepository,
             userRepository = userRepository,
             notificationTemplateFactory = notificationTemplateFactory,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -115,12 +115,12 @@ class CustomerConfig {
     fun notificationDeliveryService(
         notificationDeliveryRepository: NotificationDeliveryRepository,
         notificationChannelPort: NotificationChannelPort,
-        clock: Clock
+        clock: Clock,
     ): NotificationDeliveryService {
         return NotificationDeliveryService(
             notificationDeliveryRepository = notificationDeliveryRepository,
             notificationChannelPort = notificationChannelPort,
-            clock = clock
+            clock = clock,
         )
     }
 }

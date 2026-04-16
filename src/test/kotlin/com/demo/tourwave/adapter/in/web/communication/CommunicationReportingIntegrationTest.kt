@@ -1,16 +1,14 @@
 package com.demo.tourwave.adapter.`in`.web.communication
 
+import com.demo.tourwave.application.announcement.port.AnnouncementRepository
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
-import com.demo.tourwave.application.announcement.port.AnnouncementRepository
-import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
-import com.demo.tourwave.domain.announcement.Announcement
-import com.demo.tourwave.domain.announcement.AnnouncementVisibility
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -90,70 +88,79 @@ class CommunicationReportingIntegrationTest {
 
     @Test
     fun `announcement and report endpoints enforce authz and expose csv export`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
-        val member = userRepository.save(User.create(displayName = "Member", email = "member@test.com", passwordHash = "hash", now = Instant.now()))
-        val organization = organizationRepository.save(
-            Organization.create(
-                slug = "comm-report",
-                name = "Comm Report",
-                description = null,
-                publicDescription = null,
-                contactEmail = null,
-                contactPhone = null,
-                websiteUrl = null,
-                businessName = null,
-                businessRegistrationNumber = null,
-                timezone = "Asia/Seoul",
-                now = Instant.parse("2026-03-18T00:00:00Z")
+        val owner =
+            userRepository.save(
+                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()),
             )
-        )
+        val member =
+            userRepository.save(
+                User.create(displayName = "Member", email = "member@test.com", passwordHash = "hash", now = Instant.now()),
+            )
+        val organization =
+            organizationRepository.save(
+                Organization.create(
+                    slug = "comm-report",
+                    name = "Comm Report",
+                    description = null,
+                    publicDescription = null,
+                    contactEmail = null,
+                    contactPhone = null,
+                    websiteUrl = null,
+                    businessName = null,
+                    businessRegistrationNumber = null,
+                    timezone = "Asia/Seoul",
+                    now = Instant.parse("2026-03-18T00:00:00Z"),
+                ),
+            )
         organizationMembershipRepository.save(
             OrganizationMembership.active(
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(owner.id),
                 role = OrganizationRole.OWNER,
-                now = Instant.parse("2026-03-18T00:00:00Z")
-            )
+                now = Instant.parse("2026-03-18T00:00:00Z"),
+            ),
         )
         organizationMembershipRepository.save(
             OrganizationMembership.active(
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(member.id),
                 role = OrganizationRole.MEMBER,
-                now = Instant.parse("2026-03-18T00:00:00Z")
-            )
+                now = Instant.parse("2026-03-18T00:00:00Z"),
+            ),
         )
 
-        val createResponse = mockMvc.perform(
-            post("/organizations/${organization.id}/announcements")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """{
+        val createResponse =
+            mockMvc.perform(
+                post("/organizations/${organization.id}/announcements")
+                    .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """{
                       "title":"Operational notice",
                       "body":"Bring water.",
                       "visibility":"PUBLIC",
                       "publishStartsAtUtc":"2026-03-18T00:00:00Z",
                       "publishEndsAtUtc":"2026-03-21T00:00:00Z"
-                    }"""
-                )
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.visibility").value("PUBLIC"))
-            .andReturn()
+                    }""",
+                    ),
+            )
+                .andExpect(status().isCreated)
+                .andExpect(jsonPath("$.visibility").value("PUBLIC"))
+                .andReturn()
 
-        val announcementId = Regex("\"id\":(\\d+)").find(createResponse.response.contentAsString)?.groupValues?.get(1)?.toLong()
-            ?: error("announcement id missing")
+        val announcementId =
+            Regex("\"id\":(\\d+)").find(createResponse.response.contentAsString)?.groupValues?.get(1)?.toLong()
+                ?: error("announcement id missing")
 
         mockMvc.perform(
-            get("/public/announcements")
+            get("/public/announcements"),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items[0].title").value("Operational notice"))
 
         mockMvc.perform(
             get("/operator/organizations/${organization.id}/announcements")
-                .header("X-Actor-User-Id", requireNotNull(member.id))
+                .header("X-Actor-User-Id", requireNotNull(member.id)),
         )
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))
@@ -162,7 +169,7 @@ class CommunicationReportingIntegrationTest {
             patch("/announcements/$announcementId")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"title":"Updated notice","visibility":"INTERNAL"}""")
+                .content("""{"title":"Updated notice","visibility":"INTERNAL"}"""),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.title").value("Updated notice"))
@@ -171,14 +178,15 @@ class CommunicationReportingIntegrationTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items").isEmpty)
 
-        val tour = tourRepository.save(
-            Tour.create(
-                organizationId = requireNotNull(organization.id),
-                title = "Evening Walk",
-                summary = "Summary",
-                now = Instant.parse("2026-03-18T00:00:00Z")
+        val tour =
+            tourRepository.save(
+                Tour.create(
+                    organizationId = requireNotNull(organization.id),
+                    title = "Evening Walk",
+                    summary = "Summary",
+                    now = Instant.parse("2026-03-18T00:00:00Z"),
+                ),
             )
-        )
         occurrenceRepository.save(
             Occurrence(
                 id = 3001L,
@@ -188,26 +196,27 @@ class CommunicationReportingIntegrationTest {
                 startsAtUtc = Instant.parse("2026-03-20T09:00:00Z"),
                 status = com.demo.tourwave.domain.occurrence.OccurrenceStatus.SCHEDULED,
                 createdAt = Instant.parse("2026-03-18T00:00:00Z"),
-                updatedAt = Instant.parse("2026-03-18T00:00:00Z")
-            )
+                updatedAt = Instant.parse("2026-03-18T00:00:00Z"),
+            ),
         )
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 3001L,
-                organizationId = requireNotNull(organization.id),
-                leaderUserId = requireNotNull(owner.id),
-                partySize = 2,
-                status = BookingStatus.CONFIRMED,
-                paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-18T10:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 3001L,
+                    organizationId = requireNotNull(organization.id),
+                    leaderUserId = requireNotNull(owner.id),
+                    partySize = 2,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                    createdAt = Instant.parse("2026-03-18T10:00:00Z"),
+                ),
             )
-        )
         bookingParticipantRepository.save(
             BookingParticipant.leader(
                 bookingId = requireNotNull(booking.id),
                 userId = requireNotNull(owner.id),
-                createdAt = Instant.parse("2026-03-18T10:00:00Z")
-            ).recordAttendance(AttendanceStatus.ATTENDED)
+                createdAt = Instant.parse("2026-03-18T10:00:00Z"),
+            ).recordAttendance(AttendanceStatus.ATTENDED),
         )
         bookingParticipantRepository.save(
             BookingParticipant(
@@ -215,22 +224,22 @@ class CommunicationReportingIntegrationTest {
                 userId = requireNotNull(member.id),
                 status = BookingParticipantStatus.ACCEPTED,
                 attendanceStatus = AttendanceStatus.NO_SHOW,
-                createdAt = Instant.parse("2026-03-18T10:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-18T10:00:00Z"),
+            ),
         )
         paymentRecordRepository.save(
             PaymentRecord(
                 bookingId = requireNotNull(booking.id),
                 status = PaymentRecordStatus.REFUND_PENDING,
                 createdAtUtc = Instant.parse("2026-03-18T10:00:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-18T10:05:00Z")
-            )
+                updatedAtUtc = Instant.parse("2026-03-18T10:05:00Z"),
+            ),
         )
 
         mockMvc.perform(
             get("/organizations/${organization.id}/reports/bookings")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .param("tourId", requireNotNull(tour.id).toString())
+                .param("tourId", requireNotNull(tour.id).toString()),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items[0].bookingId").value(booking.id!!.toInt()))
@@ -238,7 +247,7 @@ class CommunicationReportingIntegrationTest {
         mockMvc.perform(
             get("/organizations/${organization.id}/reports/occurrences")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
-                .param("tourId", requireNotNull(tour.id).toString())
+                .param("tourId", requireNotNull(tour.id).toString()),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items[0].seatUtilizationPercent").value(25))
@@ -246,7 +255,7 @@ class CommunicationReportingIntegrationTest {
 
         mockMvc.perform(
             get("/organizations/${organization.id}/reports/occurrences/export")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         )
             .andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"organization-${organization.id}-occurrences.csv\""))
@@ -255,7 +264,7 @@ class CommunicationReportingIntegrationTest {
 
         mockMvc.perform(
             delete("/announcements/$announcementId")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         )
             .andExpect(status().isNoContent)
     }

@@ -10,7 +10,7 @@ fun requireValidOrganizationSlug(slug: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "organization slug is invalid"
+            message = "organization slug is invalid",
         )
     }
     return normalized
@@ -22,19 +22,23 @@ fun requireValidOrganizationName(name: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "organization name must be between 2 and 120 characters"
+            message = "organization name must be between 2 and 120 characters",
         )
     }
     return normalized
 }
 
-fun normalizeOptionalText(value: String?, maxLength: Int, fieldName: String): String? {
+fun normalizeOptionalText(
+    value: String?,
+    maxLength: Int,
+    fieldName: String,
+): String? {
     val normalized = value?.trim()?.ifEmpty { null } ?: return null
     if (normalized.length > maxLength) {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "$fieldName is too long"
+            message = "$fieldName is too long",
         )
     }
     return normalized
@@ -48,7 +52,7 @@ fun normalizeOptionalPhone(value: String?): String? {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "contact phone is invalid"
+            message = "contact phone is invalid",
         )
     }
     return normalized
@@ -60,14 +64,14 @@ fun normalizeOptionalUrl(value: String?): String? {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "website url must start with http:// or https://"
+            message = "website url must start with http:// or https://",
         )
     }
     if (normalized.length > 512) {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "website url is too long"
+            message = "website url is too long",
         )
     }
     return normalized
@@ -82,7 +86,7 @@ fun requireValidTimezone(timezone: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "timezone is invalid"
+            message = "timezone is invalid",
         )
     }
 }

@@ -9,7 +9,7 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaAuthRefreshTokenRepositoryAdapter(
-    private val authRefreshTokenJpaRepository: AuthRefreshTokenJpaRepository
+    private val authRefreshTokenJpaRepository: AuthRefreshTokenJpaRepository,
 ) : AuthRefreshTokenRepository {
     override fun save(token: AuthRefreshToken): AuthRefreshToken {
         return authRefreshTokenJpaRepository.save(token.toEntity()).toDomain()
@@ -19,7 +19,10 @@ class JpaAuthRefreshTokenRepositoryAdapter(
         return authRefreshTokenJpaRepository.findByTokenHash(tokenHash)?.toDomain()
     }
 
-    override fun revokeAllByUserId(userId: Long, revokedAtUtc: Instant) {
+    override fun revokeAllByUserId(
+        userId: Long,
+        revokedAtUtc: Instant,
+    ) {
         authRefreshTokenJpaRepository.findByUserId(userId)
             .forEach { entity ->
                 if (entity.revokedAtUtc == null) {
@@ -40,7 +43,7 @@ private fun AuthRefreshToken.toEntity(): AuthRefreshTokenJpaEntity =
         tokenHash = tokenHash,
         expiresAtUtc = expiresAtUtc,
         issuedAtUtc = issuedAtUtc,
-        revokedAtUtc = revokedAtUtc
+        revokedAtUtc = revokedAtUtc,
     )
 
 private fun AuthRefreshTokenJpaEntity.toDomain(): AuthRefreshToken =
@@ -50,5 +53,5 @@ private fun AuthRefreshTokenJpaEntity.toDomain(): AuthRefreshToken =
         tokenHash = tokenHash,
         expiresAtUtc = expiresAtUtc,
         issuedAtUtc = issuedAtUtc,
-        revokedAtUtc = revokedAtUtc
+        revokedAtUtc = revokedAtUtc,
     )

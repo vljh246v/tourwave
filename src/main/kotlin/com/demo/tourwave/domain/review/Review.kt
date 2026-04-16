@@ -9,10 +9,9 @@ data class Review(
     val type: ReviewType,
     val rating: Int,
     val comment: String? = null,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 ) {
     init {
         require(rating in 1..5) { "rating must be between 1 and 5" }
     }
 }
-

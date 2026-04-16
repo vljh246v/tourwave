@@ -9,13 +9,15 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaOperatorFailureRecordRepositoryAdapter(
-    private val operatorFailureRecordJpaRepository: OperatorFailureRecordJpaRepository
+    private val operatorFailureRecordJpaRepository: OperatorFailureRecordJpaRepository,
 ) : OperatorFailureRecordRepository {
     override fun save(record: OperatorFailureRecord): OperatorFailureRecord =
         operatorFailureRecordJpaRepository.save(record.toEntity()).toDomain()
 
-    override fun findBySource(sourceType: OperatorFailureSourceType, sourceKey: String): OperatorFailureRecord? =
-        operatorFailureRecordJpaRepository.findBySourceTypeAndSourceKey(sourceType, sourceKey)?.toDomain()
+    override fun findBySource(
+        sourceType: OperatorFailureSourceType,
+        sourceKey: String,
+    ): OperatorFailureRecord? = operatorFailureRecordJpaRepository.findBySourceTypeAndSourceKey(sourceType, sourceKey)?.toDomain()
 
     override fun findAll(): List<OperatorFailureRecord> =
         operatorFailureRecordJpaRepository.findAllByOrderByUpdatedAtUtcDesc().map { it.toDomain() }
@@ -37,7 +39,7 @@ private fun OperatorFailureRecord.toEntity(): OperatorFailureRecordJpaEntity =
         lastActionAtUtc = lastActionAtUtc,
         retryCount = retryCount,
         createdAtUtc = createdAtUtc,
-        updatedAtUtc = updatedAtUtc
+        updatedAtUtc = updatedAtUtc,
     )
 
 private fun OperatorFailureRecordJpaEntity.toDomain(): OperatorFailureRecord =
@@ -52,5 +54,5 @@ private fun OperatorFailureRecordJpaEntity.toDomain(): OperatorFailureRecord =
         lastActionAtUtc = lastActionAtUtc,
         retryCount = retryCount,
         createdAtUtc = createdAtUtc,
-        updatedAtUtc = updatedAtUtc
+        updatedAtUtc = updatedAtUtc,
     )

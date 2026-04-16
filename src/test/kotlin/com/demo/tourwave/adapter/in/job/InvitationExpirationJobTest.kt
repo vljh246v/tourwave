@@ -1,8 +1,8 @@
 package com.demo.tourwave.adapter.`in`.job
 
+import com.demo.tourwave.application.common.ScheduledJobCoordinator
 import com.demo.tourwave.application.participant.InvitationExpirationJobResult
 import com.demo.tourwave.application.participant.InvitedParticipantExpirationService
-import com.demo.tourwave.application.common.ScheduledJobCoordinator
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -21,7 +21,7 @@ class InvitationExpirationJobTest {
         whenever(scheduledJobCoordinator.run(eq("invitation-expiration"), any(), any<() -> InvitationExpirationJobResult>()))
             .thenAnswer { invocation -> invocation.getArgument<() -> InvitationExpirationJobResult>(2).invoke() }
         whenever(invitationExpirationService.expireInvitations()).thenReturn(
-            InvitationExpirationJobResult(expiredParticipantIds = listOf(3L))
+            InvitationExpirationJobResult(expiredParticipantIds = listOf(3L)),
         )
 
         val result = job.run()

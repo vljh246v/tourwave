@@ -1,13 +1,13 @@
 package com.demo.tourwave.bootstrap
 
+import com.demo.tourwave.application.announcement.AnnouncementService
+import com.demo.tourwave.application.announcement.port.AnnouncementRepository
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
-import com.demo.tourwave.application.announcement.AnnouncementService
-import com.demo.tourwave.application.announcement.port.AnnouncementRepository
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.reporting.OrganizationReportService
-import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.tour.port.TourRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -19,12 +19,12 @@ class CommunicationReportingConfig {
     fun announcementService(
         announcementRepository: AnnouncementRepository,
         organizationAccessGuard: OrganizationAccessGuard,
-        clock: Clock
+        clock: Clock,
     ): AnnouncementService {
         return AnnouncementService(
             announcementRepository = announcementRepository,
             organizationAccessGuard = organizationAccessGuard,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -35,7 +35,7 @@ class CommunicationReportingConfig {
         bookingParticipantRepository: BookingParticipantRepository,
         paymentRecordRepository: PaymentRecordRepository,
         tourRepository: TourRepository,
-        organizationAccessGuard: OrganizationAccessGuard
+        organizationAccessGuard: OrganizationAccessGuard,
     ): OrganizationReportService {
         return OrganizationReportService(
             bookingRepository = bookingRepository,
@@ -43,7 +43,7 @@ class CommunicationReportingConfig {
             bookingParticipantRepository = bookingParticipantRepository,
             paymentRecordRepository = paymentRecordRepository,
             tourRepository = tourRepository,
-            organizationAccessGuard = organizationAccessGuard
+            organizationAccessGuard = organizationAccessGuard,
         )
     }
 }

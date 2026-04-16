@@ -26,7 +26,10 @@ class InMemoryNotificationRepositoryAdapter : NotificationRepository {
     override fun findByUserId(userId: Long): List<Notification> =
         notifications.values.filter { it.userId == userId }.sortedByDescending { it.createdAt }
 
-    override fun markAllRead(userId: Long, notificationIds: List<Long>) {
+    override fun markAllRead(
+        userId: Long,
+        notificationIds: List<Long>,
+    ) {
         val now = Instant.now()
         notificationIds.forEach { id ->
             val notification = notifications[id] ?: return@forEach

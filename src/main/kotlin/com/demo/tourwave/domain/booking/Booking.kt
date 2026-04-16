@@ -13,7 +13,7 @@ data class Booking(
     val offerExpiresAtUtc: Instant? = null,
     val waitlistSkipCount: Int = 0,
     val lastWaitlistActionAtUtc: Instant? = null,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 ) {
     init {
         require(partySize >= 1) { "partySize must be >= 1" }
@@ -25,7 +25,7 @@ data class Booking(
             organizationId: Long,
             leaderUserId: Long,
             partySize: Int,
-            availableSeats: Int
+            availableSeats: Int,
         ): Booking {
             require(availableSeats >= 0) { "availableSeats must be >= 0" }
             val initialStatus = if (availableSeats >= partySize) BookingStatus.REQUESTED else BookingStatus.WAITLISTED
@@ -35,7 +35,7 @@ data class Booking(
                 leaderUserId = leaderUserId,
                 partySize = partySize,
                 status = initialStatus,
-                paymentStatus = PaymentStatus.AUTHORIZED
+                paymentStatus = PaymentStatus.AUTHORIZED,
             )
         }
     }
@@ -45,7 +45,7 @@ data class Booking(
         return copy(
             status = BookingStatus.OFFERED,
             offerExpiresAtUtc = expiresAtUtc,
-            lastWaitlistActionAtUtc = expiresAtUtc
+            lastWaitlistActionAtUtc = expiresAtUtc,
         )
     }
 
@@ -98,7 +98,7 @@ data class Booking(
         require(status == BookingStatus.WAITLISTED) { "Only WAITLISTED booking can be skipped" }
         return copy(
             waitlistSkipCount = waitlistSkipCount + 1,
-            lastWaitlistActionAtUtc = now
+            lastWaitlistActionAtUtc = now,
         )
     }
 }

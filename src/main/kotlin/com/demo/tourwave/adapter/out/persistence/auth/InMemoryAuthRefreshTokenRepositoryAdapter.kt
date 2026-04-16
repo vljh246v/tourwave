@@ -27,7 +27,10 @@ class InMemoryAuthRefreshTokenRepositoryAdapter : AuthRefreshTokenRepository {
         return tokenIdByHash[tokenHash]?.let(tokensById::get)
     }
 
-    override fun revokeAllByUserId(userId: Long, revokedAtUtc: Instant) {
+    override fun revokeAllByUserId(
+        userId: Long,
+        revokedAtUtc: Instant,
+    ) {
         tokensById.entries.forEach { (id, token) ->
             if (token.userId == userId && token.revokedAtUtc == null) {
                 tokensById[id] = token.copy(revokedAtUtc = revokedAtUtc)

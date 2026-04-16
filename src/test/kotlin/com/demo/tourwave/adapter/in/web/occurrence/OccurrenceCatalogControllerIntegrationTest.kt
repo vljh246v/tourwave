@@ -2,9 +2,9 @@ package com.demo.tourwave.adapter.`in`.web.occurrence
 
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
-import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
+import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.booking.Booking
@@ -68,13 +68,16 @@ class OccurrenceCatalogControllerIntegrationTest {
 
     @Test
     fun `occurrence operator and catalog APIs support authoring and public discovery`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
+        val owner =
+            userRepository.save(
+                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()),
+            )
 
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"slug":"catalog-team","name":"Catalog Team","timezone":"Asia/Seoul"}""")
+                .content("""{"slug":"catalog-team","name":"Catalog Team","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
         val organizationId = requireNotNull(organizationRepository.findBySlug("catalog-team")?.id)
 
@@ -82,7 +85,7 @@ class OccurrenceCatalogControllerIntegrationTest {
             post("/organizations/$organizationId/tours")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"title":"Seoul Night Walk","summary":"Downtown route"}""")
+                .content("""{"title":"Seoul Night Walk","summary":"Downtown route"}"""),
         ).andExpect(status().isCreated)
         val tourId = requireNotNull(tourRepository.findByOrganizationId(organizationId).single().id)
 
@@ -100,8 +103,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                       "currency":"KRW",
                       "locationText":"Seoul Station",
                       "meetingPoint":"Platform 1"
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.unitPrice").value(50000))
@@ -120,8 +123,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                       "timezone":"Asia/Seoul",
                       "locationText":"Myeongdong",
                       "meetingPoint":"Gate B"
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.capacity").value(15))
@@ -137,8 +140,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                       "timezone":"Asia/Seoul",
                       "locationText":"Euljiro",
                       "meetingPoint":"Gate C"
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.locationText").value("Euljiro"))
@@ -155,13 +158,13 @@ class OccurrenceCatalogControllerIntegrationTest {
                       "exclusions":["transport"],
                       "preparations":["walking shoes"],
                       "policies":["48h refund"]
-                    }"""
-                )
+                    }""",
+                ),
         ).andExpect(status().isOk)
 
         mockMvc.perform(
             post("/tours/$tourId/publish")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         ).andExpect(status().isOk)
 
         bookingRepository.save(
@@ -172,8 +175,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                 partySize = 4,
                 status = BookingStatus.CONFIRMED,
                 paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-20T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-20T00:00:00Z"),
+            ),
         )
         reviewRepository.save(
             Review(
@@ -182,8 +185,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                 type = ReviewType.TOUR,
                 rating = 5,
                 comment = "great",
-                createdAt = Instant.parse("2026-04-12T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-04-12T00:00:00Z"),
+            ),
         )
 
         mockMvc.perform(get("/tours"))

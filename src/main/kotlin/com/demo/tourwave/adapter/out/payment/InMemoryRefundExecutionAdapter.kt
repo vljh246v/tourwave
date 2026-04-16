@@ -23,7 +23,7 @@ class InMemoryRefundExecutionAdapter : RefundExecutionPort, PaymentProviderPort 
         return PaymentAuthorizationResult(
             providerName = "stub-pay",
             providerPaymentKey = "pay-${request.bookingId}",
-            authorizationId = "auth-${request.bookingId}"
+            authorizationId = "auth-${request.bookingId}",
         )
     }
 
@@ -31,14 +31,14 @@ class InMemoryRefundExecutionAdapter : RefundExecutionPort, PaymentProviderPort 
         return PaymentCaptureResult(
             providerName = "stub-pay",
             providerReference = "capture-${request.bookingId}",
-            captureId = "cap-${request.bookingId}"
+            captureId = "cap-${request.bookingId}",
         )
     }
 
     override fun cancelAuthorization(request: PaymentAuthorizationCancelRequest): PaymentAuthorizationCancelResult {
         return PaymentAuthorizationCancelResult(
             providerName = "stub-pay",
-            providerReference = "cancel-${request.bookingId}"
+            providerReference = "cancel-${request.bookingId}",
         )
     }
 
@@ -47,11 +47,17 @@ class InMemoryRefundExecutionAdapter : RefundExecutionPort, PaymentProviderPort 
             ?: RefundExecutionResult.Success(externalReference = "refund-${request.bookingId}")
     }
 
-    fun scriptRetryableFailure(bookingId: Long, errorCode: String) {
+    fun scriptRetryableFailure(
+        bookingId: Long,
+        errorCode: String,
+    ) {
         scriptedResults[bookingId] = RefundExecutionResult.RetryableFailure(errorCode)
     }
 
-    fun scriptReviewRequired(bookingId: Long, errorCode: String) {
+    fun scriptReviewRequired(
+        bookingId: Long,
+        errorCode: String,
+    ) {
         scriptedResults[bookingId] = RefundExecutionResult.ReviewRequired(errorCode)
     }
 

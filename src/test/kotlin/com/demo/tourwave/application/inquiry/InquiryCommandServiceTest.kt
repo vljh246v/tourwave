@@ -150,8 +150,8 @@ class InquiryCommandServiceTest {
                 idempotencyKey = "inq-create-structured",
                 bookingId = 72L,
                 subject = "환불 문의",
-                message = "첫 질문"
-            )
+                message = "첫 질문",
+            ),
         )
 
         val auditCaptor = argumentCaptor<com.demo.tourwave.application.common.port.AuditEventCommand>()

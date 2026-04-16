@@ -19,8 +19,8 @@ import java.time.Instant
     name = "operator_failure_records",
     indexes = [
         Index(name = "uk_operator_failure_records_source", columnList = "source_type,source_key", unique = true),
-        Index(name = "idx_operator_failure_records_updated_at_utc", columnList = "updated_at_utc")
-    ]
+        Index(name = "idx_operator_failure_records_updated_at_utc", columnList = "updated_at_utc"),
+    ],
 )
 data class OperatorFailureRecordJpaEntity(
     @Id
@@ -48,5 +48,5 @@ data class OperatorFailureRecordJpaEntity(
     @Column(name = "created_at_utc", nullable = false)
     val createdAtUtc: Instant,
     @Column(name = "updated_at_utc", nullable = false)
-    val updatedAtUtc: Instant
+    val updatedAtUtc: Instant,
 )

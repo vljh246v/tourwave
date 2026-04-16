@@ -21,11 +21,11 @@ class CustomerController(
     private val customerBookingQueryService: CustomerBookingQueryService,
     private val favoriteService: FavoriteService,
     private val notificationService: NotificationService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/me/bookings")
     fun listMyBookings(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<List<MyBookingResponse>> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(customerBookingQueryService.listMyBookings(requiredActorUserId).map { it.toResponse() })
@@ -36,20 +36,21 @@ class CustomerController(
         @PathVariable bookingId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
-        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?
+        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
     ): ResponseEntity<String> {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
-        )
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
+            )
         val calendar = customerBookingQueryService.bookingCalendar(bookingId, actor)
         return calendarResponse(calendar.fileName, calendar.body)
     }
 
     @GetMapping("/occurrences/{occurrenceId}/calendar.ics")
     fun occurrenceCalendar(
-        @PathVariable occurrenceId: Long
+        @PathVariable occurrenceId: Long,
     ): ResponseEntity<String> {
         val calendar = customerBookingQueryService.occurrenceCalendar(occurrenceId)
         return calendarResponse(calendar.fileName, calendar.body)
@@ -58,19 +59,19 @@ class CustomerController(
     @PostMapping("/tours/{tourId}/favorite")
     fun favoriteTour(
         @PathVariable tourId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<FavoriteResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         favoriteService.favorite(requiredActorUserId, tourId)
         return ResponseEntity.status(201).body(
-            favoriteService.list(requiredActorUserId).first { it.tourId == tourId }.toResponse()
+            favoriteService.list(requiredActorUserId).first { it.tourId == tourId }.toResponse(),
         )
     }
 
     @DeleteMapping("/tours/{tourId}/favorite")
     fun unfavoriteTour(
         @PathVariable tourId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         favoriteService.unfavorite(requiredActorUserId, tourId)
@@ -79,7 +80,7 @@ class CustomerController(
 
     @GetMapping("/me/favorites")
     fun listFavorites(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<List<FavoriteResponse>> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(favoriteService.list(requiredActorUserId).map { it.toResponse() })
@@ -87,7 +88,7 @@ class CustomerController(
 
     @GetMapping("/me/notifications")
     fun listNotifications(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<List<NotificationResponse>> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(notificationService.list(requiredActorUserId).map { it.toResponse() })
@@ -96,7 +97,7 @@ class CustomerController(
     @PostMapping("/me/notifications/{notificationId}/read")
     fun markNotificationRead(
         @PathVariable notificationId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<NotificationResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(notificationService.markRead(requiredActorUserId, notificationId).toResponse())
@@ -104,13 +105,16 @@ class CustomerController(
 
     @PostMapping("/me/notifications/read-all")
     fun markAllNotificationsRead(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<List<NotificationResponse>> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(notificationService.markAllRead(requiredActorUserId).map { it.toResponse() })
     }
 
-    private fun calendarResponse(fileName: String, body: String): ResponseEntity<String> {
+    private fun calendarResponse(
+        fileName: String,
+        body: String,
+    ): ResponseEntity<String> {
         return ResponseEntity.ok()
             .contentType(MediaType("text", "calendar"))
             .header(HttpHeaders.CONTENT_DISPOSITION, """attachment; filename="$fileName"""")
@@ -133,7 +137,7 @@ data class MyBookingResponse(
     val timezone: String?,
     val locationText: String?,
     val meetingPoint: String?,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class FavoriteResponse(
@@ -143,7 +147,7 @@ data class FavoriteResponse(
     val title: String,
     val summary: String?,
     val attachmentAssetIds: List<Long>,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class NotificationResponse(
@@ -154,7 +158,7 @@ data class NotificationResponse(
     val resourceType: String,
     val resourceId: Long,
     val readAt: Instant?,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 private fun com.demo.tourwave.application.customer.MyBookingListItem.toResponse(): MyBookingResponse =
@@ -173,7 +177,7 @@ private fun com.demo.tourwave.application.customer.MyBookingListItem.toResponse(
         timezone = timezone,
         locationText = locationText,
         meetingPoint = meetingPoint,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun com.demo.tourwave.application.customer.FavoriteView.toResponse(): FavoriteResponse =
@@ -184,7 +188,7 @@ private fun com.demo.tourwave.application.customer.FavoriteView.toResponse(): Fa
         title = title,
         summary = summary,
         attachmentAssetIds = attachmentAssetIds,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun Notification.toResponse(): NotificationResponse =
@@ -196,5 +200,5 @@ private fun Notification.toResponse(): NotificationResponse =
         resourceType = resourceType,
         resourceId = resourceId,
         readAt = readAt,
-        createdAt = createdAt
+        createdAt = createdAt,
     )

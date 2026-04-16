@@ -19,7 +19,7 @@ data class OccurrenceRosterWebResponse(
     val organizationId: Long,
     val tourId: Long?,
     val instructorProfileId: Long?,
-    val items: List<OccurrenceRosterEntryWebResponse>
+    val items: List<OccurrenceRosterEntryWebResponse>,
 )
 
 data class OccurrenceRosterEntryWebResponse(
@@ -31,20 +31,20 @@ data class OccurrenceRosterEntryWebResponse(
     val participantId: Long,
     val participantUserId: Long,
     val participantStatus: String,
-    val attendanceStatus: String
+    val attendanceStatus: String,
 )
 
 @RestController
 class ParticipantRosterController(
     private val participantRosterQueryService: ParticipantRosterQueryService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/occurrences/{occurrenceId}/participants/roster")
     fun getRoster(
         @PathVariable occurrenceId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
-        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?
+        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
     ): ResponseEntity<OccurrenceRosterWebResponse> {
         val result = query(occurrenceId, actorUserId, actorOrgRole, actorOrgId)
         return ResponseEntity.ok(result.toWebResponse())
@@ -56,7 +56,7 @@ class ParticipantRosterController(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
-        @RequestParam(required = false, defaultValue = "csv") format: String
+        @RequestParam(required = false, defaultValue = "csv") format: String,
     ): ResponseEntity<String> {
         if (format.lowercase() != "csv") {
             throw IllegalArgumentException("Only csv export is supported")
@@ -72,18 +72,19 @@ class ParticipantRosterController(
         occurrenceId: Long,
         actorUserId: Long?,
         actorOrgRole: String?,
-        actorOrgId: Long?
+        actorOrgId: Long?,
     ): OccurrenceRosterResult {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
-        )
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
+            )
         return participantRosterQueryService.getOccurrenceRoster(
             GetOccurrenceRosterQuery(
                 occurrenceId = occurrenceId,
-                actor = actor
-            )
+                actor = actor,
+            ),
         )
     }
 
@@ -93,7 +94,7 @@ class ParticipantRosterController(
             organizationId = organizationId,
             tourId = tourId,
             instructorProfileId = instructorProfileId,
-            items = items.map { it.toWebResponse() }
+            items = items.map { it.toWebResponse() },
         )
     }
 
@@ -107,27 +108,31 @@ class ParticipantRosterController(
             participantId = participantId,
             participantUserId = participantUserId,
             participantStatus = participantStatus.name,
-            attendanceStatus = attendanceStatus.name
+            attendanceStatus = attendanceStatus.name,
         )
     }
 
     private fun OccurrenceRosterResult.toCsv(): String {
-        val header = "occurrenceId,organizationId,tourId,instructorProfileId,bookingId,bookingLeaderUserId,bookingStatus,participantId,participantUserId,participantStatus,attendanceStatus"
-        val rows = items.joinToString("\n") { entry ->
-            listOf(
-                entry.occurrenceId,
-                organizationId,
-                tourId ?: "",
-                instructorProfileId ?: "",
-                entry.bookingId,
-                entry.bookingLeaderUserId,
-                entry.bookingStatus.name,
-                entry.participantId,
-                entry.participantUserId,
-                entry.participantStatus.name,
-                entry.attendanceStatus.name
-            ).joinToString(",")
-        }
+        val header =
+            "occurrenceId,organizationId,tourId,instructorProfileId," +
+                "bookingId,bookingLeaderUserId,bookingStatus," +
+                "participantId,participantUserId,participantStatus,attendanceStatus"
+        val rows =
+            items.joinToString("\n") { entry ->
+                listOf(
+                    entry.occurrenceId,
+                    organizationId,
+                    tourId ?: "",
+                    instructorProfileId ?: "",
+                    entry.bookingId,
+                    entry.bookingLeaderUserId,
+                    entry.bookingStatus.name,
+                    entry.participantId,
+                    entry.participantUserId,
+                    entry.participantStatus.name,
+                    entry.attendanceStatus.name,
+                ).joinToString(",")
+            }
         return if (rows.isEmpty()) header else "$header\n$rows"
     }
 }

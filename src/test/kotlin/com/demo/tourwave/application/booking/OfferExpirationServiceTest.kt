@@ -25,14 +25,15 @@ class OfferExpirationServiceTest {
     private val refundExecutionAdapter = InMemoryRefundExecutionAdapter()
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
     private val paymentLedgerService = PaymentLedgerService(paymentRecordRepository, refundExecutionAdapter, refundExecutionAdapter, clock)
-    private val service = OfferExpirationService(
-        bookingRepository = bookingRepository,
-        occurrenceRepository = occurrenceRepository,
-        auditEventPort = auditEventAdapter,
-        paymentLedgerService = paymentLedgerService,
-        timeWindowPolicyService = TimeWindowPolicyService(),
-        clock = clock
-    )
+    private val service =
+        OfferExpirationService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            auditEventPort = auditEventAdapter,
+            paymentLedgerService = paymentLedgerService,
+            timeWindowPolicyService = TimeWindowPolicyService(),
+            clock = clock,
+        )
 
     @Test
     fun `expire offers settles refund and promotes next waitlist booking`() {
@@ -41,37 +42,39 @@ class OfferExpirationServiceTest {
                 id = 4001L,
                 organizationId = 31L,
                 capacity = 2,
-                startsAtUtc = Instant.parse("2026-03-20T12:00:00Z")
-            )
+                startsAtUtc = Instant.parse("2026-03-20T12:00:00Z"),
+            ),
         )
-        val expired = bookingRepository.save(
-            Booking(
-                occurrenceId = 4001L,
-                organizationId = 31L,
-                leaderUserId = 101L,
-                partySize = 2,
-                status = BookingStatus.OFFERED,
-                paymentStatus = PaymentStatus.AUTHORIZED,
-                offerExpiresAtUtc = Instant.parse("2026-03-16T11:00:00Z"),
-                createdAt = Instant.parse("2026-03-10T00:00:00Z")
+        val expired =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 4001L,
+                    organizationId = 31L,
+                    leaderUserId = 101L,
+                    partySize = 2,
+                    status = BookingStatus.OFFERED,
+                    paymentStatus = PaymentStatus.AUTHORIZED,
+                    offerExpiresAtUtc = Instant.parse("2026-03-16T11:00:00Z"),
+                    createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+                ),
             )
-        )
         paymentLedgerService.initialize(
             booking = expired,
             occurrence = occurrenceRepository.getOrCreate(4001L),
-            actorUserId = 101L
+            actorUserId = 101L,
         )
-        val waiting = bookingRepository.save(
-            Booking(
-                occurrenceId = 4001L,
-                organizationId = 31L,
-                leaderUserId = 102L,
-                partySize = 2,
-                status = BookingStatus.WAITLISTED,
-                paymentStatus = PaymentStatus.AUTHORIZED,
-                createdAt = Instant.parse("2026-03-10T00:01:00Z")
+        val waiting =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 4001L,
+                    organizationId = 31L,
+                    leaderUserId = 102L,
+                    partySize = 2,
+                    status = BookingStatus.WAITLISTED,
+                    paymentStatus = PaymentStatus.AUTHORIZED,
+                    createdAt = Instant.parse("2026-03-10T00:01:00Z"),
+                ),
             )
-        )
 
         val result = service.expireOffers()
 
@@ -81,7 +84,9 @@ class OfferExpirationServiceTest {
         assertEquals(BookingStatus.EXPIRED, expiredAfter.status)
         assertEquals(PaymentStatus.REFUNDED, expiredAfter.paymentStatus)
         assertEquals(BookingStatus.OFFERED, waitingAfter.status)
-        assertTrue(auditEventAdapter.all().any { it.action == "OFFER_EXPIRED" && it.actorType.name == "JOB" && it.reasonCode == "OFFER_TIMEOUT" })
+        assertTrue(
+            auditEventAdapter.all().any { it.action == "OFFER_EXPIRED" && it.actorType.name == "JOB" && it.reasonCode == "OFFER_TIMEOUT" },
+        )
         assertTrue(auditEventAdapter.all().any { it.action == "WAITLIST_PROMOTED_TO_OFFER" && it.actorType.name == "JOB" })
     }
 }
