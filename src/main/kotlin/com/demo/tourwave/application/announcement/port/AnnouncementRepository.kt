@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.communication.port
+package com.demo.tourwave.application.announcement.port
 
 import com.demo.tourwave.domain.announcement.Announcement
 

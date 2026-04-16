@@ -1,6 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.jpa.announcement
 
-import com.demo.tourwave.application.communication.port.AnnouncementRepository
+import com.demo.tourwave.application.announcement.port.AnnouncementRepository
 import com.demo.tourwave.domain.announcement.Announcement
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
