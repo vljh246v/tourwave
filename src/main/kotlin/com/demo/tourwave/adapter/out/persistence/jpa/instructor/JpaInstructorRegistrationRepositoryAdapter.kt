@@ -1,5 +1,6 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.instructor
 
+import com.demo.tourwave.adapter.out.persistence.jpa.JpaJsonCodec
 import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.domain.instructor.InstructorRegistration
 import org.springframework.context.annotation.Profile
@@ -35,8 +36,8 @@ private fun InstructorRegistration.toEntity(): InstructorRegistrationJpaEntity =
         userId = userId,
         headline = headline,
         bio = bio,
-        languagesJson = TopologyJsonCodec.writeList(languages),
-        specialtiesJson = TopologyJsonCodec.writeList(specialties),
+        languagesJson = JpaJsonCodec.writeList(languages),
+        specialtiesJson = JpaJsonCodec.writeList(specialties),
         status = status,
         rejectionReason = rejectionReason,
         reviewedByUserId = reviewedByUserId,
@@ -52,8 +53,8 @@ private fun InstructorRegistrationJpaEntity.toDomain(): InstructorRegistration =
         userId = userId,
         headline = headline,
         bio = bio,
-        languages = TopologyJsonCodec.readList(languagesJson),
-        specialties = TopologyJsonCodec.readList(specialtiesJson),
+        languages = JpaJsonCodec.readList(languagesJson),
+        specialties = JpaJsonCodec.readList(specialtiesJson),
         status = status,
         rejectionReason = rejectionReason,
         reviewedByUserId = reviewedByUserId,

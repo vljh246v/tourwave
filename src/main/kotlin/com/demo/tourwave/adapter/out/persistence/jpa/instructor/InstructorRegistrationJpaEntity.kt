@@ -1,6 +1,6 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.instructor
 
-import com.demo.tourwave.domain.instructor.InstructorProfileStatus
+import com.demo.tourwave.domain.instructor.InstructorRegistrationStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -14,14 +14,14 @@ import java.time.Instant
 
 @Entity
 @Table(
-    name = "instructor_profiles",
+    name = "instructor_registrations",
     indexes = [
-        Index(name = "idx_instructor_profiles_org_status", columnList = "organization_id,status"),
-        Index(name = "idx_instructor_profiles_user_status", columnList = "user_id,status"),
-        Index(name = "uk_instructor_profiles_org_user", columnList = "organization_id,user_id", unique = true)
+        Index(name = "idx_instructor_registrations_org_status", columnList = "organization_id,status"),
+        Index(name = "idx_instructor_registrations_user_status", columnList = "user_id,status"),
+        Index(name = "uk_instructor_registrations_org_user", columnList = "organization_id,user_id", unique = true)
     ]
 )
-data class InstructorProfileJpaEntity(
+data class InstructorRegistrationJpaEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -36,17 +36,15 @@ data class InstructorProfileJpaEntity(
     val languagesJson: String,
     @Column(name = "specialties_json", columnDefinition = "TEXT", nullable = false)
     val specialtiesJson: String,
-    @Column(name = "certifications_json", columnDefinition = "TEXT", nullable = false)
-    val certificationsJson: String,
-    @Column(name = "years_of_experience")
-    val yearsOfExperience: Int? = null,
-    @Column(name = "internal_note", columnDefinition = "TEXT")
-    val internalNote: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val status: InstructorProfileStatus,
-    @Column(name = "approved_at")
-    val approvedAt: Instant? = null,
+    val status: InstructorRegistrationStatus,
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    val rejectionReason: String? = null,
+    @Column(name = "reviewed_by_user_id")
+    val reviewedByUserId: Long? = null,
+    @Column(name = "reviewed_at")
+    val reviewedAt: Instant? = null,
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
     @Column(name = "updated_at", nullable = false)

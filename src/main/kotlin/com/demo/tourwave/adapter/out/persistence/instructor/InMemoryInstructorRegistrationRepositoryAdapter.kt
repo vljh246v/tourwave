@@ -1,4 +1,4 @@
-package com.demo.tourwave.adapter.out.persistence.topology
+package com.demo.tourwave.adapter.out.persistence.instructor
 
 import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.domain.instructor.InstructorRegistration

@@ -1,5 +1,6 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.instructor
 
+import com.demo.tourwave.adapter.out.persistence.jpa.JpaJsonCodec
 import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import org.springframework.context.annotation.Profile
@@ -35,9 +36,9 @@ private fun InstructorProfile.toEntity(): InstructorProfileJpaEntity =
         userId = userId,
         headline = headline,
         bio = bio,
-        languagesJson = TopologyJsonCodec.writeList(languages),
-        specialtiesJson = TopologyJsonCodec.writeList(specialties),
-        certificationsJson = TopologyJsonCodec.writeList(certifications),
+        languagesJson = JpaJsonCodec.writeList(languages),
+        specialtiesJson = JpaJsonCodec.writeList(specialties),
+        certificationsJson = JpaJsonCodec.writeList(certifications),
         yearsOfExperience = yearsOfExperience,
         internalNote = internalNote,
         status = status,
@@ -53,9 +54,9 @@ private fun InstructorProfileJpaEntity.toDomain(): InstructorProfile =
         userId = userId,
         headline = headline,
         bio = bio,
-        languages = TopologyJsonCodec.readList(languagesJson),
-        specialties = TopologyJsonCodec.readList(specialtiesJson),
-        certifications = TopologyJsonCodec.readList(certificationsJson),
+        languages = JpaJsonCodec.readList(languagesJson),
+        specialties = JpaJsonCodec.readList(specialtiesJson),
+        certifications = JpaJsonCodec.readList(certificationsJson),
         yearsOfExperience = yearsOfExperience,
         internalNote = internalNote,
         status = status,
