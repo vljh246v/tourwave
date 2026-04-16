@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.instructor
 
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
@@ -12,6 +12,15 @@ import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
+import com.demo.tourwave.application.organization.AcceptOrganizationInvitationCommand
+import com.demo.tourwave.application.organization.CreateOrganizationCommand
+import com.demo.tourwave.application.organization.InviteOrganizationMemberCommand
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
+import com.demo.tourwave.application.organization.OrganizationCommandService
+import com.demo.tourwave.application.organization.OrganizationInvitationDeliveryService
+import com.demo.tourwave.application.organization.OrganizationMembershipService
+import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.instructor.InstructorRegistrationStatus
 import com.demo.tourwave.domain.organization.OrganizationRole
