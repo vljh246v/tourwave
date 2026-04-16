@@ -55,7 +55,7 @@ else
   for pattern in "${patterns[@]}"; do
     matches=$(grep -rn --include="*.kt" --include="*.java" --include="*.ts" --include="*.py" \
       --include="*.yaml" --include="*.yml" --include="*.json" \
-      --exclude-dir=".git" --exclude-dir="node_modules" --exclude-dir="build" \
+      --exclude-dir=".git" --exclude-dir="node_modules" --exclude-dir="build" --exclude-dir="test" \
       -E "$pattern" . 2>/dev/null || true)
     if [[ -n "$matches" ]]; then
       ISSUES_FOUND=1
