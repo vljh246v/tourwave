@@ -1,12 +1,17 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.occurrence
 
 import com.demo.tourwave.adapter.out.persistence.booking.InMemoryBookingRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.occurrence.InMemoryOccurrenceRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryInstructorProfileRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationMembershipRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryTourRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
+import com.demo.tourwave.application.organization.CreateOrganizationCommand
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
+import com.demo.tourwave.application.organization.OrganizationCommandService
+import com.demo.tourwave.application.tour.CreateTourCommand
+import com.demo.tourwave.application.tour.TourCommandService
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus

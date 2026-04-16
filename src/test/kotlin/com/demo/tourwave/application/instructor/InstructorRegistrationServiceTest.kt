@@ -3,10 +3,10 @@ package com.demo.tourwave.application.instructor
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryInstructorProfileRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryInstructorRegistrationRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationMembershipRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorRegistrationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
 import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.UserActionTokenService

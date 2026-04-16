@@ -4,10 +4,10 @@ import com.demo.tourwave.adapter.out.persistence.booking.InMemoryBookingReposito
 import com.demo.tourwave.adapter.out.persistence.occurrence.InMemoryOccurrenceRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.participant.InMemoryBookingParticipantRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.payment.InMemoryPaymentRecordRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationMembershipRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryTourRepositoryAdapter
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus

@@ -1,9 +1,9 @@
-package com.demo.tourwave.application.communication
+package com.demo.tourwave.application.announcement
 
 import com.demo.tourwave.adapter.out.persistence.announcement.InMemoryAnnouncementRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationMembershipRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryOrganizationRepositoryAdapter
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.domain.announcement.AnnouncementVisibility
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.organization.Organization

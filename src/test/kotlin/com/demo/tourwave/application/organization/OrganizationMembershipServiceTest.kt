@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.organization
 
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter

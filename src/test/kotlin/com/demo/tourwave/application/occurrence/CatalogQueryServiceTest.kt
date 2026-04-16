@@ -1,9 +1,9 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.occurrence
 
 import com.demo.tourwave.adapter.out.persistence.booking.InMemoryBookingRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.occurrence.InMemoryOccurrenceRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.review.InMemoryReviewRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryTourRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
 import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
