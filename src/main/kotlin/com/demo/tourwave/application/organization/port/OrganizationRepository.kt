@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology.port
+package com.demo.tourwave.application.organization.port
 
 import com.demo.tourwave.domain.organization.Organization
 

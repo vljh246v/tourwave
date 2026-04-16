@@ -1,10 +1,10 @@
 package com.demo.tourwave.bootstrap
 
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
-import com.demo.tourwave.application.topology.OrganizationCommandService
-import com.demo.tourwave.application.topology.OrganizationInvitationDeliveryService
-import com.demo.tourwave.application.topology.OrganizationMembershipService
-import com.demo.tourwave.application.topology.OrganizationQueryService
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
+import com.demo.tourwave.application.organization.OrganizationCommandService
+import com.demo.tourwave.application.organization.OrganizationInvitationDeliveryService
+import com.demo.tourwave.application.organization.OrganizationMembershipService
+import com.demo.tourwave.application.organization.OrganizationQueryService
 import com.demo.tourwave.application.topology.InstructorProfileService
 import com.demo.tourwave.application.topology.InstructorRegistrationService
 import com.demo.tourwave.application.topology.CatalogQueryService
@@ -17,8 +17,8 @@ import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.topology.port.InstructorProfileRepository
 import com.demo.tourwave.application.topology.port.InstructorRegistrationRepository
-import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
-import com.demo.tourwave.application.topology.port.OrganizationRepository
+import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.topology.port.TourRepository
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService

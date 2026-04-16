@@ -3,6 +3,7 @@ package com.demo.tourwave.application.topology
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.TimeWindowPolicyService
+import com.demo.tourwave.application.organization.requireValidTimezone
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.topology.port.TourRepository
 import com.demo.tourwave.domain.booking.BookingStatus

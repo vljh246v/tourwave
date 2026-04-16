@@ -1,6 +1,6 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.organization
 
-import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode

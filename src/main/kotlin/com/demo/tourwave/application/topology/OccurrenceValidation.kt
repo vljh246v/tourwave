@@ -1,5 +1,6 @@
 package com.demo.tourwave.application.topology
 
+import com.demo.tourwave.application.organization.normalizeOptionalText
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import java.time.Instant

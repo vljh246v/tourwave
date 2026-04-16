@@ -1,10 +1,10 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.organization
 
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.DeliverNotificationCommand
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
-import com.demo.tourwave.application.topology.port.OrganizationRepository
+import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.auth.UserActionTokenPurpose
 import com.demo.tourwave.domain.common.DomainException

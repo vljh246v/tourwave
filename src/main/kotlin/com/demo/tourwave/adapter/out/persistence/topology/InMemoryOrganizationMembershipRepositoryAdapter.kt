@@ -1,6 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.topology
 
-import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository

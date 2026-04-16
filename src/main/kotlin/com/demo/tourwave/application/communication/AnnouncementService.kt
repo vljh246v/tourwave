@@ -1,7 +1,7 @@
 package com.demo.tourwave.application.communication
 
 import com.demo.tourwave.application.communication.port.AnnouncementRepository
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.domain.announcement.Announcement
 import com.demo.tourwave.domain.announcement.AnnouncementVisibility
 import com.demo.tourwave.domain.common.DomainException

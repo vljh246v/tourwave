@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.organization
 
 import com.demo.tourwave.domain.organization.OrganizationRole
 

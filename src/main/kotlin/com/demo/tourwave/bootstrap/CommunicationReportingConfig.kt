@@ -7,7 +7,7 @@ import com.demo.tourwave.application.communication.AnnouncementService
 import com.demo.tourwave.application.communication.port.AnnouncementRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.reporting.OrganizationReportService
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.topology.port.TourRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
