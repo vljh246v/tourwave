@@ -1,10 +1,10 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.instructor
 
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.organization.normalizeOptionalText
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
-import com.demo.tourwave.application.topology.port.InstructorRegistrationRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
+import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode

@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.instructor
 
 data class ApplyInstructorRegistrationCommand(
     val actorUserId: Long,

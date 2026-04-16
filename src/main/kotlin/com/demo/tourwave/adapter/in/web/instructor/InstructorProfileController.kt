@@ -1,8 +1,8 @@
 package com.demo.tourwave.adapter.`in`.web.instructor
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.topology.InstructorProfileService
-import com.demo.tourwave.application.topology.UpsertInstructorProfileCommand
+import com.demo.tourwave.application.instructor.InstructorProfileService
+import com.demo.tourwave.application.instructor.UpsertInstructorProfileCommand
 import com.demo.tourwave.application.user.port.UserRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

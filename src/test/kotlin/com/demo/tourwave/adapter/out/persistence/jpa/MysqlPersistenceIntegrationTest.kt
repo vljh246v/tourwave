@@ -18,11 +18,11 @@ import com.demo.tourwave.application.customer.port.FavoriteRepository
 import com.demo.tourwave.application.customer.port.NotificationRepository
 import com.demo.tourwave.application.payment.port.PaymentProviderEventRepository
 import com.demo.tourwave.application.payment.port.PaymentReconciliationSummaryRepository
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
-import com.demo.tourwave.application.topology.port.InstructorRegistrationRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
+import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.Booking

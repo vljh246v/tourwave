@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology
+package com.demo.tourwave.application.instructor
 
 import com.demo.tourwave.application.organization.normalizeOptionalText
 import com.demo.tourwave.domain.common.DomainException

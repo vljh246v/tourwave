@@ -1,4 +1,4 @@
-package com.demo.tourwave.application.topology.port
+package com.demo.tourwave.application.instructor.port
 
 import com.demo.tourwave.domain.instructor.InstructorProfile
 

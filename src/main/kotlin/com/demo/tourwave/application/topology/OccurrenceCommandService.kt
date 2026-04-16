@@ -4,7 +4,7 @@ import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.requireValidTimezone
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.application.topology.port.TourRepository
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.common.DomainException

@@ -31,8 +31,8 @@ import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
 import com.demo.tourwave.application.review.port.ReviewRepository
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.UserCommandService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.application.payment.PaymentProviderPort

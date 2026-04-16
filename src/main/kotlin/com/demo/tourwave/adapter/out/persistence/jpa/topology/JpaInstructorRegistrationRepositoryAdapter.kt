@@ -1,6 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.jpa.topology
 
-import com.demo.tourwave.application.topology.port.InstructorRegistrationRepository
+import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.domain.instructor.InstructorRegistration
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository

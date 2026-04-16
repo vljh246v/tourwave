@@ -2,10 +2,10 @@ package com.demo.tourwave.adapter.`in`.web.review
 
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.organization.Organization

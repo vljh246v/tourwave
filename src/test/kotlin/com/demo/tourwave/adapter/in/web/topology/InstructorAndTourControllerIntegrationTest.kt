@@ -1,10 +1,10 @@
 package com.demo.tourwave.adapter.`in`.web.topology
 
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
-import com.demo.tourwave.application.topology.port.InstructorRegistrationRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
+import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
 import org.junit.jupiter.api.BeforeEach

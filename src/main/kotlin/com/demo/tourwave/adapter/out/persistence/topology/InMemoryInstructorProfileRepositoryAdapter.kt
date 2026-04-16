@@ -1,6 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.topology
 
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
