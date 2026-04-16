@@ -1,4 +1,4 @@
-package com.demo.tourwave.adapter.out.persistence.topology
+package com.demo.tourwave.adapter.out.persistence.tour
 
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.tour.Tour

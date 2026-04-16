@@ -1,5 +1,6 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.tour
 
+import com.demo.tourwave.adapter.out.persistence.jpa.JpaJsonCodec
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.domain.tour.TourContent
@@ -38,12 +39,12 @@ private fun Tour.toEntity(): TourJpaEntity =
         summary = summary,
         status = status,
         description = content.description,
-        highlightsJson = TopologyJsonCodec.writeList(content.highlights),
-        inclusionsJson = TopologyJsonCodec.writeList(content.inclusions),
-        exclusionsJson = TopologyJsonCodec.writeList(content.exclusions),
-        preparationsJson = TopologyJsonCodec.writeList(content.preparations),
-        policiesJson = TopologyJsonCodec.writeList(content.policies),
-        attachmentAssetIdsJson = TopologyJsonCodec.writeLongList(attachmentAssetIds),
+        highlightsJson = JpaJsonCodec.writeList(content.highlights),
+        inclusionsJson = JpaJsonCodec.writeList(content.inclusions),
+        exclusionsJson = JpaJsonCodec.writeList(content.exclusions),
+        preparationsJson = JpaJsonCodec.writeList(content.preparations),
+        policiesJson = JpaJsonCodec.writeList(content.policies),
+        attachmentAssetIdsJson = JpaJsonCodec.writeLongList(attachmentAssetIds),
         publishedAt = publishedAt,
         createdAt = createdAt,
         updatedAt = updatedAt
@@ -58,13 +59,13 @@ private fun TourJpaEntity.toDomain(): Tour =
         status = status,
         content = TourContent(
             description = description,
-            highlights = TopologyJsonCodec.readList(highlightsJson),
-            inclusions = TopologyJsonCodec.readList(inclusionsJson),
-            exclusions = TopologyJsonCodec.readList(exclusionsJson),
-            preparations = TopologyJsonCodec.readList(preparationsJson),
-            policies = TopologyJsonCodec.readList(policiesJson)
+            highlights = JpaJsonCodec.readList(highlightsJson),
+            inclusions = JpaJsonCodec.readList(inclusionsJson),
+            exclusions = JpaJsonCodec.readList(exclusionsJson),
+            preparations = JpaJsonCodec.readList(preparationsJson),
+            policies = JpaJsonCodec.readList(policiesJson)
         ),
-        attachmentAssetIds = TopologyJsonCodec.readLongList(attachmentAssetIdsJson),
+        attachmentAssetIds = JpaJsonCodec.readLongList(attachmentAssetIdsJson),
         publishedAt = publishedAt,
         createdAt = createdAt,
         updatedAt = updatedAt

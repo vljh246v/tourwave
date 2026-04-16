@@ -1,4 +1,4 @@
-package com.demo.tourwave.adapter.out.persistence.jpa.topology
+package com.demo.tourwave.adapter.out.persistence.jpa.tour
 
 import org.springframework.data.jpa.repository.JpaRepository
 
