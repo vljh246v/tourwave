@@ -2,6 +2,34 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 작업 진입점
+
+| 작업 유형 | 먼저 읽을 문서 | 시작 명령 |
+|-----------|---------------|-----------|
+| 새 기능 / 버그 수정 | `docs/golden-principles.md` → `docs/escalation-policy.md` | `/harness-task <id> <설명>` |
+| 고위험 변경 (DB 스키마, 인증, 상태 머신) | `docs/escalation-policy.md` → 사람 승인 필수 | - |
+| 반복 실패 분석 | `logs/trends/failure-patterns.md` → `docs/agent-failures.md` | - |
+
+## 하네스 워크플로우
+
+```
+/harness-task <task-id> <설명>
+  → 계획 → task-start.sh → 구현 → verify-task.sh → PR push
+```
+
+수동 실행:
+```bash
+./scripts/task-start.sh <task-id>    # 워크트리 생성
+./scripts/verify-task.sh <task-id>   # 검증만 (병합 안 함)
+./scripts/task-finish.sh <task-id>   # push + PR 안내
+```
+
+핵심 문서:
+- `docs/golden-principles.md` — 반복 실패에서 승격된 누적 규칙
+- `docs/escalation-policy.md` — 사람 승인 필수 변경 목록
+- `docs/agent-failures.md` — 에이전트 실패 로그
+- `logs/trends/failure-patterns.md` — 최근 실패 패턴 (Feedforward)
+
 ## 프로젝트 개요
 
 Tourwave는 투어/액티비티 운영사를 위한 예약 플랫폼 백엔드다. 고객 예약, 운영 실행, 사후 관리(출석/리뷰/환불)를 하나의 도메인으로 다룬다. Spring Boot 3.3.1 / Kotlin 1.9.24 / JDK 17, MySQL + Flyway, Spring Security (JWT), Micrometer + Prometheus.
