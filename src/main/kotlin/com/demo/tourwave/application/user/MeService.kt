@@ -1,6 +1,6 @@
 package com.demo.tourwave.application.user
 
-import com.demo.tourwave.application.topology.OrganizationQueryService
+import com.demo.tourwave.application.organization.OrganizationQueryService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode

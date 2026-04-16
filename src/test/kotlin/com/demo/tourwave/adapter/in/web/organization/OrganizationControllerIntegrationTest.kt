@@ -1,7 +1,7 @@
 package com.demo.tourwave.adapter.`in`.web.organization
 
-import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
-import com.demo.tourwave.application.topology.port.OrganizationRepository
+import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User

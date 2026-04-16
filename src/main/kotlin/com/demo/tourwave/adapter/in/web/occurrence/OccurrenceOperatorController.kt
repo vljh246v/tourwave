@@ -1,10 +1,10 @@
 package com.demo.tourwave.adapter.`in`.web.occurrence
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.topology.CreateOccurrenceCommand
-import com.demo.tourwave.application.topology.OccurrenceCommandService
-import com.demo.tourwave.application.topology.RescheduleOccurrenceCommand
-import com.demo.tourwave.application.topology.UpdateOccurrenceCommand
+import com.demo.tourwave.application.occurrence.CreateOccurrenceCommand
+import com.demo.tourwave.application.occurrence.OccurrenceCommandService
+import com.demo.tourwave.application.occurrence.RescheduleOccurrenceCommand
+import com.demo.tourwave.application.occurrence.UpdateOccurrenceCommand
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable

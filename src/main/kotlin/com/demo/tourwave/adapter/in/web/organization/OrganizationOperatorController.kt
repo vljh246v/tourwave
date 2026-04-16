@@ -1,14 +1,14 @@
 package com.demo.tourwave.adapter.`in`.web.organization
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.topology.ChangeOrganizationMemberRoleCommand
-import com.demo.tourwave.application.topology.CreateOrganizationCommand
-import com.demo.tourwave.application.topology.DeactivateOrganizationMemberCommand
-import com.demo.tourwave.application.topology.InviteOrganizationMemberCommand
-import com.demo.tourwave.application.topology.OrganizationCommandService
-import com.demo.tourwave.application.topology.OrganizationMembershipService
-import com.demo.tourwave.application.topology.OrganizationQueryService
-import com.demo.tourwave.application.topology.UpdateOrganizationProfileCommand
+import com.demo.tourwave.application.organization.ChangeOrganizationMemberRoleCommand
+import com.demo.tourwave.application.organization.CreateOrganizationCommand
+import com.demo.tourwave.application.organization.DeactivateOrganizationMemberCommand
+import com.demo.tourwave.application.organization.InviteOrganizationMemberCommand
+import com.demo.tourwave.application.organization.OrganizationCommandService
+import com.demo.tourwave.application.organization.OrganizationMembershipService
+import com.demo.tourwave.application.organization.OrganizationQueryService
+import com.demo.tourwave.application.organization.UpdateOrganizationProfileCommand
 import com.demo.tourwave.domain.organization.OrganizationRole
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

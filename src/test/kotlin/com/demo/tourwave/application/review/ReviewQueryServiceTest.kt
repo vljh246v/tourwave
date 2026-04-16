@@ -2,7 +2,7 @@ package com.demo.tourwave.application.review
 
 import com.demo.tourwave.adapter.out.persistence.occurrence.InMemoryOccurrenceRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.review.InMemoryReviewRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryInstructorProfileRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.organization.Organization
@@ -14,7 +14,7 @@ import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.support.FakeOrganizationMembershipRepository
 import com.demo.tourwave.support.FakeOrganizationRepository
 import com.demo.tourwave.support.FakeTourRepository
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach

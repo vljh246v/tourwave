@@ -1,7 +1,7 @@
 package com.demo.tourwave.application.customer
 
 import com.demo.tourwave.application.common.port.AuditEventCommand
-import com.demo.tourwave.application.topology.OrganizationInvitationPayload
+import com.demo.tourwave.application.organization.OrganizationInvitationPayload
 
 data class RenderedNotificationTemplate(
     val templateCode: String,

@@ -1,8 +1,8 @@
 package com.demo.tourwave.adapter.`in`.web.occurrence
 
-import com.demo.tourwave.application.topology.AvailabilityQuery
-import com.demo.tourwave.application.topology.CatalogQueryService
-import com.demo.tourwave.application.topology.OccurrenceSearchQuery
+import com.demo.tourwave.application.occurrence.AvailabilityQuery
+import com.demo.tourwave.application.occurrence.CatalogQueryService
+import com.demo.tourwave.application.occurrence.OccurrenceSearchQuery
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

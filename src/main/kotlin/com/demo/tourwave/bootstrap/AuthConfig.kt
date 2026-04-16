@@ -9,7 +9,7 @@ import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
 import com.demo.tourwave.application.auth.port.PasswordHasher
 import com.demo.tourwave.application.auth.port.UserActionTokenRepository
 import com.demo.tourwave.application.common.port.AuditEventPort
-import com.demo.tourwave.application.topology.OrganizationQueryService
+import com.demo.tourwave.application.organization.OrganizationQueryService
 import com.demo.tourwave.application.user.MeService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper

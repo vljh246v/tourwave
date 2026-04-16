@@ -1,5 +1,10 @@
 package com.demo.tourwave.adapter.out.persistence.topology
 
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorRegistrationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.instructor.InstructorProfileStatus
 import com.demo.tourwave.domain.instructor.InstructorRegistration

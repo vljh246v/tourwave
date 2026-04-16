@@ -3,12 +3,12 @@ package com.demo.tourwave.bootstrap
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
-import com.demo.tourwave.application.communication.AnnouncementService
-import com.demo.tourwave.application.communication.port.AnnouncementRepository
+import com.demo.tourwave.application.announcement.AnnouncementService
+import com.demo.tourwave.application.announcement.port.AnnouncementRepository
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.application.reporting.OrganizationReportService
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
+import com.demo.tourwave.application.tour.port.TourRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock

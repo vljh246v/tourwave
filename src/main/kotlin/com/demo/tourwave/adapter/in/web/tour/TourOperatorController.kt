@@ -1,12 +1,12 @@
 package com.demo.tourwave.adapter.`in`.web.tour
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.topology.CreateTourCommand
-import com.demo.tourwave.application.topology.PublishTourCommand
-import com.demo.tourwave.application.topology.TourCommandService
-import com.demo.tourwave.application.topology.TourQueryService
-import com.demo.tourwave.application.topology.UpdateTourCommand
-import com.demo.tourwave.application.topology.UpdateTourContentCommand
+import com.demo.tourwave.application.tour.CreateTourCommand
+import com.demo.tourwave.application.tour.PublishTourCommand
+import com.demo.tourwave.application.tour.TourCommandService
+import com.demo.tourwave.application.tour.TourQueryService
+import com.demo.tourwave.application.tour.UpdateTourCommand
+import com.demo.tourwave.application.tour.UpdateTourContentCommand
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

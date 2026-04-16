@@ -1,9 +1,9 @@
 package com.demo.tourwave.adapter.`in`.web.organization
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.topology.AcceptOrganizationInvitationCommand
-import com.demo.tourwave.application.topology.OrganizationMembershipService
-import com.demo.tourwave.application.topology.OrganizationQueryService
+import com.demo.tourwave.application.organization.AcceptOrganizationInvitationCommand
+import com.demo.tourwave.application.organization.OrganizationMembershipService
+import com.demo.tourwave.application.organization.OrganizationQueryService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
