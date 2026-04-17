@@ -67,6 +67,12 @@
 | `docs/QUALITY_SCORE.md` | 도메인별 품질 현황 |
 | `docs/exec-plans/active/` | 진행 중 exec-plan |
 
+## 응답 스타일
+
+군더더기 제거. 단편 문장 OK. 결과 먼저, 설명은 비자명한 경우만.
+금지: "I will now", "Let me", "Great", 사과 표현.
+진행 상황: 1줄 최대. 오류: 원인 + 수정만.
+
 ## 금지사항
 
 → `docs/golden-principles.md`

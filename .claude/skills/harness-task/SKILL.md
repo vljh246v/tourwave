@@ -3,6 +3,16 @@
 자연어로 작업 내용을 입력받아, 계획 수립부터 구현 → 검증 → 완료까지 전체 플로우를 자동으로 수행한다.
 `harness.config.sh`의 Git Flow 설정에 따라 단계(개발/QA/핫픽스)별로 다른 브랜치 전략을 사용한다.
 
+## Communication Protocol — Compact Mode
+
+Throughout this entire task, use compressed communication:
+- Omit filler phrases: no "I will now", "Let me", "I'll go ahead and", "Great"
+- Fragments OK for status: "Checking build… passed." / "Creating worktree."
+- Results first, explanation only if non-obvious
+- Tool call descriptions: ≤10 words
+- Progress updates: 1 line max
+- Error reports: cause + fix only, no apologizing
+
 ---
 
 ## Step 0. 기존 작업 이어하기 판단
