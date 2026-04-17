@@ -21,13 +21,13 @@ import java.time.Instant
 
 enum class OperatorRemediationAction {
     RETRY,
-    RESOLVE
+    RESOLVE,
 }
 
 data class OperatorRemediationCommand(
     val actorUserId: Long,
     val action: OperatorRemediationAction,
-    val note: String? = null
+    val note: String? = null,
 )
 
 data class OperatorRemediationQueueItem(
@@ -46,7 +46,7 @@ data class OperatorRemediationQueueItem(
     val lastQueueAction: OperatorFailureAction?,
     val lastActionByUserId: Long?,
     val lastActionAtUtc: Instant?,
-    val lastActionNote: String?
+    val lastActionNote: String?,
 )
 
 class OperatorRemediationQueueService(
@@ -58,7 +58,7 @@ class OperatorRemediationQueueService(
     private val paymentWebhookService: PaymentWebhookService,
     private val operatorFailureRecordRepository: OperatorFailureRecordRepository,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun listOpenItems(): List<OperatorRemediationQueueItem> {
         return buildRawItems()
@@ -66,16 +66,24 @@ class OperatorRemediationQueueService(
             .sortedByDescending { it.sourceUpdatedAtUtc }
     }
 
-    fun remediate(sourceType: OperatorFailureSourceType, sourceKey: String, command: OperatorRemediationCommand): OperatorRemediationQueueItem {
-        val rawItem = buildRawItems().firstOrNull { it.sourceType == sourceType && it.sourceKey == sourceKey }
-            ?: throw IllegalArgumentException("Remediation queue item not found: $sourceType/$sourceKey")
+    fun remediate(
+        sourceType: OperatorFailureSourceType,
+        sourceKey: String,
+        command: OperatorRemediationCommand,
+    ): OperatorRemediationQueueItem {
+        val rawItem =
+            buildRawItems().firstOrNull { it.sourceType == sourceType && it.sourceKey == sourceKey }
+                ?: throw IllegalArgumentException("Remediation queue item not found: $sourceType/$sourceKey")
         val now = clock.instant()
         return when (command.action) {
             OperatorRemediationAction.RETRY -> {
                 require(rawItem.retryable) { "Retry is not supported for $sourceType/$sourceKey" }
                 when (sourceType) {
                     OperatorFailureSourceType.REFUND ->
-                        refundOperationsService.remediateBookingRefund(sourceKey.toLong(), com.demo.tourwave.application.payment.RefundRemediationCommand(actorUserId = command.actorUserId))
+                        refundOperationsService.remediateBookingRefund(
+                            sourceKey.toLong(),
+                            com.demo.tourwave.application.payment.RefundRemediationCommand(actorUserId = command.actorUserId),
+                        )
 
                     OperatorFailureSourceType.NOTIFICATION_DELIVERY ->
                         notificationDeliveryService.redeliver(sourceKey.toLong())
@@ -92,7 +100,7 @@ class OperatorRemediationQueueService(
                         lastQueueAction = record.lastAction,
                         lastActionByUserId = record.lastActionByUserId,
                         lastActionAtUtc = record.lastActionAtUtc,
-                        lastActionNote = record.note
+                        lastActionNote = record.note,
                     )
             }
 
@@ -104,7 +112,7 @@ class OperatorRemediationQueueService(
                         action = OperatorFailureAction.RESOLVE,
                         note = command.note,
                         now = now,
-                        status = OperatorFailureRecordStatus.RESOLVED
+                        status = OperatorFailureRecordStatus.RESOLVED,
                     )
                 appendAudit(rawItem, record, command.actorUserId, command.note)
                 rawItem.copy(
@@ -113,7 +121,7 @@ class OperatorRemediationQueueService(
                     lastQueueAction = record.lastAction,
                     lastActionByUserId = record.lastActionByUserId,
                     lastActionAtUtc = record.lastActionAtUtc,
-                    lastActionNote = record.note
+                    lastActionNote = record.note,
                 )
             }
         }
@@ -124,8 +132,8 @@ class OperatorRemediationQueueService(
             paymentRecordRepository.findByStatuses(
                 setOf(
                     PaymentRecordStatus.REFUND_FAILED_RETRYABLE,
-                    PaymentRecordStatus.REFUND_REVIEW_REQUIRED
-                )
+                    PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
+                ),
             ).map {
                 OperatorRemediationQueueItem(
                     sourceType = OperatorFailureSourceType.REFUND,
@@ -136,14 +144,22 @@ class OperatorRemediationQueueService(
                     resourceId = it.bookingId,
                     detail = it.lastErrorCode ?: it.status.name,
                     retryable = it.status == PaymentRecordStatus.REFUND_FAILED_RETRYABLE,
-                    availableActions = if (it.status == PaymentRecordStatus.REFUND_FAILED_RETRYABLE) setOf(OperatorRemediationAction.RETRY, OperatorRemediationAction.RESOLVE) else setOf(OperatorRemediationAction.RESOLVE),
+                    availableActions =
+                        if (it.status == PaymentRecordStatus.REFUND_FAILED_RETRYABLE) {
+                            setOf(
+                                OperatorRemediationAction.RETRY,
+                                OperatorRemediationAction.RESOLVE,
+                            )
+                        } else {
+                            setOf(OperatorRemediationAction.RESOLVE)
+                        },
                     sourceOccurredAtUtc = it.lastRefundAttemptedAtUtc ?: it.updatedAtUtc,
                     sourceUpdatedAtUtc = it.updatedAtUtc,
                     actionRetryCount = 0,
                     lastQueueAction = null,
                     lastActionByUserId = null,
                     lastActionAtUtc = null,
-                    lastActionNote = null
+                    lastActionNote = null,
                 )
             }
         val notificationItems =
@@ -159,14 +175,22 @@ class OperatorRemediationQueueService(
                         resourceId = it.resourceId,
                         detail = it.lastError ?: it.status.name,
                         retryable = it.status == NotificationDeliveryStatus.FAILED_RETRYABLE,
-                        availableActions = if (it.status == NotificationDeliveryStatus.FAILED_RETRYABLE) setOf(OperatorRemediationAction.RETRY, OperatorRemediationAction.RESOLVE) else setOf(OperatorRemediationAction.RESOLVE),
+                        availableActions =
+                            if (it.status == NotificationDeliveryStatus.FAILED_RETRYABLE) {
+                                setOf(
+                                    OperatorRemediationAction.RETRY,
+                                    OperatorRemediationAction.RESOLVE,
+                                )
+                            } else {
+                                setOf(OperatorRemediationAction.RESOLVE)
+                            },
                         sourceOccurredAtUtc = it.updatedAt,
                         sourceUpdatedAtUtc = it.updatedAt,
                         actionRetryCount = 0,
                         lastQueueAction = null,
                         lastActionByUserId = null,
                         lastActionAtUtc = null,
-                        lastActionNote = null
+                        lastActionNote = null,
                     )
                 }
         val webhookItems =
@@ -185,14 +209,22 @@ class OperatorRemediationQueueService(
                         resourceId = it.id,
                         detail = it.note ?: it.status.name,
                         retryable = it.status == PaymentProviderEventStatus.POISONED,
-                        availableActions = if (it.status == PaymentProviderEventStatus.POISONED) setOf(OperatorRemediationAction.RETRY, OperatorRemediationAction.RESOLVE) else setOf(OperatorRemediationAction.RESOLVE),
+                        availableActions =
+                            if (it.status == PaymentProviderEventStatus.POISONED) {
+                                setOf(
+                                    OperatorRemediationAction.RETRY,
+                                    OperatorRemediationAction.RESOLVE,
+                                )
+                            } else {
+                                setOf(OperatorRemediationAction.RESOLVE)
+                            },
                         sourceOccurredAtUtc = it.receivedAtUtc,
                         sourceUpdatedAtUtc = it.processedAtUtc ?: it.receivedAtUtc,
                         actionRetryCount = 0,
                         lastQueueAction = null,
                         lastActionByUserId = null,
                         lastActionAtUtc = null,
-                        lastActionNote = null
+                        lastActionNote = null,
                     )
                 }
         return refundItems + notificationItems + webhookItems
@@ -209,7 +241,7 @@ class OperatorRemediationQueueService(
             lastQueueAction = record?.lastAction,
             lastActionByUserId = record?.lastActionByUserId,
             lastActionAtUtc = record?.lastActionAtUtc,
-            lastActionNote = record?.note
+            lastActionNote = record?.note,
         )
     }
 
@@ -219,7 +251,7 @@ class OperatorRemediationQueueService(
         action: OperatorFailureAction,
         note: String?,
         now: Instant,
-        status: OperatorFailureRecordStatus = OperatorFailureRecordStatus.OPEN
+        status: OperatorFailureRecordStatus = OperatorFailureRecordStatus.OPEN,
     ): OperatorFailureRecord {
         val current = operatorFailureRecordRepository.findBySource(rawItem.sourceType, rawItem.sourceKey)
         return operatorFailureRecordRepository.save(
@@ -234,8 +266,8 @@ class OperatorRemediationQueueService(
                 lastActionAtUtc = now,
                 retryCount = if (action == OperatorFailureAction.RETRY) (current?.retryCount ?: 0) + 1 else current?.retryCount ?: 0,
                 createdAtUtc = current?.createdAtUtc ?: now,
-                updatedAtUtc = now
-            )
+                updatedAtUtc = now,
+            ),
         )
     }
 
@@ -243,7 +275,7 @@ class OperatorRemediationQueueService(
         rawItem: OperatorRemediationQueueItem,
         record: OperatorFailureRecord,
         actorUserId: Long,
-        note: String?
+        note: String?,
     ) {
         auditEventPort.append(
             AuditEventCommand(
@@ -252,21 +284,24 @@ class OperatorRemediationQueueService(
                 resourceType = "OPERATOR_FAILURE_QUEUE",
                 resourceId = requireNotNull(record.id ?: rawItem.resourceId ?: 0L),
                 occurredAtUtc = clock.instant(),
-                details = mapOf(
-                    "sourceType" to rawItem.sourceType.name,
-                    "sourceKey" to rawItem.sourceKey,
-                    "failureCategory" to rawItem.failureCategory,
-                    "note" to note
-                ),
-                beforeJson = mapOf(
-                    "queueStatus" to rawItem.queueStatus.name,
-                    "retryCount" to rawItem.actionRetryCount
-                ),
-                afterJson = mapOf(
-                    "queueStatus" to record.status.name,
-                    "retryCount" to record.retryCount
-                )
-            )
+                details =
+                    mapOf(
+                        "sourceType" to rawItem.sourceType.name,
+                        "sourceKey" to rawItem.sourceKey,
+                        "failureCategory" to rawItem.failureCategory,
+                        "note" to note,
+                    ),
+                beforeJson =
+                    mapOf(
+                        "queueStatus" to rawItem.queueStatus.name,
+                        "retryCount" to rawItem.actionRetryCount,
+                    ),
+                afterJson =
+                    mapOf(
+                        "queueStatus" to record.status.name,
+                        "retryCount" to record.retryCount,
+                    ),
+            ),
         )
     }
 }

@@ -1,8 +1,9 @@
 package com.demo.tourwave.application.review
 
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.occurrence.InMemoryOccurrenceRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.review.InMemoryReviewRepositoryAdapter
-import com.demo.tourwave.adapter.out.persistence.topology.InMemoryInstructorProfileRepositoryAdapter
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.organization.Organization
@@ -14,12 +15,11 @@ import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.support.FakeOrganizationMembershipRepository
 import com.demo.tourwave.support.FakeOrganizationRepository
 import com.demo.tourwave.support.FakeTourRepository
-import com.demo.tourwave.application.topology.OrganizationAccessGuard
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class ReviewQueryServiceTest {
     private val reviewRepository = InMemoryReviewRepositoryAdapter()
@@ -28,13 +28,14 @@ class ReviewQueryServiceTest {
     private val instructorProfileRepository = InMemoryInstructorProfileRepositoryAdapter()
     private val organizationRepository = FakeOrganizationRepository()
     private val membershipRepository = FakeOrganizationMembershipRepository()
-    private val service = ReviewQueryService(
-        reviewRepository = reviewRepository,
-        occurrenceRepository = occurrenceRepository,
-        tourRepository = tourRepository,
-        instructorProfileRepository = instructorProfileRepository,
-        organizationAccessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
-    )
+    private val service =
+        ReviewQueryService(
+            reviewRepository = reviewRepository,
+            occurrenceRepository = occurrenceRepository,
+            tourRepository = tourRepository,
+            instructorProfileRepository = instructorProfileRepository,
+            organizationAccessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository),
+        )
 
     @BeforeEach
     fun setUp() {
@@ -48,14 +49,15 @@ class ReviewQueryServiceTest {
 
     @Test
     fun `tour and instructor summaries aggregate only public trust surface`() {
-        val publishedTour = tourRepository.save(
-            Tour.create(organizationId = 11L, title = "Published", summary = null, now = now())
-                .publish(now())
-                .copy(id = 101L)
-        )
+        val publishedTour =
+            tourRepository.save(
+                Tour.create(organizationId = 11L, title = "Published", summary = null, now = now())
+                    .publish(now())
+                    .copy(id = 101L),
+            )
         tourRepository.save(
             Tour.create(organizationId = 11L, title = "Draft", summary = null, now = now())
-                .copy(id = 102L)
+                .copy(id = 102L),
         )
         instructorProfileRepository.save(
             InstructorProfile.create(
@@ -69,8 +71,8 @@ class ReviewQueryServiceTest {
                 yearsOfExperience = 3,
                 internalNote = null,
                 approvedAt = now(),
-                now = now()
-            ).copy(id = 301L)
+                now = now(),
+            ).copy(id = 301L),
         )
         occurrenceRepository.save(
             Occurrence(
@@ -82,8 +84,8 @@ class ReviewQueryServiceTest {
                 startsAtUtc = now(),
                 endsAtUtc = now().plusSeconds(7200),
                 createdAt = now(),
-                updatedAt = now()
-            )
+                updatedAt = now(),
+            ),
         )
         occurrenceRepository.save(
             Occurrence(
@@ -95,8 +97,8 @@ class ReviewQueryServiceTest {
                 startsAtUtc = now(),
                 endsAtUtc = now().plusSeconds(7200),
                 createdAt = now(),
-                updatedAt = now()
-            )
+                updatedAt = now(),
+            ),
         )
         reviewRepository.save(review(1001L, 201L, ReviewType.TOUR, 5))
         reviewRepository.save(review(1001L, 202L, ReviewType.TOUR, 3))
@@ -126,25 +128,25 @@ class ReviewQueryServiceTest {
                 businessName = null,
                 businessRegistrationNumber = null,
                 timezone = "Asia/Seoul",
-                now = now()
-            ).copy(id = 11L)
+                now = now(),
+            ).copy(id = 11L),
         )
         membershipRepository.save(
             OrganizationMembership.active(
                 organizationId = 11L,
                 userId = 900L,
                 role = OrganizationRole.ADMIN,
-                now = now()
-            )
+                now = now(),
+            ),
         )
         tourRepository.save(
             Tour.create(organizationId = 11L, title = "Published", summary = null, now = now())
                 .publish(now())
-                .copy(id = 101L)
+                .copy(id = 101L),
         )
         tourRepository.save(
             Tour.create(organizationId = 11L, title = "Draft", summary = null, now = now())
-                .copy(id = 102L)
+                .copy(id = 102L),
         )
         occurrenceRepository.save(
             Occurrence(
@@ -156,8 +158,8 @@ class ReviewQueryServiceTest {
                 startsAtUtc = now(),
                 endsAtUtc = now().plusSeconds(7200),
                 createdAt = now(),
-                updatedAt = now()
-            )
+                updatedAt = now(),
+            ),
         )
         occurrenceRepository.save(
             Occurrence(
@@ -169,8 +171,8 @@ class ReviewQueryServiceTest {
                 startsAtUtc = now(),
                 endsAtUtc = now().plusSeconds(7200),
                 createdAt = now(),
-                updatedAt = now()
-            )
+                updatedAt = now(),
+            ),
         )
         reviewRepository.save(review(1001L, 201L, ReviewType.TOUR, 5))
         reviewRepository.save(review(1001L, 202L, ReviewType.INSTRUCTOR, 4))
@@ -205,8 +207,8 @@ class ReviewQueryServiceTest {
                 businessName = null,
                 businessRegistrationNumber = null,
                 timezone = "Asia/Seoul",
-                now = now()
-            ).copy(id = 11L)
+                now = now(),
+            ).copy(id = 11L),
         )
 
         assertFailsWith<Exception> {
@@ -214,13 +216,18 @@ class ReviewQueryServiceTest {
         }
     }
 
-    private fun review(occurrenceId: Long, reviewerUserId: Long, type: ReviewType, rating: Int): Review =
+    private fun review(
+        occurrenceId: Long,
+        reviewerUserId: Long,
+        type: ReviewType,
+        rating: Int,
+    ): Review =
         Review(
             occurrenceId = occurrenceId,
             reviewerUserId = reviewerUserId,
             type = type,
             rating = rating,
-            createdAt = now()
+            createdAt = now(),
         )
 
     private fun now(): Instant = Instant.parse("2026-03-19T00:00:00Z")

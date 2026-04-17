@@ -1,7 +1,7 @@
 package com.demo.tourwave.application.customer
 
 import com.demo.tourwave.application.customer.port.FavoriteRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
@@ -17,16 +17,19 @@ data class FavoriteView(
     val title: String,
     val summary: String?,
     val attachmentAssetIds: List<Long>,
-    val createdAt: java.time.Instant
+    val createdAt: java.time.Instant,
 )
 
 class FavoriteService(
     private val favoriteRepository: FavoriteRepository,
     private val tourRepository: TourRepository,
     private val userRepository: UserRepository,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
-    fun favorite(actorUserId: Long, tourId: Long): Favorite {
+    fun favorite(
+        actorUserId: Long,
+        tourId: Long,
+    ): Favorite {
         requireUser(actorUserId)
         val tour = requirePublishedTour(tourId)
         return favoriteRepository.findByUserIdAndTourId(actorUserId, tour.id!!)
@@ -34,12 +37,15 @@ class FavoriteService(
                 Favorite(
                     userId = actorUserId,
                     tourId = tour.id,
-                    createdAt = clock.instant()
-                )
+                    createdAt = clock.instant(),
+                ),
             )
     }
 
-    fun unfavorite(actorUserId: Long, tourId: Long) {
+    fun unfavorite(
+        actorUserId: Long,
+        tourId: Long,
+    ) {
         requireUser(actorUserId)
         favoriteRepository.findByUserIdAndTourId(actorUserId, tourId)?.let { favoriteRepository.delete(requireNotNull(it.id)) }
     }
@@ -59,7 +65,7 @@ class FavoriteService(
                         title = tour.title,
                         summary = tour.summary,
                         attachmentAssetIds = tour.attachmentAssetIds,
-                        createdAt = favorite.createdAt
+                        createdAt = favorite.createdAt,
                     )
                 }
             }
@@ -77,13 +83,14 @@ class FavoriteService(
         userRepository.findById(actorUserId) ?: throw DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = "authenticated user does not exist"
+            message = "authenticated user does not exist",
         )
     }
 
-    private fun notFound(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = message
-    )
+    private fun notFound(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = message,
+        )
 }

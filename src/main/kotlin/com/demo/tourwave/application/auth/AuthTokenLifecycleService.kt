@@ -12,7 +12,7 @@ import java.util.UUID
 class AuthTokenLifecycleService(
     private val authRefreshTokenRepository: AuthRefreshTokenRepository,
     private val refreshTokenTtlSeconds: Long,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     private val base64Encoder = Base64.getUrlEncoder().withoutPadding()
 
@@ -24,8 +24,8 @@ class AuthTokenLifecycleService(
                 userId = userId,
                 tokenHash = hash(refreshToken),
                 issuedAtUtc = now,
-                expiresAtUtc = now.plusSeconds(refreshTokenTtlSeconds)
-            )
+                expiresAtUtc = now.plusSeconds(refreshTokenTtlSeconds),
+            ),
         )
         return refreshToken
     }
@@ -35,8 +35,9 @@ class AuthTokenLifecycleService(
         if (normalized.isBlank()) {
             throw unauthorized("refresh token is required")
         }
-        val token = authRefreshTokenRepository.findByTokenHash(hash(normalized))
-            ?: throw unauthorized("refresh token is invalid")
+        val token =
+            authRefreshTokenRepository.findByTokenHash(hash(normalized))
+                ?: throw unauthorized("refresh token is invalid")
         if (!token.isActive(clock.instant())) {
             throw unauthorized("refresh token is expired")
         }
@@ -62,7 +63,7 @@ class AuthTokenLifecycleService(
         return DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = message
+            message = message,
         )
     }
 }

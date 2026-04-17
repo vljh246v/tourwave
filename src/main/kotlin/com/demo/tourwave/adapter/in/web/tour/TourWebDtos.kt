@@ -6,12 +6,12 @@ import java.time.Instant
 
 data class CreateTourWebRequest(
     val title: String,
-    val summary: String? = null
+    val summary: String? = null,
 )
 
 data class UpdateTourWebRequest(
     val title: String,
-    val summary: String? = null
+    val summary: String? = null,
 )
 
 data class UpdateTourContentWebRequest(
@@ -20,7 +20,7 @@ data class UpdateTourContentWebRequest(
     val inclusions: List<String> = emptyList(),
     val exclusions: List<String> = emptyList(),
     val preparations: List<String> = emptyList(),
-    val policies: List<String> = emptyList()
+    val policies: List<String> = emptyList(),
 )
 
 data class TourResponse(
@@ -30,7 +30,7 @@ data class TourResponse(
     val summary: String?,
     val attachmentAssetIds: List<Long>,
     val status: String,
-    val publishedAt: Instant?
+    val publishedAt: Instant?,
 )
 
 data class TourContentResponse(
@@ -39,7 +39,7 @@ data class TourContentResponse(
     val inclusions: List<String>,
     val exclusions: List<String>,
     val preparations: List<String>,
-    val policies: List<String>
+    val policies: List<String>,
 )
 
 fun Tour.toResponse(): TourResponse =
@@ -50,7 +50,7 @@ fun Tour.toResponse(): TourResponse =
         summary = summary,
         attachmentAssetIds = attachmentAssetIds,
         status = status.name,
-        publishedAt = publishedAt
+        publishedAt = publishedAt,
     )
 
 fun TourContent.toResponse(): TourContentResponse =
@@ -60,7 +60,7 @@ fun TourContent.toResponse(): TourContentResponse =
         inclusions = inclusions,
         exclusions = exclusions,
         preparations = preparations,
-        policies = policies
+        policies = policies,
     )
 
 data class PublicTourResponse(
@@ -71,10 +71,10 @@ data class PublicTourResponse(
     val description: String?,
     val highlights: List<String>,
     val attachmentAssetIds: List<Long>,
-    val publishedAt: Instant?
+    val publishedAt: Instant?,
 )
 
 data class TourCatalogListResponse(
     val items: List<PublicTourResponse>,
-    val nextCursor: String?
+    val nextCursor: String?,
 )

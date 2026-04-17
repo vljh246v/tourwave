@@ -12,13 +12,14 @@ class RequestHeaderActorContextResolverTest {
 
     @Test
     fun `resolve returns typed roles for instructor org admin actor`() {
-        val actor = resolver.resolve(
-            actorUserId = 42L,
-            actorRole = "instructor",
-            actorOrgRole = "org_admin",
-            actorOrgId = 31L,
-            requestId = "req-1"
-        )
+        val actor =
+            resolver.resolve(
+                actorUserId = 42L,
+                actorRole = "instructor",
+                actorOrgRole = "org_admin",
+                actorOrgId = 31L,
+                requestId = "req-1",
+            )
 
         assertEquals(42L, actor.actorUserId)
         assertEquals(31L, actor.actorOrgId)
@@ -29,30 +30,32 @@ class RequestHeaderActorContextResolverTest {
 
     @Test
     fun `resolve rejects org id without org role`() {
-        val exception = assertThrows<DomainException> {
-            resolver.resolve(
-                actorUserId = 42L,
-                actorRole = null,
-                actorOrgRole = null,
-                actorOrgId = 31L,
-                requestId = null
-            )
-        }
+        val exception =
+            assertThrows<DomainException> {
+                resolver.resolve(
+                    actorUserId = 42L,
+                    actorRole = null,
+                    actorOrgRole = null,
+                    actorOrgId = 31L,
+                    requestId = null,
+                )
+            }
 
         assertEquals(422, exception.status)
     }
 
     @Test
     fun `resolve rejects unknown actor role`() {
-        val exception = assertThrows<DomainException> {
-            resolver.resolve(
-                actorUserId = 42L,
-                actorRole = "manager",
-                actorOrgRole = null,
-                actorOrgId = null,
-                requestId = null
-            )
-        }
+        val exception =
+            assertThrows<DomainException> {
+                resolver.resolve(
+                    actorUserId = 42L,
+                    actorRole = "manager",
+                    actorOrgRole = null,
+                    actorOrgId = null,
+                    requestId = null,
+                )
+            }
 
         assertEquals(422, exception.status)
     }

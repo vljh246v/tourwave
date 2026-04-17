@@ -5,7 +5,13 @@ import java.time.Instant
 
 interface AuthRefreshTokenRepository {
     fun save(token: AuthRefreshToken): AuthRefreshToken
+
     fun findByTokenHash(tokenHash: String): AuthRefreshToken?
-    fun revokeAllByUserId(userId: Long, revokedAtUtc: Instant)
+
+    fun revokeAllByUserId(
+        userId: Long,
+        revokedAtUtc: Instant,
+    )
+
     fun clear()
 }

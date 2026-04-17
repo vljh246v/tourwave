@@ -5,7 +5,13 @@ import java.time.LocalDate
 
 interface PaymentReconciliationSummaryRepository {
     fun save(summary: PaymentReconciliationDailySummary): PaymentReconciliationDailySummary
+
     fun findByDate(summaryDate: LocalDate): PaymentReconciliationDailySummary?
-    fun findBetween(startInclusive: LocalDate, endInclusive: LocalDate): List<PaymentReconciliationDailySummary>
+
+    fun findBetween(
+        startInclusive: LocalDate,
+        endInclusive: LocalDate,
+    ): List<PaymentReconciliationDailySummary>
+
     fun clear()
 }

@@ -13,7 +13,7 @@ class WorkerJobLockHealthIndicator(
     private val workerJobLockRepository: WorkerJobLockRepository,
     private val clock: Clock,
     @Value("\${tourwave.jobs.lock.stale-after-seconds:300}")
-    private val staleAfterSeconds: Long
+    private val staleAfterSeconds: Long,
 ) : HealthIndicator {
     override fun health(): Health {
         val now = clock.instant()
@@ -24,13 +24,16 @@ class WorkerJobLockHealthIndicator(
         return health
             .withDetail("activeLockCount", locks.size)
             .withDetail("staleLockCount", staleLocks.size)
-            .withDetail("locks", locks.map { lock ->
-                mapOf(
-                    "lockName" to lock.lockName,
-                    "ownerId" to lock.ownerId,
-                    "leaseExpiresAtUtc" to lock.leaseExpiresAtUtc.toString()
-                )
-            })
+            .withDetail(
+                "locks",
+                locks.map { lock ->
+                    mapOf(
+                        "lockName" to lock.lockName,
+                        "ownerId" to lock.ownerId,
+                        "leaseExpiresAtUtc" to lock.leaseExpiresAtUtc.toString(),
+                    )
+                },
+            )
             .build()
     }
 }

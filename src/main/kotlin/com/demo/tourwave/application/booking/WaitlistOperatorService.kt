@@ -17,12 +17,12 @@ data class ManualWaitlistActionCommand(
     val bookingId: Long,
     val actor: ActorAuthContext,
     val note: String? = null,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class ManualWaitlistActionResult(
     val status: Int,
-    val booking: Booking
+    val booking: Booking,
 )
 
 @Transactional
@@ -30,7 +30,7 @@ class WaitlistOperatorService(
     private val bookingRepository: BookingRepository,
     private val occurrenceRepository: OccurrenceRepository,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun promote(command: ManualWaitlistActionCommand): ManualWaitlistActionResult {
         val booking = requireOperatorScopedWaitlistedBooking(command)
@@ -41,37 +41,40 @@ class WaitlistOperatorService(
                 errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
                 status = 409,
                 message = "Occurrence is already canceled",
-                details = mapOf("occurrenceId" to occurrence.id)
+                details = mapOf("occurrenceId" to occurrence.id),
             )
         }
 
-        val availableSeats = availableSeatsForOccurrence(
-            occurrenceId = booking.occurrenceId,
-            excludeBookingId = requireNotNull(booking.id)
-        )
+        val availableSeats =
+            availableSeatsForOccurrence(
+                occurrenceId = booking.occurrenceId,
+                excludeBookingId = requireNotNull(booking.id),
+            )
 
         if (booking.partySize > availableSeats) {
             throw DomainException(
                 errorCode = ErrorCode.CAPACITY_EXCEEDED,
                 status = 409,
                 message = "Not enough seats to promote waitlist booking",
-                details = mapOf(
-                    "bookingId" to booking.id,
-                    "partySize" to booking.partySize,
-                    "availableSeats" to availableSeats
-                )
+                details =
+                    mapOf(
+                        "bookingId" to booking.id,
+                        "partySize" to booking.partySize,
+                        "availableSeats" to availableSeats,
+                    ),
             )
         }
 
-        val promoted = bookingRepository.save(
-            booking.offer(clock.instant().plusSeconds(24 * 60 * 60L))
-        )
+        val promoted =
+            bookingRepository.save(
+                booking.offer(clock.instant().plusSeconds(24 * 60 * 60L)),
+            )
         appendAudit(
             actor = command.actor,
             booking = promoted,
             action = "WAITLIST_PROMOTED_MANUALLY",
             note = command.note,
-            requestId = command.requestId
+            requestId = command.requestId,
         )
         return ManualWaitlistActionResult(status = 200, booking = promoted)
     }
@@ -79,34 +82,36 @@ class WaitlistOperatorService(
     fun skip(command: ManualWaitlistActionCommand): ManualWaitlistActionResult {
         val booking = requireOperatorScopedWaitlistedBooking(command)
         occurrenceRepository.lock(booking.occurrenceId)
-        val skipped = bookingRepository.save(
-            booking.skipWaitlist(clock.instant())
-        )
+        val skipped =
+            bookingRepository.save(
+                booking.skipWaitlist(clock.instant()),
+            )
         appendAudit(
             actor = command.actor,
             booking = skipped,
             action = "WAITLIST_SKIPPED_MANUALLY",
             note = command.note,
-            requestId = command.requestId
+            requestId = command.requestId,
         )
         return ManualWaitlistActionResult(status = 200, booking = skipped)
     }
 
     private fun requireOperatorScopedWaitlistedBooking(command: ManualWaitlistActionCommand): Booking {
-        val booking = bookingRepository.findById(command.bookingId)
-            ?: throw DomainException(
-                errorCode = ErrorCode.VALIDATION_ERROR,
-                status = 404,
-                message = "Booking not found",
-                details = mapOf("bookingId" to command.bookingId)
-            )
+        val booking =
+            bookingRepository.findById(command.bookingId)
+                ?: throw DomainException(
+                    errorCode = ErrorCode.VALIDATION_ERROR,
+                    status = 404,
+                    message = "Booking not found",
+                    details = mapOf("bookingId" to command.bookingId),
+                )
 
         if (!command.actor.isOrgOperator()) {
             throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,
                 message = "Only org operators can control waitlist",
-                details = mapOf("bookingId" to command.bookingId, "actorUserId" to command.actor.actorUserId)
+                details = mapOf("bookingId" to command.bookingId, "actorUserId" to command.actor.actorUserId),
             )
         }
 
@@ -115,11 +120,12 @@ class WaitlistOperatorService(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,
                 message = "operator organization does not match booking scope",
-                details = mapOf(
-                    "bookingId" to command.bookingId,
-                    "bookingOrganizationId" to booking.organizationId,
-                    "actorOrganizationId" to command.actor.actorOrgId
-                )
+                details =
+                    mapOf(
+                        "bookingId" to command.bookingId,
+                        "bookingOrganizationId" to booking.organizationId,
+                        "actorOrganizationId" to command.actor.actorOrgId,
+                    ),
             )
         }
 
@@ -128,33 +134,37 @@ class WaitlistOperatorService(
                 errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                 status = 409,
                 message = "Only WAITLISTED booking can be manually controlled",
-                details = mapOf("bookingId" to command.bookingId, "status" to booking.status)
+                details = mapOf("bookingId" to command.bookingId, "status" to booking.status),
             )
         }
 
         return booking
     }
 
-    private fun availableSeatsForOccurrence(occurrenceId: Long, excludeBookingId: Long): Int {
+    private fun availableSeatsForOccurrence(
+        occurrenceId: Long,
+        excludeBookingId: Long,
+    ): Int {
         val now = clock.instant()
         val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
-        val occupiedSeats = bookingRepository.findByOccurrenceAndStatuses(
-            occurrenceId = occurrenceId,
-            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
-        )
-            .filterNot { it.id == excludeBookingId }
-            .filter {
-                when (it.status) {
-                    BookingStatus.CONFIRMED -> true
-                    BookingStatus.OFFERED -> {
-                        val expiresAt = it.offerExpiresAtUtc ?: return@filter true
-                        !now.isAfter(expiresAt)
-                    }
+        val occupiedSeats =
+            bookingRepository.findByOccurrenceAndStatuses(
+                occurrenceId = occurrenceId,
+                statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED),
+            )
+                .filterNot { it.id == excludeBookingId }
+                .filter {
+                    when (it.status) {
+                        BookingStatus.CONFIRMED -> true
+                        BookingStatus.OFFERED -> {
+                            val expiresAt = it.offerExpiresAtUtc ?: return@filter true
+                            !now.isAfter(expiresAt)
+                        }
 
-                    else -> false
+                        else -> false
+                    }
                 }
-            }
-            .sumOf { it.partySize }
+                .sumOf { it.partySize }
         return (occurrence.capacity - occupiedSeats).coerceAtLeast(0)
     }
 
@@ -163,7 +173,7 @@ class WaitlistOperatorService(
         booking: Booking,
         action: String,
         note: String?,
-        requestId: String?
+        requestId: String?,
     ) {
         auditEventPort.append(
             AuditEventCommand(
@@ -174,17 +184,19 @@ class WaitlistOperatorService(
                 occurredAtUtc = clock.instant(),
                 requestId = requestId,
                 reasonCode = action,
-                afterJson = mapOf(
-                    "bookingStatus" to booking.status.name,
-                    "waitlistSkipCount" to booking.waitlistSkipCount,
-                    "offerExpiresAtUtc" to booking.offerExpiresAtUtc?.toString()
-                ),
-                details = mapOf(
-                    "bookingStatus" to booking.status.name,
-                    "waitlistSkipCount" to booking.waitlistSkipCount,
-                    "note" to note
-                )
-            )
+                afterJson =
+                    mapOf(
+                        "bookingStatus" to booking.status.name,
+                        "waitlistSkipCount" to booking.waitlistSkipCount,
+                        "offerExpiresAtUtc" to booking.offerExpiresAtUtc?.toString(),
+                    ),
+                details =
+                    mapOf(
+                        "bookingStatus" to booking.status.name,
+                        "waitlistSkipCount" to booking.waitlistSkipCount,
+                        "note" to note,
+                    ),
+            ),
         )
     }
 }

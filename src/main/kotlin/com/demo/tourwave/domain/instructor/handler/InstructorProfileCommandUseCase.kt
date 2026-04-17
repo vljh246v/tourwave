@@ -7,7 +7,6 @@ interface InstructorProfileCommandUseCase {
         userId: Long,
         organizationId: Long,
         bio: String? = null,
-        languages: List<String> = emptyList()
+        languages: List<String> = emptyList(),
     ): InstructorProfile
 }
-

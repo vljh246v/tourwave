@@ -28,23 +28,25 @@ class ParticipantCommandServiceTest {
     private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
     private val timeWindowPolicyService = TimeWindowPolicyService()
-    private val lifecycleService = ParticipantInvitationLifecycleService(
-        bookingRepository = bookingRepository,
-        occurrenceRepository = occurrenceRepository,
-        bookingParticipantRepository = bookingParticipantRepository,
-        timeWindowPolicyService = timeWindowPolicyService,
-        clock = clock
-    )
-    private val service = ParticipantCommandService(
-        bookingRepository = bookingRepository,
-        occurrenceRepository = occurrenceRepository,
-        bookingParticipantRepository = bookingParticipantRepository,
-        participantInvitationLifecycleService = lifecycleService,
-        timeWindowPolicyService = timeWindowPolicyService,
-        idempotencyStore = idempotencyStore,
-        auditEventPort = auditEventAdapter,
-        clock = clock
-    )
+    private val lifecycleService =
+        ParticipantInvitationLifecycleService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
+            timeWindowPolicyService = timeWindowPolicyService,
+            clock = clock,
+        )
+    private val service =
+        ParticipantCommandService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
+            participantInvitationLifecycleService = lifecycleService,
+            timeWindowPolicyService = timeWindowPolicyService,
+            idempotencyStore = idempotencyStore,
+            auditEventPort = auditEventAdapter,
+            clock = clock,
+        )
 
     @Test
     fun `create invitation is blocked within six hours of occurrence start`() {
@@ -54,38 +56,40 @@ class ParticipantCommandServiceTest {
                 organizationId = 31L,
                 capacity = 10,
                 startsAtUtc = Instant.parse("2026-03-16T17:00:00Z"),
-                timezone = "Asia/Seoul"
-            )
+                timezone = "Asia/Seoul",
+            ),
         )
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 6001L,
-                organizationId = 31L,
-                leaderUserId = 101L,
-                partySize = 2,
-                status = BookingStatus.CONFIRMED,
-                paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-10T00:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 6001L,
+                    organizationId = 31L,
+                    leaderUserId = 101L,
+                    partySize = 2,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                    createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+                ),
             )
-        )
         bookingParticipantRepository.save(
             BookingParticipant.leader(
                 bookingId = requireNotNull(booking.id),
                 userId = 101L,
-                createdAt = Instant.parse("2026-03-10T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+            ),
         )
 
-        val exception = assertThrows<DomainException> {
-            service.createInvitation(
-                CreateParticipantInvitationCommand(
-                    bookingId = requireNotNull(booking.id),
-                    actorUserId = 101L,
-                    inviteeUserId = 202L,
-                    idempotencyKey = "invite-window-1"
+        val exception =
+            assertThrows<DomainException> {
+                service.createInvitation(
+                    CreateParticipantInvitationCommand(
+                        bookingId = requireNotNull(booking.id),
+                        actorUserId = 101L,
+                        inviteeUserId = 202L,
+                        idempotencyKey = "invite-window-1",
+                    ),
                 )
-            )
-        }
+            }
 
         assertEquals(409, exception.status)
     }
@@ -98,26 +102,27 @@ class ParticipantCommandServiceTest {
                 organizationId = 31L,
                 capacity = 10,
                 startsAtUtc = Instant.parse("2026-03-18T12:00:00Z"),
-                timezone = "Asia/Seoul"
-            )
+                timezone = "Asia/Seoul",
+            ),
         )
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 6002L,
-                organizationId = 31L,
-                leaderUserId = 101L,
-                partySize = 2,
-                status = BookingStatus.CONFIRMED,
-                paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-10T00:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 6002L,
+                    organizationId = 31L,
+                    leaderUserId = 101L,
+                    partySize = 2,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                    createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+                ),
             )
-        )
         bookingParticipantRepository.save(
             BookingParticipant.leader(
                 bookingId = requireNotNull(booking.id),
                 userId = 101L,
-                createdAt = Instant.parse("2026-03-10T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+            ),
         )
 
         service.createInvitation(
@@ -125,8 +130,8 @@ class ParticipantCommandServiceTest {
                 bookingId = requireNotNull(booking.id),
                 actorUserId = 101L,
                 inviteeUserId = 202L,
-                idempotencyKey = "invite-success-1"
-            )
+                idempotencyKey = "invite-success-1",
+            ),
         )
 
         val audit = auditEventAdapter.all().last()

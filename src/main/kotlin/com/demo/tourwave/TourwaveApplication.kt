@@ -10,8 +10,8 @@ import org.springframework.boot.runApplication
     exclude = [
         DataSourceAutoConfiguration::class,
         HibernateJpaAutoConfiguration::class,
-        FlywayAutoConfiguration::class
-    ]
+        FlywayAutoConfiguration::class,
+    ],
 )
 class TourwaveApplication
 

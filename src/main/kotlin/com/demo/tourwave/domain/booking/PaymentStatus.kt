@@ -4,6 +4,5 @@ enum class PaymentStatus {
     AUTHORIZED,
     PAID,
     REFUND_PENDING,
-    REFUNDED
+    REFUNDED,
 }
-

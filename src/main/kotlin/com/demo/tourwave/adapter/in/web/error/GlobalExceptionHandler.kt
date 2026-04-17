@@ -13,16 +13,17 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
-
     @ExceptionHandler(DomainException::class)
     fun handleDomainException(e: DomainException): ResponseEntity<ErrorResponse> {
-        val body = ErrorResponse(
-            error = ErrorResponse.ErrorDetail(
-                code = e.errorCode,
-                message = e.message,
-                details = e.details
+        val body =
+            ErrorResponse(
+                error =
+                    ErrorResponse.ErrorDetail(
+                        code = e.errorCode,
+                        message = e.message,
+                        details = e.details,
+                    ),
             )
-        )
         return ResponseEntity.status(e.status).body(body)
     }
 
@@ -31,15 +32,17 @@ class GlobalExceptionHandler {
         HttpMessageNotReadableException::class,
         MissingRequestHeaderException::class,
         MethodArgumentTypeMismatchException::class,
-        IllegalArgumentException::class
+        IllegalArgumentException::class,
     )
     fun handleValidation(e: Exception): ResponseEntity<ErrorResponse> {
-        val body = ErrorResponse(
-            error = ErrorResponse.ErrorDetail(
-                code = ErrorCode.VALIDATION_ERROR,
-                message = "Invalid request"
+        val body =
+            ErrorResponse(
+                error =
+                    ErrorResponse.ErrorDetail(
+                        code = ErrorCode.VALIDATION_ERROR,
+                        message = "Invalid request",
+                    ),
             )
-        )
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body)
     }
 }

@@ -13,14 +13,14 @@ class RequestHeaderAuthzGuardAdapter(
     private val requestHeaderActorContextResolver: RequestHeaderActorContextResolver,
     private val jwtTokenService: JwtTokenService,
     @Value("\${tourwave.auth.allow-header-auth-fallback:true}")
-    private val allowHeaderAuthFallback: Boolean
+    private val allowHeaderAuthFallback: Boolean,
 ) : AuthzGuardPort {
     override fun requireActorContext(
         actorUserId: Long?,
         actorRole: String?,
         actorOrgRole: String?,
         actorOrgId: Long?,
-        requestId: String?
+        requestId: String?,
     ): ActorAuthContext {
         resolveJwtContext(requestId)?.let { return it }
         if (!allowHeaderAuthFallback) {
@@ -29,7 +29,7 @@ class RequestHeaderAuthzGuardAdapter(
                 actorRole = null,
                 actorOrgRole = null,
                 actorOrgId = null,
-                requestId = requestId
+                requestId = requestId,
             )
         }
         return requestHeaderActorContextResolver.resolve(
@@ -37,7 +37,7 @@ class RequestHeaderAuthzGuardAdapter(
             actorRole = actorRole,
             actorOrgRole = actorOrgRole,
             actorOrgId = actorOrgId,
-            requestId = requestId
+            requestId = requestId,
         )
     }
 
@@ -52,7 +52,7 @@ class RequestHeaderAuthzGuardAdapter(
             actorUserId = claims.userId,
             roles = claims.roles,
             actorOrgId = claims.orgId,
-            requestId = requestId
+            requestId = requestId,
         )
     }
 }

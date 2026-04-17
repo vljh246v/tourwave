@@ -9,7 +9,7 @@ internal fun requireValidEmail(email: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "email must be a valid address"
+            message = "email must be a valid address",
         )
     }
     return normalized
@@ -21,7 +21,7 @@ internal fun requireValidPassword(password: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "password must be at least 8 characters"
+            message = "password must be at least 8 characters",
         )
     }
     return password
@@ -33,7 +33,7 @@ internal fun requireValidDisplayName(displayName: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "displayName must be between 1 and 100 characters"
+            message = "displayName must be between 1 and 100 characters",
         )
     }
     return normalized

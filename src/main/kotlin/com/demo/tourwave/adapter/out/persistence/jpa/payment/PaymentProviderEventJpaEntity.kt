@@ -19,8 +19,8 @@ import java.time.Instant
     indexes = [
         Index(name = "idx_payment_provider_events_received", columnList = "received_at_utc"),
         Index(name = "idx_payment_provider_events_booking", columnList = "booking_id"),
-        Index(name = "uk_payment_provider_events_provider_event", columnList = "provider_event_id", unique = true)
-    ]
+        Index(name = "uk_payment_provider_events_provider_event", columnList = "provider_event_id", unique = true),
+    ],
 )
 data class PaymentProviderEventJpaEntity(
     @Id
@@ -51,5 +51,5 @@ data class PaymentProviderEventJpaEntity(
     @Column(name = "received_at_utc", nullable = false)
     val receivedAtUtc: Instant,
     @Column(name = "processed_at_utc")
-    val processedAtUtc: Instant? = null
+    val processedAtUtc: Instant? = null,
 )

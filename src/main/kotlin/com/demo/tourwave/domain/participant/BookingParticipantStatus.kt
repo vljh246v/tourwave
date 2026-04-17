@@ -6,5 +6,5 @@ enum class BookingParticipantStatus {
     ACCEPTED,
     DECLINED,
     EXPIRED,
-    CANCELED
+    CANCELED,
 }

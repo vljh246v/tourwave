@@ -1,0 +1,15 @@
+package com.demo.tourwave.application.tour.port
+
+import com.demo.tourwave.domain.tour.Tour
+
+interface TourRepository {
+    fun save(tour: Tour): Tour
+
+    fun findById(tourId: Long): Tour?
+
+    fun findByOrganizationId(organizationId: Long): List<Tour>
+
+    fun findAllPublished(): List<Tour>
+
+    fun clear()
+}

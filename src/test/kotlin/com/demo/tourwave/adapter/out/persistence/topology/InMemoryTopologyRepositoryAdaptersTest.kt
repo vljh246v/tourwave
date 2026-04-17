@@ -1,11 +1,16 @@
 package com.demo.tourwave.adapter.out.persistence.topology
 
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorRegistrationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.instructor.InstructorProfileStatus
 import com.demo.tourwave.domain.instructor.InstructorRegistration
+import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.organization.OrganizationRole
-import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.domain.tour.TourContent
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -32,71 +37,76 @@ class InMemoryTopologyRepositoryAdaptersTest {
 
     @Test
     fun `repositories persist and load topology entities by id`() {
-        val organization = organizationRepository.save(
-            Organization.create(
-                slug = "tourwave-org",
-                name = "Tourwave Org",
-                description = "operator",
-                publicDescription = "public",
-                contactEmail = "ops@tourwave.test",
-                contactPhone = "+82 10 0000 0000",
-                websiteUrl = "https://tourwave.test",
-                businessName = "Tourwave LLC",
-                businessRegistrationNumber = "123-45-67890",
-                timezone = "Asia/Seoul",
-                now = Instant.parse("2026-03-17T00:00:00Z")
-            )
-        )
-        val membership = membershipRepository.save(
-            OrganizationMembership.active(
-                organizationId = requireNotNull(organization.id),
-                userId = 7L,
-                role = OrganizationRole.OWNER,
-                now = Instant.parse("2026-03-17T00:00:00Z")
-            )
-        )
-        val registration = instructorRegistrationRepository.save(
-            InstructorRegistration.create(
-                organizationId = requireNotNull(organization.id),
-                userId = 42L,
-                headline = "Walking guide",
-                bio = "Night route specialist",
-                languages = listOf("ko", "en"),
-                specialties = listOf("history"),
-                now = Instant.parse("2026-03-17T00:00:00Z")
-            )
-        )
-        val tour = tourRepository.save(
-            Tour.create(
-                organizationId = requireNotNull(organization.id),
-                title = "Night Walk",
-                summary = "after dark city walk",
-                now = Instant.parse("2026-03-17T00:00:00Z")
-            ).updateContent(
-                TourContent(
-                    description = "Tour content",
-                    highlights = listOf("lantern market")
+        val organization =
+            organizationRepository.save(
+                Organization.create(
+                    slug = "tourwave-org",
+                    name = "Tourwave Org",
+                    description = "operator",
+                    publicDescription = "public",
+                    contactEmail = "ops@tourwave.test",
+                    contactPhone = "+82 10 0000 0000",
+                    websiteUrl = "https://tourwave.test",
+                    businessName = "Tourwave LLC",
+                    businessRegistrationNumber = "123-45-67890",
+                    timezone = "Asia/Seoul",
+                    now = Instant.parse("2026-03-17T00:00:00Z"),
                 ),
-                now = Instant.parse("2026-03-17T00:30:00Z")
             )
-        )
-        val instructorProfile = instructorProfileRepository.save(
-            InstructorProfile(
-                userId = 42L,
-                organizationId = requireNotNull(organization.id),
-                headline = "Lead guide",
-                bio = "Guide",
-                languages = listOf("ko", "en"),
-                specialties = listOf("history"),
-                certifications = listOf("first aid"),
-                yearsOfExperience = 5,
-                internalNote = "internal",
-                status = InstructorProfileStatus.ACTIVE,
-                approvedAt = Instant.parse("2026-03-17T00:00:00Z"),
-                createdAt = Instant.parse("2026-03-17T00:00:00Z"),
-                updatedAt = Instant.parse("2026-03-17T00:00:00Z")
+        val membership =
+            membershipRepository.save(
+                OrganizationMembership.active(
+                    organizationId = requireNotNull(organization.id),
+                    userId = 7L,
+                    role = OrganizationRole.OWNER,
+                    now = Instant.parse("2026-03-17T00:00:00Z"),
+                ),
             )
-        )
+        val registration =
+            instructorRegistrationRepository.save(
+                InstructorRegistration.create(
+                    organizationId = requireNotNull(organization.id),
+                    userId = 42L,
+                    headline = "Walking guide",
+                    bio = "Night route specialist",
+                    languages = listOf("ko", "en"),
+                    specialties = listOf("history"),
+                    now = Instant.parse("2026-03-17T00:00:00Z"),
+                ),
+            )
+        val tour =
+            tourRepository.save(
+                Tour.create(
+                    organizationId = requireNotNull(organization.id),
+                    title = "Night Walk",
+                    summary = "after dark city walk",
+                    now = Instant.parse("2026-03-17T00:00:00Z"),
+                ).updateContent(
+                    TourContent(
+                        description = "Tour content",
+                        highlights = listOf("lantern market"),
+                    ),
+                    now = Instant.parse("2026-03-17T00:30:00Z"),
+                ),
+            )
+        val instructorProfile =
+            instructorProfileRepository.save(
+                InstructorProfile(
+                    userId = 42L,
+                    organizationId = requireNotNull(organization.id),
+                    headline = "Lead guide",
+                    bio = "Guide",
+                    languages = listOf("ko", "en"),
+                    specialties = listOf("history"),
+                    certifications = listOf("first aid"),
+                    yearsOfExperience = 5,
+                    internalNote = "internal",
+                    status = InstructorProfileStatus.ACTIVE,
+                    approvedAt = Instant.parse("2026-03-17T00:00:00Z"),
+                    createdAt = Instant.parse("2026-03-17T00:00:00Z"),
+                    updatedAt = Instant.parse("2026-03-17T00:00:00Z"),
+                ),
+            )
 
         assertNotNull(organization.id)
         assertNotNull(membership.id)

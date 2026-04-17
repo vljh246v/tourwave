@@ -12,13 +12,15 @@ class IdempotencyPurgeServiceTest {
     @Test
     fun `purge service returns purged count and appends audit`() {
         val audit = InMemoryAuditEventAdapter()
-        val service = IdempotencyPurgeService(
-            idempotencyMaintenancePort = object : IdempotencyMaintenancePort {
-                override fun purgeExpired(nowEpochMillis: Long): Long = 3
-            },
-            auditEventPort = audit,
-            clock = Clock.fixed(Instant.parse("2026-03-17T00:00:00Z"), ZoneOffset.UTC)
-        )
+        val service =
+            IdempotencyPurgeService(
+                idempotencyMaintenancePort =
+                    object : IdempotencyMaintenancePort {
+                        override fun purgeExpired(nowEpochMillis: Long): Long = 3
+                    },
+                auditEventPort = audit,
+                clock = Clock.fixed(Instant.parse("2026-03-17T00:00:00Z"), ZoneOffset.UTC),
+            )
 
         val result = service.purgeExpired()
 

@@ -12,31 +12,37 @@ data class Tour(
     val attachmentAssetIds: List<Long> = emptyList(),
     val publishedAt: Instant? = null,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     fun updateMetadata(
         title: String,
         summary: String?,
-        now: Instant
+        now: Instant,
     ): Tour {
         return copy(
             title = title,
             summary = summary,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun updateContent(content: TourContent, now: Instant): Tour {
+    fun updateContent(
+        content: TourContent,
+        now: Instant,
+    ): Tour {
         return copy(
             content = content,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun updateAttachments(assetIds: List<Long>, now: Instant): Tour {
+    fun updateAttachments(
+        assetIds: List<Long>,
+        now: Instant,
+    ): Tour {
         return copy(
             attachmentAssetIds = assetIds,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -44,7 +50,7 @@ data class Tour(
         return copy(
             status = TourStatus.PUBLISHED,
             publishedAt = publishedAt ?: now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -53,7 +59,7 @@ data class Tour(
             organizationId: Long,
             title: String,
             summary: String?,
-            now: Instant
+            now: Instant,
         ): Tour {
             return Tour(
                 organizationId = organizationId,
@@ -61,7 +67,7 @@ data class Tour(
                 summary = summary,
                 status = TourStatus.DRAFT,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }

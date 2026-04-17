@@ -1,6 +1,5 @@
 package com.demo.tourwave.adapter.`in`.web.booking
 
-import com.demo.tourwave.application.common.port.AuthzGuardPort
 import com.demo.tourwave.application.booking.BookingCommandService
 import com.demo.tourwave.application.booking.BookingCreated
 import com.demo.tourwave.application.booking.BookingMutationType
@@ -8,10 +7,11 @@ import com.demo.tourwave.application.booking.CancelOccurrenceCommand
 import com.demo.tourwave.application.booking.CreateBookingCommand
 import com.demo.tourwave.application.booking.FinishOccurrenceCommand
 import com.demo.tourwave.application.booking.MutateBookingCommand
+import com.demo.tourwave.application.common.port.AuthzGuardPort
 import com.demo.tourwave.domain.booking.Booking
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class BookingCommandController(
     private val bookingCommandService: BookingCommandService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @PostMapping("/occurrences/{occurrenceId}/bookings")
     fun createBooking(
@@ -28,19 +28,20 @@ class BookingCommandController(
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
-        @RequestBody request: BookingCreateWebRequest
+        @RequestBody request: BookingCreateWebRequest,
     ): ResponseEntity<BookingCreateWebResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.createBooking(
-            CreateBookingCommand(
-                occurrenceId = occurrenceId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                partySize = request.partySize,
-                noteToOperator = request.noteToOperator,
-                requestId = requestId
+        val result =
+            bookingCommandService.createBooking(
+                CreateBookingCommand(
+                    occurrenceId = occurrenceId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    partySize = request.partySize,
+                    noteToOperator = request.noteToOperator,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).body(result.booking.toWebResponse())
     }
 
@@ -49,17 +50,18 @@ class BookingCommandController(
         @PathVariable occurrenceId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.cancelOccurrence(
-            CancelOccurrenceCommand(
-                occurrenceId = occurrenceId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                requestId = requestId
+        val result =
+            bookingCommandService.cancelOccurrence(
+                CancelOccurrenceCommand(
+                    occurrenceId = occurrenceId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -68,17 +70,18 @@ class BookingCommandController(
         @PathVariable occurrenceId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.finishOccurrence(
-            FinishOccurrenceCommand(
-                occurrenceId = occurrenceId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                requestId = requestId
+        val result =
+            bookingCommandService.finishOccurrence(
+                FinishOccurrenceCommand(
+                    occurrenceId = occurrenceId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -87,18 +90,19 @@ class BookingCommandController(
         @PathVariable bookingId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.APPROVE,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.APPROVE,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -107,18 +111,19 @@ class BookingCommandController(
         @PathVariable bookingId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.REJECT,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.REJECT,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -127,18 +132,19 @@ class BookingCommandController(
         @PathVariable bookingId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.CANCEL,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.CANCEL,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -147,18 +153,19 @@ class BookingCommandController(
         @PathVariable bookingId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.COMPLETE,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.COMPLETE,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -167,18 +174,19 @@ class BookingCommandController(
         @PathVariable bookingId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.OFFER_ACCEPT,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.OFFER_ACCEPT,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -187,18 +195,19 @@ class BookingCommandController(
         @PathVariable bookingId: Long,
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<Void> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.OFFER_DECLINE,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.OFFER_DECLINE,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).build()
     }
 
@@ -208,19 +217,20 @@ class BookingCommandController(
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
-        @RequestBody request: BookingPartySizeUpdateWebRequest
+        @RequestBody request: BookingPartySizeUpdateWebRequest,
     ): ResponseEntity<BookingCreateWebResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = bookingCommandService.mutateBooking(
-            MutateBookingCommand(
-                bookingId = bookingId,
-                actorUserId = requiredActorUserId,
-                idempotencyKey = idempotencyKey,
-                mutationType = BookingMutationType.PARTY_SIZE_PATCH,
-                partySize = request.partySize,
-                requestId = requestId
+        val result =
+            bookingCommandService.mutateBooking(
+                MutateBookingCommand(
+                    bookingId = bookingId,
+                    actorUserId = requiredActorUserId,
+                    idempotencyKey = idempotencyKey,
+                    mutationType = BookingMutationType.PARTY_SIZE_PATCH,
+                    partySize = request.partySize,
+                    requestId = requestId,
+                ),
             )
-        )
 
         return ResponseEntity.status(result.status).body(requireNotNull(result.booking).toWebResponse())
     }
@@ -236,7 +246,7 @@ class BookingCommandController(
             paymentStatus = paymentStatus,
             currency = currency,
             amountPaid = amountPaid,
-            createdAt = createdAt
+            createdAt = createdAt,
         )
     }
 
@@ -249,7 +259,7 @@ class BookingCommandController(
             partySize = partySize,
             status = status,
             paymentStatus = paymentStatus,
-            createdAt = createdAt
+            createdAt = createdAt,
         )
     }
 }

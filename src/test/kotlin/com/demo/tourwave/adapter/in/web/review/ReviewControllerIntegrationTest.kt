@@ -1,11 +1,12 @@
 package com.demo.tourwave.adapter.`in`.web.review
 
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
+import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
+import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.review.port.ReviewRepository
-import com.demo.tourwave.application.topology.port.InstructorProfileRepository
-import com.demo.tourwave.application.topology.port.OrganizationMembershipRepository
-import com.demo.tourwave.application.topology.port.OrganizationRepository
-import com.demo.tourwave.application.topology.port.TourRepository
+import com.demo.tourwave.application.tour.port.TourRepository
+import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.organization.Organization
@@ -15,7 +16,6 @@ import com.demo.tourwave.domain.review.Review
 import com.demo.tourwave.domain.review.ReviewType
 import com.demo.tourwave.domain.tour.Tour
 import com.demo.tourwave.domain.user.User
-import com.demo.tourwave.application.user.port.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -83,8 +83,8 @@ class ReviewControllerIntegrationTest {
                 businessName = null,
                 businessRegistrationNumber = null,
                 timezone = "Asia/Seoul",
-                now = now()
-            ).copy(id = 11L)
+                now = now(),
+            ).copy(id = 11L),
         )
         membershipRepository.save(OrganizationMembership.active(11L, requireNotNull(admin.id), OrganizationRole.ADMIN, now()))
         membershipRepository.save(OrganizationMembership.active(11L, requireNotNull(member.id), OrganizationRole.MEMBER, now()))
@@ -100,17 +100,17 @@ class ReviewControllerIntegrationTest {
                 yearsOfExperience = 2,
                 internalNote = null,
                 approvedAt = now(),
-                now = now()
-            ).copy(id = 301L)
+                now = now(),
+            ).copy(id = 301L),
         )
         tourRepository.save(
             Tour.create(organizationId = 11L, title = "Published Tour", summary = null, now = now())
                 .publish(now())
-                .copy(id = 101L)
+                .copy(id = 101L),
         )
         tourRepository.save(
             Tour.create(organizationId = 11L, title = "Draft Tour", summary = null, now = now())
-                .copy(id = 102L)
+                .copy(id = 102L),
         )
         occurrenceRepository.save(occurrence(1001L, 11L, 101L, 301L))
         occurrenceRepository.save(occurrence(1002L, 11L, 102L, 301L))
@@ -139,7 +139,7 @@ class ReviewControllerIntegrationTest {
 
         mockMvc.perform(
             get("/operator/organizations/11/reviews/summary")
-                .header("X-Actor-User-Id", requireNotNull(admin.id))
+                .header("X-Actor-User-Id", requireNotNull(admin.id)),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.scope").value("OPERATOR"))
@@ -148,20 +148,28 @@ class ReviewControllerIntegrationTest {
 
         mockMvc.perform(
             get("/operator/organizations/11/reviews/summary")
-                .header("X-Actor-User-Id", requireNotNull(member.id))
+                .header("X-Actor-User-Id", requireNotNull(member.id)),
         )
             .andExpect(status().isForbidden)
     }
 
-    private fun user(id: Long, email: String): User =
+    private fun user(
+        id: Long,
+        email: String,
+    ): User =
         User.create(
             displayName = email.substringBefore("@"),
             email = email,
             passwordHash = "hash",
-            now = now()
+            now = now(),
         ).copy(id = id)
 
-    private fun occurrence(id: Long, organizationId: Long, tourId: Long, instructorProfileId: Long): Occurrence =
+    private fun occurrence(
+        id: Long,
+        organizationId: Long,
+        tourId: Long,
+        instructorProfileId: Long,
+    ): Occurrence =
         Occurrence(
             id = id,
             organizationId = organizationId,
@@ -172,16 +180,21 @@ class ReviewControllerIntegrationTest {
             endsAtUtc = now().plusSeconds(7200),
             timezone = "Asia/Seoul",
             createdAt = now(),
-            updatedAt = now()
+            updatedAt = now(),
         )
 
-    private fun review(occurrenceId: Long, reviewerUserId: Long, type: ReviewType, rating: Int): Review =
+    private fun review(
+        occurrenceId: Long,
+        reviewerUserId: Long,
+        type: ReviewType,
+        rating: Int,
+    ): Review =
         Review(
             occurrenceId = occurrenceId,
             reviewerUserId = reviewerUserId,
             type = type,
             rating = rating,
-            createdAt = now()
+            createdAt = now(),
         )
 
     private fun now(): Instant = Instant.parse("2026-03-19T00:00:00Z")

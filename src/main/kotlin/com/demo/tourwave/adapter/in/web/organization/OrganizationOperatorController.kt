@@ -1,14 +1,14 @@
 package com.demo.tourwave.adapter.`in`.web.organization
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.topology.ChangeOrganizationMemberRoleCommand
-import com.demo.tourwave.application.topology.CreateOrganizationCommand
-import com.demo.tourwave.application.topology.DeactivateOrganizationMemberCommand
-import com.demo.tourwave.application.topology.InviteOrganizationMemberCommand
-import com.demo.tourwave.application.topology.OrganizationCommandService
-import com.demo.tourwave.application.topology.OrganizationMembershipService
-import com.demo.tourwave.application.topology.OrganizationQueryService
-import com.demo.tourwave.application.topology.UpdateOrganizationProfileCommand
+import com.demo.tourwave.application.organization.ChangeOrganizationMemberRoleCommand
+import com.demo.tourwave.application.organization.CreateOrganizationCommand
+import com.demo.tourwave.application.organization.DeactivateOrganizationMemberCommand
+import com.demo.tourwave.application.organization.InviteOrganizationMemberCommand
+import com.demo.tourwave.application.organization.OrganizationCommandService
+import com.demo.tourwave.application.organization.OrganizationMembershipService
+import com.demo.tourwave.application.organization.OrganizationQueryService
+import com.demo.tourwave.application.organization.UpdateOrganizationProfileCommand
 import com.demo.tourwave.domain.organization.OrganizationRole
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,40 +24,41 @@ class OrganizationOperatorController(
     private val organizationCommandService: OrganizationCommandService,
     private val organizationQueryService: OrganizationQueryService,
     private val organizationMembershipService: OrganizationMembershipService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @PostMapping("/operator/organizations")
     fun createOrganization(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: CreateOrganizationWebRequest
+        @RequestBody request: CreateOrganizationWebRequest,
     ): ResponseEntity<OrganizationOperatorResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
-        val organization = organizationCommandService.createOrganization(
-            CreateOrganizationCommand(
-                actorUserId = actorUserIdRequired,
-                slug = request.slug,
-                name = request.name,
-                description = request.description,
-                publicDescription = request.publicDescription,
-                contactEmail = request.contactEmail,
-                contactPhone = request.contactPhone,
-                websiteUrl = request.websiteUrl,
-                businessName = request.businessName,
-                businessRegistrationNumber = request.businessRegistrationNumber,
-                timezone = request.timezone
+        val organization =
+            organizationCommandService.createOrganization(
+                CreateOrganizationCommand(
+                    actorUserId = actorUserIdRequired,
+                    slug = request.slug,
+                    name = request.name,
+                    description = request.description,
+                    publicDescription = request.publicDescription,
+                    contactEmail = request.contactEmail,
+                    contactPhone = request.contactPhone,
+                    websiteUrl = request.websiteUrl,
+                    businessName = request.businessName,
+                    businessRegistrationNumber = request.businessRegistrationNumber,
+                    timezone = request.timezone,
+                ),
             )
-        )
         return ResponseEntity.status(201).body(organization.toOperatorResponse())
     }
 
     @GetMapping("/operator/organizations/{organizationId}")
     fun getOperatorOrganization(
         @PathVariable organizationId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<OrganizationOperatorResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
-            organizationQueryService.getOperatorOrganization(actorUserIdRequired, organizationId).toOperatorResponse()
+            organizationQueryService.getOperatorOrganization(actorUserIdRequired, organizationId).toOperatorResponse(),
         )
     }
 
@@ -65,7 +66,7 @@ class OrganizationOperatorController(
     fun updateOrganization(
         @PathVariable organizationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: UpdateOrganizationWebRequest
+        @RequestBody request: UpdateOrganizationWebRequest,
     ): ResponseEntity<OrganizationOperatorResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
@@ -81,20 +82,20 @@ class OrganizationOperatorController(
                     websiteUrl = request.websiteUrl,
                     businessName = request.businessName,
                     businessRegistrationNumber = request.businessRegistrationNumber,
-                    timezone = request.timezone
-                )
-            ).toOperatorResponse()
+                    timezone = request.timezone,
+                ),
+            ).toOperatorResponse(),
         )
     }
 
     @GetMapping("/operator/organizations/{organizationId}/members")
     fun listMemberships(
         @PathVariable organizationId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<List<OrganizationMembershipResponse>> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
-            organizationMembershipService.listMemberships(actorUserIdRequired, organizationId).map { it.toResponse() }
+            organizationMembershipService.listMemberships(actorUserIdRequired, organizationId).map { it.toResponse() },
         )
     }
 
@@ -102,7 +103,7 @@ class OrganizationOperatorController(
     fun inviteMember(
         @PathVariable organizationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: InviteOrganizationMemberWebRequest
+        @RequestBody request: InviteOrganizationMemberWebRequest,
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.status(201).body(
@@ -111,9 +112,9 @@ class OrganizationOperatorController(
                     actorUserId = actorUserIdRequired,
                     organizationId = organizationId,
                     userId = request.userId,
-                    role = OrganizationRole.valueOf(request.role.trim().uppercase())
-                )
-            ).toResponse()
+                    role = OrganizationRole.valueOf(request.role.trim().uppercase()),
+                ),
+            ).toResponse(),
         )
     }
 
@@ -122,7 +123,7 @@ class OrganizationOperatorController(
         @PathVariable organizationId: Long,
         @PathVariable memberUserId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody request: UpdateOrganizationMemberRoleWebRequest
+        @RequestBody request: UpdateOrganizationMemberRoleWebRequest,
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
@@ -131,9 +132,9 @@ class OrganizationOperatorController(
                     actorUserId = actorUserIdRequired,
                     organizationId = organizationId,
                     memberUserId = memberUserId,
-                    role = OrganizationRole.valueOf(request.role.trim().uppercase())
-                )
-            ).toResponse()
+                    role = OrganizationRole.valueOf(request.role.trim().uppercase()),
+                ),
+            ).toResponse(),
         )
     }
 
@@ -141,7 +142,7 @@ class OrganizationOperatorController(
     fun deactivateMember(
         @PathVariable organizationId: Long,
         @PathVariable memberUserId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
@@ -149,9 +150,9 @@ class OrganizationOperatorController(
                 DeactivateOrganizationMemberCommand(
                     actorUserId = actorUserIdRequired,
                     organizationId = organizationId,
-                    memberUserId = memberUserId
-                )
-            ).toResponse()
+                    memberUserId = memberUserId,
+                ),
+            ).toResponse(),
         )
     }
 }

@@ -15,27 +15,29 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class BookingQueryController(
     private val bookingQueryService: BookingQueryService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/bookings/{bookingId}")
     fun getBookingDetail(
         @PathVariable bookingId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
-        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?
+        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
     ): ResponseEntity<BookingDetailWebResponse> {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
-        )
-
-        val result = bookingQueryService.getBookingDetail(
-            GetBookingDetailQuery(
-                bookingId = bookingId,
-                actor = actor
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
             )
-        )
+
+        val result =
+            bookingQueryService.getBookingDetail(
+                GetBookingDetailQuery(
+                    bookingId = bookingId,
+                    actor = actor,
+                ),
+            )
 
         return ResponseEntity.ok(result.toWebResponse())
     }
@@ -52,7 +54,7 @@ class BookingQueryController(
             createdAt = createdAt,
             offerExpiresAtUtc = offerExpiresAtUtc,
             occurrence = occurrence.toWebResponse(),
-            participants = participants.map { it.toWebResponse() }
+            participants = participants.map { it.toWebResponse() },
         )
     }
 
@@ -64,7 +66,7 @@ class BookingQueryController(
             instructorProfileId = instructorProfileId,
             capacity = capacity,
             startsAtUtc = startsAtUtc,
-            status = status
+            status = status,
         )
     }
 
@@ -76,7 +78,7 @@ class BookingQueryController(
             status = status,
             attendanceStatus = attendanceStatus,
             invitedAt = invitedAt,
-            respondedAt = respondedAt
+            respondedAt = respondedAt,
         )
     }
 }

@@ -9,12 +9,12 @@ enum class PaymentRecordStatus {
     REFUNDED,
     NO_REFUND,
     REFUND_FAILED_RETRYABLE,
-    REFUND_REVIEW_REQUIRED
+    REFUND_REVIEW_REQUIRED,
 }
 
 enum class RefundRemediationAction {
     RETRY,
-    MARK_REVIEW_REQUIRED
+    MARK_REVIEW_REQUIRED,
 }
 
 data class PaymentRecord(
@@ -37,5 +37,5 @@ data class PaymentRecord(
     val lastRemediatedAtUtc: Instant? = null,
     val lastWebhookEventId: String? = null,
     val createdAtUtc: Instant,
-    val updatedAtUtc: Instant
+    val updatedAtUtc: Instant,
 )

@@ -17,8 +17,8 @@ import java.time.Instant
     name = "assets",
     indexes = [
         Index(name = "idx_assets_owner_created", columnList = "owner_user_id,created_at"),
-        Index(name = "idx_assets_org_created", columnList = "organization_id,created_at")
-    ]
+        Index(name = "idx_assets_org_created", columnList = "organization_id,created_at"),
+    ],
 )
 data class AssetJpaEntity(
     @Id
@@ -48,5 +48,5 @@ data class AssetJpaEntity(
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
     @Column(name = "completed_at")
-    val completedAt: Instant? = null
+    val completedAt: Instant? = null,
 )

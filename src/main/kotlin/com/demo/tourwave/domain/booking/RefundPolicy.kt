@@ -1,20 +1,20 @@
 package com.demo.tourwave.domain.booking
 
-import java.time.ZoneId
 import java.time.Instant
+import java.time.ZoneId
 
 enum class RefundPolicyAction {
     LEADER_CANCEL,
     OCCURRENCE_CANCEL,
     BOOKING_REJECTED,
     OFFER_DECLINED,
-    OFFER_EXPIRED
+    OFFER_EXPIRED,
 }
 
 enum class RefundDecisionType {
     FULL_REFUND,
     NO_REFUND,
-    REFUND_PENDING
+    REFUND_PENDING,
 }
 
 enum class RefundReasonCode {
@@ -25,13 +25,13 @@ enum class RefundReasonCode {
     LEADER_CANCEL_BEFORE_48_HOURS,
     LEADER_CANCEL_WITHIN_48_HOURS,
     OCCURRENCE_START_TIME_MISSING,
-    PAYMENT_NOT_REFUNDABLE
+    PAYMENT_NOT_REFUNDABLE,
 }
 
 data class RefundDecision(
     val type: RefundDecisionType,
     val reasonCode: RefundReasonCode,
-    val refundable: Boolean
+    val refundable: Boolean,
 )
 
 data class RefundPolicyContext(
@@ -40,7 +40,7 @@ data class RefundPolicyContext(
     val paymentStatus: PaymentStatus,
     val occurrenceStartsAtUtc: Instant?,
     val occurrenceTimezone: String = "UTC",
-    val evaluatedAtUtc: Instant
+    val evaluatedAtUtc: Instant,
 )
 
 object BookingRefundPolicy {
@@ -51,7 +51,7 @@ object BookingRefundPolicy {
             return RefundDecision(
                 type = RefundDecisionType.NO_REFUND,
                 reasonCode = RefundReasonCode.PAYMENT_NOT_REFUNDABLE,
-                refundable = false
+                refundable = false,
             )
         }
 
@@ -65,28 +65,34 @@ object BookingRefundPolicy {
     }
 
     private fun evaluateLeaderCancel(context: RefundPolicyContext): RefundDecision {
-        if (context.bookingStatus == BookingStatus.REQUESTED || context.bookingStatus == BookingStatus.WAITLISTED || context.bookingStatus == BookingStatus.OFFERED) {
+        val isEarlyStatus =
+            context.bookingStatus == BookingStatus.REQUESTED ||
+                context.bookingStatus == BookingStatus.WAITLISTED ||
+                context.bookingStatus == BookingStatus.OFFERED
+        if (isEarlyStatus) {
             return fullRefund(RefundReasonCode.LEADER_CANCEL_BEFORE_48_HOURS)
         }
 
-        val startsAtUtc = context.occurrenceStartsAtUtc
-            ?: return RefundDecision(
-                type = RefundDecisionType.REFUND_PENDING,
-                reasonCode = RefundReasonCode.OCCURRENCE_START_TIME_MISSING,
-                refundable = true
-            )
+        val startsAtUtc =
+            context.occurrenceStartsAtUtc
+                ?: return RefundDecision(
+                    type = RefundDecisionType.REFUND_PENDING,
+                    reasonCode = RefundReasonCode.OCCURRENCE_START_TIME_MISSING,
+                    refundable = true,
+                )
 
-        val fullRefundDeadline = startsAtUtc
-            .atZone(ZoneId.of(context.occurrenceTimezone))
-            .minusHours(FULL_REFUND_WINDOW_HOURS)
-            .toInstant()
+        val fullRefundDeadline =
+            startsAtUtc
+                .atZone(ZoneId.of(context.occurrenceTimezone))
+                .minusHours(FULL_REFUND_WINDOW_HOURS)
+                .toInstant()
         return if (!context.evaluatedAtUtc.isAfter(fullRefundDeadline)) {
             fullRefund(RefundReasonCode.LEADER_CANCEL_BEFORE_48_HOURS)
         } else {
             RefundDecision(
                 type = RefundDecisionType.NO_REFUND,
                 reasonCode = RefundReasonCode.LEADER_CANCEL_WITHIN_48_HOURS,
-                refundable = false
+                refundable = false,
             )
         }
     }
@@ -95,7 +101,7 @@ object BookingRefundPolicy {
         return RefundDecision(
             type = RefundDecisionType.FULL_REFUND,
             reasonCode = reasonCode,
-            refundable = true
+            refundable = true,
         )
     }
 }

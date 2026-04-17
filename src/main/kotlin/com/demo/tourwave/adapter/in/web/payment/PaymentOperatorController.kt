@@ -1,9 +1,9 @@
 package com.demo.tourwave.adapter.`in`.web.payment
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
-import com.demo.tourwave.application.payment.RefundRemediationCommand
 import com.demo.tourwave.application.payment.ReconciliationService
 import com.demo.tourwave.application.payment.RefundOperationsService
+import com.demo.tourwave.application.payment.RefundRemediationCommand
 import com.demo.tourwave.domain.payment.RefundRemediationAction
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
@@ -21,11 +21,11 @@ import java.time.LocalDate
 class PaymentOperatorController(
     private val refundOperationsService: RefundOperationsService,
     private val reconciliationService: ReconciliationService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/operator/payments/refunds/ops")
     fun listRefundOpsQueue(
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): List<RefundOpsQueueItemResponse> {
         authzGuardPort.requireActorUserId(actorUserId)
         return refundOperationsService.listRefundOpsQueue().map {
@@ -44,7 +44,7 @@ class PaymentOperatorController(
                 lastRemediationAction = it.lastRemediationAction?.name,
                 lastRemediatedByUserId = it.lastRemediatedByUserId,
                 lastRemediatedAtUtc = it.lastRemediatedAtUtc?.toString(),
-                updatedAtUtc = it.updatedAtUtc.toString()
+                updatedAtUtc = it.updatedAtUtc.toString(),
             )
         }
     }
@@ -53,18 +53,20 @@ class PaymentOperatorController(
     fun retryBookingRefund(
         @PathVariable bookingId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
-        @RequestBody(required = false) request: RefundRemediationRequest?
+        @RequestBody(required = false) request: RefundRemediationRequest?,
     ): RefundOpsQueueItemResponse {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val item = refundOperationsService.remediateBookingRefund(
-            bookingId = bookingId,
-            command = RefundRemediationCommand(
-                actorUserId = requiredActorUserId,
-                action = request?.action ?: RefundRemediationAction.RETRY,
-                reasonCode = request?.reasonCode,
-                note = request?.note
+        val item =
+            refundOperationsService.remediateBookingRefund(
+                bookingId = bookingId,
+                command =
+                    RefundRemediationCommand(
+                        actorUserId = requiredActorUserId,
+                        action = request?.action ?: RefundRemediationAction.RETRY,
+                        reasonCode = request?.reasonCode,
+                        note = request?.note,
+                    ),
             )
-        )
         return RefundOpsQueueItemResponse(
             bookingId = item.bookingId,
             bookingStatus = item.bookingStatus?.name,
@@ -80,7 +82,7 @@ class PaymentOperatorController(
             lastRemediationAction = item.lastRemediationAction?.name,
             lastRemediatedByUserId = item.lastRemediatedByUserId,
             lastRemediatedAtUtc = item.lastRemediatedAtUtc?.toString(),
-            updatedAtUtc = item.updatedAtUtc.toString()
+            updatedAtUtc = item.updatedAtUtc.toString(),
         )
     }
 
@@ -88,7 +90,7 @@ class PaymentOperatorController(
     fun listDailySummaries(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
-        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate,
     ): List<FinanceDailySummaryResponse> {
         authzGuardPort.requireActorUserId(actorUserId)
         return reconciliationService.listDailySummaries(startDate, endDate).map { it.toResponse() }
@@ -97,7 +99,7 @@ class PaymentOperatorController(
     @PostMapping("/operator/finance/reconciliation/daily/{summaryDate}/refresh")
     fun refreshDailySummary(
         @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) summaryDate: LocalDate,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): FinanceDailySummaryResponse {
         authzGuardPort.requireActorUserId(actorUserId)
         return reconciliationService.refreshDailySummary(summaryDate).toResponse()
@@ -107,7 +109,7 @@ class PaymentOperatorController(
     fun exportDailySummariesCsv(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
-        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate,
     ): ResponseEntity<String> {
         authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok()
@@ -119,7 +121,7 @@ class PaymentOperatorController(
     fun listMismatches(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
-        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate,
     ): List<FinanceReconciliationMismatchResponse> {
         authzGuardPort.requireActorUserId(actorUserId)
         return reconciliationService.listMismatches(startDate, endDate).map {
@@ -131,7 +133,7 @@ class PaymentOperatorController(
                 bookingPaymentStatus = it.bookingPaymentStatus,
                 recordStatus = it.recordStatus,
                 providerEventType = it.providerEventType,
-                note = it.note
+                note = it.note,
             )
         }
     }
@@ -140,7 +142,7 @@ class PaymentOperatorController(
     fun exportMismatchesCsv(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate,
-        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate,
     ): ResponseEntity<String> {
         authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok()
@@ -164,7 +166,7 @@ data class RefundOpsQueueItemResponse(
     val lastRemediationAction: String?,
     val lastRemediatedByUserId: Long?,
     val lastRemediatedAtUtc: String?,
-    val updatedAtUtc: String
+    val updatedAtUtc: String,
 )
 
 data class FinanceDailySummaryResponse(
@@ -182,13 +184,13 @@ data class FinanceDailySummaryResponse(
     val captureMismatchCount: Int,
     val refundMismatchCount: Int,
     val internalStatusMismatchCount: Int,
-    val refreshedAtUtc: String
+    val refreshedAtUtc: String,
 )
 
 data class RefundRemediationRequest(
     val action: RefundRemediationAction = RefundRemediationAction.RETRY,
     val reasonCode: String? = null,
-    val note: String? = null
+    val note: String? = null,
 )
 
 data class FinanceReconciliationMismatchResponse(
@@ -199,7 +201,7 @@ data class FinanceReconciliationMismatchResponse(
     val bookingPaymentStatus: String?,
     val recordStatus: String?,
     val providerEventType: String?,
-    val note: String?
+    val note: String?,
 )
 
 private fun com.demo.tourwave.domain.payment.PaymentReconciliationDailySummary.toResponse(): FinanceDailySummaryResponse =
@@ -218,5 +220,5 @@ private fun com.demo.tourwave.domain.payment.PaymentReconciliationDailySummary.t
         captureMismatchCount = captureMismatchCount,
         refundMismatchCount = refundMismatchCount,
         internalStatusMismatchCount = internalStatusMismatchCount,
-        refreshedAtUtc = refreshedAtUtc.toString()
+        refreshedAtUtc = refreshedAtUtc.toString(),
     )

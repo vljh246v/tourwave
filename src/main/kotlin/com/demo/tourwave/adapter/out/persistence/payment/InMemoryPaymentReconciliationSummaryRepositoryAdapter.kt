@@ -19,7 +19,10 @@ class InMemoryPaymentReconciliationSummaryRepositoryAdapter : PaymentReconciliat
 
     override fun findByDate(summaryDate: LocalDate): PaymentReconciliationDailySummary? = summaries[summaryDate]
 
-    override fun findBetween(startInclusive: LocalDate, endInclusive: LocalDate): List<PaymentReconciliationDailySummary> {
+    override fun findBetween(
+        startInclusive: LocalDate,
+        endInclusive: LocalDate,
+    ): List<PaymentReconciliationDailySummary> {
         return summaries.values
             .filter { !it.summaryDate.isBefore(startInclusive) && !it.summaryDate.isAfter(endInclusive) }
             .sortedBy { it.summaryDate }

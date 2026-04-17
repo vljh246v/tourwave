@@ -52,56 +52,65 @@ class RealMysqlContainerRegressionTest : MysqlTestContainerSupport() {
     @Test
     fun `real mysql container persists customer payment and remediation ops views`() {
         val user = userRepository.save(User.create(displayName = "Ops", email = "ops@example.com", passwordHash = "hashed"))
-        val delivery = notificationDeliveryRepository.save(
-            NotificationDelivery(
-                channel = NotificationChannel.EMAIL,
-                templateCode = "ops-alert",
-                recipient = "ops@example.com",
-                subject = "Alert",
-                body = "Notification failed",
-                resourceType = "BOOKING",
-                resourceId = 101L,
-                status = NotificationDeliveryStatus.FAILED_RETRYABLE,
-                attemptCount = 1,
-                lastError = "provider-timeout",
-                createdAt = Instant.parse("2026-03-19T01:00:00Z"),
-                updatedAt = Instant.parse("2026-03-19T01:01:00Z")
+        val delivery =
+            notificationDeliveryRepository.save(
+                NotificationDelivery(
+                    channel = NotificationChannel.EMAIL,
+                    templateCode = "ops-alert",
+                    recipient = "ops@example.com",
+                    subject = "Alert",
+                    body = "Notification failed",
+                    resourceType = "BOOKING",
+                    resourceId = 101L,
+                    status = NotificationDeliveryStatus.FAILED_RETRYABLE,
+                    attemptCount = 1,
+                    lastError = "provider-timeout",
+                    createdAt = Instant.parse("2026-03-19T01:00:00Z"),
+                    updatedAt = Instant.parse("2026-03-19T01:01:00Z"),
+                ),
             )
-        )
-        val event = paymentProviderEventRepository.save(
-            PaymentProviderEvent(
-                providerName = "stub-pay",
-                providerEventId = "evt-mysql-regression-1",
-                eventType = PaymentProviderEventType.REFUND_FAILED,
-                bookingId = 101L,
-                payloadJson = """{"providerName":"stub-pay"}""",
-                payloadSha256 = "mysql-regression-hash",
-                status = PaymentProviderEventStatus.POISONED,
-                note = "processing-failed",
-                receivedAtUtc = Instant.parse("2026-03-19T01:02:00Z"),
-                processedAtUtc = Instant.parse("2026-03-19T01:03:00Z")
+        val event =
+            paymentProviderEventRepository.save(
+                PaymentProviderEvent(
+                    providerName = "stub-pay",
+                    providerEventId = "evt-mysql-regression-1",
+                    eventType = PaymentProviderEventType.REFUND_FAILED,
+                    bookingId = 101L,
+                    payloadJson = """{"providerName":"stub-pay"}""",
+                    payloadSha256 = "mysql-regression-hash",
+                    status = PaymentProviderEventStatus.POISONED,
+                    note = "processing-failed",
+                    receivedAtUtc = Instant.parse("2026-03-19T01:02:00Z"),
+                    processedAtUtc = Instant.parse("2026-03-19T01:03:00Z"),
+                ),
             )
-        )
-        val remediation = operatorFailureRecordRepository.save(
-            OperatorFailureRecord(
-                sourceType = OperatorFailureSourceType.PAYMENT_WEBHOOK,
-                sourceKey = "evt-mysql-regression-1",
-                status = OperatorFailureRecordStatus.OPEN,
-                lastAction = OperatorFailureAction.RETRY,
-                note = "initial replay attempted",
-                lastActionByUserId = requireNotNull(user.id),
-                lastActionAtUtc = Instant.parse("2026-03-19T01:04:00Z"),
-                retryCount = 1,
-                createdAtUtc = Instant.parse("2026-03-19T01:04:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-19T01:04:00Z")
+        val remediation =
+            operatorFailureRecordRepository.save(
+                OperatorFailureRecord(
+                    sourceType = OperatorFailureSourceType.PAYMENT_WEBHOOK,
+                    sourceKey = "evt-mysql-regression-1",
+                    status = OperatorFailureRecordStatus.OPEN,
+                    lastAction = OperatorFailureAction.RETRY,
+                    note = "initial replay attempted",
+                    lastActionByUserId = requireNotNull(user.id),
+                    lastActionAtUtc = Instant.parse("2026-03-19T01:04:00Z"),
+                    retryCount = 1,
+                    createdAtUtc = Instant.parse("2026-03-19T01:04:00Z"),
+                    updatedAtUtc = Instant.parse("2026-03-19T01:04:00Z"),
+                ),
             )
-        )
 
         assertNotNull(delivery.id)
         assertNotNull(event.id)
         assertNotNull(remediation.id)
-        assertEquals(NotificationDeliveryStatus.FAILED_RETRYABLE, notificationDeliveryRepository.findById(requireNotNull(delivery.id))?.status)
-        assertEquals(PaymentProviderEventStatus.POISONED, paymentProviderEventRepository.findByProviderEventId("evt-mysql-regression-1")?.status)
+        assertEquals(
+            NotificationDeliveryStatus.FAILED_RETRYABLE,
+            notificationDeliveryRepository.findById(requireNotNull(delivery.id))?.status,
+        )
+        assertEquals(
+            PaymentProviderEventStatus.POISONED,
+            paymentProviderEventRepository.findByProviderEventId("evt-mysql-regression-1")?.status,
+        )
         assertEquals(1, operatorFailureRecordRepository.findAll().single().retryCount)
     }
 }

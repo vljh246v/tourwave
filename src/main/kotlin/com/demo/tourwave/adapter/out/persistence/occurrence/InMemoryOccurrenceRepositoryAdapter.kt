@@ -25,7 +25,7 @@ class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
                 id = occurrenceId,
                 organizationId = 1L,
                 capacity = 10,
-                status = OccurrenceStatus.SCHEDULED
+                status = OccurrenceStatus.SCHEDULED,
             )
         }
     }
@@ -37,8 +37,7 @@ class InMemoryOccurrenceRepositoryAdapter : OccurrenceRepository {
             .filter { it.tourId == tourId }
             .sortedWith(compareBy<Occurrence> { it.startsAtUtc ?: java.time.Instant.MAX }.thenBy { it.id })
 
-    override fun findAll(): List<Occurrence> =
-        occurrences.values.sortedBy { it.id }
+    override fun findAll(): List<Occurrence> = occurrences.values.sortedBy { it.id }
 
     override fun lock(occurrenceId: Long): Occurrence = getOrCreate(occurrenceId)
 

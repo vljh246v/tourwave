@@ -41,12 +41,13 @@ class PaymentLedgerServiceTest {
         service.initialize(booking, occurrence(802L), actorUserId = 900L)
         paymentProviderAdapter.scriptRetryableFailure(32L, "gateway-timeout")
 
-        val refunded = service.applyRefundPolicy(
-            booking = booking,
-            occurrence = occurrence(803L),
-            action = RefundPolicyAction.OCCURRENCE_CANCEL,
-            actorUserId = 900L
-        )
+        val refunded =
+            service.applyRefundPolicy(
+                booking = booking,
+                occurrence = occurrence(803L),
+                action = RefundPolicyAction.OCCURRENCE_CANCEL,
+                actorUserId = 900L,
+            )
 
         assertEquals(PaymentStatus.REFUND_PENDING, refunded.paymentStatus)
         val record = paymentRecordRepository.findByBookingId(32L)
@@ -60,12 +61,13 @@ class PaymentLedgerServiceTest {
         val booking = booking(33L, BookingStatus.CANCELED, PaymentStatus.PAID)
         service.initialize(booking, occurrence(804L), actorUserId = 900L)
 
-        val result = service.applyRefundPolicy(
-            booking = booking,
-            occurrence = occurrence(805L, startsAtUtc = Instant.parse("2026-03-17T00:00:00Z")),
-            action = RefundPolicyAction.LEADER_CANCEL,
-            actorUserId = 900L
-        )
+        val result =
+            service.applyRefundPolicy(
+                booking = booking,
+                occurrence = occurrence(805L, startsAtUtc = Instant.parse("2026-03-17T00:00:00Z")),
+                action = RefundPolicyAction.LEADER_CANCEL,
+                actorUserId = 900L,
+            )
 
         assertEquals(PaymentStatus.PAID, result.paymentStatus)
         assertEquals(PaymentRecordStatus.NO_REFUND, paymentRecordRepository.findByBookingId(33L)?.status)
@@ -77,12 +79,13 @@ class PaymentLedgerServiceTest {
         service.initialize(booking, occurrence(806L), actorUserId = 900L)
         paymentProviderAdapter.scriptReviewRequired(34L, "gateway-manual-review")
 
-        val refunded = service.applyRefundPolicy(
-            booking = booking,
-            occurrence = occurrence(807L),
-            action = RefundPolicyAction.OCCURRENCE_CANCEL,
-            actorUserId = 900L
-        )
+        val refunded =
+            service.applyRefundPolicy(
+                booking = booking,
+                occurrence = occurrence(807L),
+                action = RefundPolicyAction.OCCURRENCE_CANCEL,
+                actorUserId = 900L,
+            )
 
         assertEquals(PaymentStatus.REFUND_PENDING, refunded.paymentStatus)
         assertEquals(PaymentRecordStatus.REFUND_REVIEW_REQUIRED, paymentRecordRepository.findByBookingId(34L)?.status)
@@ -94,21 +97,26 @@ class PaymentLedgerServiceTest {
         val booking = booking(35L, BookingStatus.CONFIRMED, PaymentStatus.AUTHORIZED)
         service.initialize(booking, occurrence(808L), actorUserId = 900L)
 
-        val record = service.applyWebhookStatus(
-            bookingId = 35L,
-            status = PaymentRecordStatus.CAPTURED,
-            providerName = "stub-pay",
-            providerReference = "capture-webhook-35",
-            providerCaptureId = "cap-webhook-35",
-            webhookEventId = "evt-35"
-        )
+        val record =
+            service.applyWebhookStatus(
+                bookingId = 35L,
+                status = PaymentRecordStatus.CAPTURED,
+                providerName = "stub-pay",
+                providerReference = "capture-webhook-35",
+                providerCaptureId = "cap-webhook-35",
+                webhookEventId = "evt-35",
+            )
 
         assertEquals("cap-webhook-35", record.providerCaptureId)
         assertEquals("capture-webhook-35", record.lastProviderReference)
         assertEquals("evt-35", record.lastWebhookEventId)
     }
 
-    private fun booking(id: Long, status: BookingStatus, paymentStatus: PaymentStatus): Booking {
+    private fun booking(
+        id: Long,
+        status: BookingStatus,
+        paymentStatus: PaymentStatus,
+    ): Booking {
         return Booking(
             id = id,
             occurrenceId = 701L,
@@ -117,18 +125,21 @@ class PaymentLedgerServiceTest {
             partySize = 2,
             status = status,
             paymentStatus = paymentStatus,
-            createdAt = Instant.parse("2026-03-10T00:00:00Z")
+            createdAt = Instant.parse("2026-03-10T00:00:00Z"),
         )
     }
 
-    private fun occurrence(id: Long, startsAtUtc: Instant = Instant.parse("2026-03-20T12:00:00Z")): Occurrence {
+    private fun occurrence(
+        id: Long,
+        startsAtUtc: Instant = Instant.parse("2026-03-20T12:00:00Z"),
+    ): Occurrence {
         return Occurrence(
             id = id,
             organizationId = 31L,
             capacity = 10,
             startsAtUtc = startsAtUtc,
             unitPrice = 50000,
-            currency = "KRW"
+            currency = "KRW",
         )
     }
 }

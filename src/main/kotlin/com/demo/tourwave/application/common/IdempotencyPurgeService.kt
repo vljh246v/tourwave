@@ -6,13 +6,13 @@ import com.demo.tourwave.application.common.port.IdempotencyMaintenancePort
 import java.time.Clock
 
 data class IdempotencyPurgeJobResult(
-    val purgedCount: Long
+    val purgedCount: Long,
 )
 
 class IdempotencyPurgeService(
     private val idempotencyMaintenancePort: IdempotencyMaintenancePort,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun purgeExpired(): IdempotencyPurgeJobResult {
         val purged = idempotencyMaintenancePort.purgeExpired(clock.instant().toEpochMilli())
@@ -24,8 +24,8 @@ class IdempotencyPurgeService(
                 resourceId = 0L,
                 occurredAtUtc = clock.instant(),
                 reasonCode = "IDEMPOTENCY_TTL_PURGE",
-                details = mapOf("purgedCount" to purged)
-            )
+                details = mapOf("purgedCount" to purged),
+            ),
         )
         return IdempotencyPurgeJobResult(purgedCount = purged)
     }

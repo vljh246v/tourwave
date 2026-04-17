@@ -4,7 +4,7 @@ import com.demo.tourwave.domain.booking.Booking
 
 enum class BookingMutationType(
     val httpMethod: String,
-    val pathTemplate: String
+    val pathTemplate: String,
 ) {
     APPROVE("POST", "/bookings/{bookingId}/approve"),
     REJECT("POST", "/bookings/{bookingId}/reject"),
@@ -12,7 +12,7 @@ enum class BookingMutationType(
     OFFER_ACCEPT("POST", "/bookings/{bookingId}/offer/accept"),
     OFFER_DECLINE("POST", "/bookings/{bookingId}/offer/decline"),
     PARTY_SIZE_PATCH("PATCH", "/bookings/{bookingId}/party-size"),
-    COMPLETE("POST", "/bookings/{bookingId}/complete")
+    COMPLETE("POST", "/bookings/{bookingId}/complete"),
 }
 
 data class MutateBookingCommand(
@@ -21,10 +21,10 @@ data class MutateBookingCommand(
     val idempotencyKey: String,
     val mutationType: BookingMutationType,
     val partySize: Int? = null,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class MutateBookingResult(
     val status: Int,
-    val booking: Booking? = null
+    val booking: Booking? = null,
 )

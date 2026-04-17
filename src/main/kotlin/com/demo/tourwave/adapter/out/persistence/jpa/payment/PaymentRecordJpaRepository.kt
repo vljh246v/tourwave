@@ -6,9 +6,11 @@ import java.time.Instant
 
 interface PaymentRecordJpaRepository : JpaRepository<PaymentRecordJpaEntity, Long> {
     fun findByBookingId(bookingId: Long): PaymentRecordJpaEntity?
+
     fun findByStatusInOrderByUpdatedAtUtcAsc(statuses: Collection<PaymentRecordStatus>): List<PaymentRecordJpaEntity>
+
     fun findByUpdatedAtUtcGreaterThanEqualAndUpdatedAtUtcLessThanOrderByUpdatedAtUtcAsc(
         startInclusive: Instant,
-        endExclusive: Instant
+        endExclusive: Instant,
     ): List<PaymentRecordJpaEntity>
 }
