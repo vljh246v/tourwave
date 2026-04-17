@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -68,6 +69,14 @@ class OccurrenceCatalogControllerIntegrationTest {
 
     @Test
     fun `occurrence operator and catalog APIs support authoring and public discovery`() {
+        val baseDay = Instant.now().plus(10, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS)
+        val createStart = baseDay.plus(10, ChronoUnit.HOURS)
+        val createEnd = baseDay.plus(12, ChronoUnit.HOURS)
+        val patchStart = baseDay.plus(11, ChronoUnit.HOURS)
+        val patchEnd = baseDay.plus(13, ChronoUnit.HOURS)
+        val rescheduleStart = baseDay.plus(1, ChronoUnit.DAYS).plus(11, ChronoUnit.HOURS)
+        val rescheduleEnd = baseDay.plus(1, ChronoUnit.DAYS).plus(13, ChronoUnit.HOURS)
+
         val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
 
         mockMvc.perform(
@@ -93,8 +102,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                 .content(
                     """{
                       "capacity":12,
-                      "startsAtUtc":"2026-04-10T10:00:00Z",
-                      "endsAtUtc":"2026-04-10T12:00:00Z",
+                      "startsAtUtc":"$createStart",
+                      "endsAtUtc":"$createEnd",
                       "timezone":"Asia/Seoul",
                       "unitPrice":50000,
                       "currency":"KRW",
@@ -115,8 +124,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                 .content(
                     """{
                       "capacity":15,
-                      "startsAtUtc":"2026-04-10T11:00:00Z",
-                      "endsAtUtc":"2026-04-10T13:00:00Z",
+                      "startsAtUtc":"$patchStart",
+                      "endsAtUtc":"$patchEnd",
                       "timezone":"Asia/Seoul",
                       "locationText":"Myeongdong",
                       "meetingPoint":"Gate B"
@@ -132,8 +141,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """{
-                      "startsAtUtc":"2026-04-11T11:00:00Z",
-                      "endsAtUtc":"2026-04-11T13:00:00Z",
+                      "startsAtUtc":"$rescheduleStart",
+                      "endsAtUtc":"$rescheduleEnd",
                       "timezone":"Asia/Seoul",
                       "locationText":"Euljiro",
                       "meetingPoint":"Gate C"

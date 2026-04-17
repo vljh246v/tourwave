@@ -41,6 +41,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -124,6 +125,9 @@ class CommunicationReportingIntegrationTest {
             )
         )
 
+        val announcementStart = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS)
+        val announcementEnd = Instant.now().plus(3, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS)
+
         val createResponse = mockMvc.perform(
             post("/organizations/${organization.id}/announcements")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
@@ -133,8 +137,8 @@ class CommunicationReportingIntegrationTest {
                       "title":"Operational notice",
                       "body":"Bring water.",
                       "visibility":"PUBLIC",
-                      "publishStartsAtUtc":"2026-03-18T00:00:00Z",
-                      "publishEndsAtUtc":"2026-03-21T00:00:00Z"
+                      "publishStartsAtUtc":"$announcementStart",
+                      "publishEndsAtUtc":"$announcementEnd"
                     }"""
                 )
         )
