@@ -45,6 +45,22 @@
 - 컨트롤러 drift 가드: `./gradlew test --tests 'com.demo.tourwave.agent.DocumentationBaselineTest'`
 - 실 MySQL 컨테이너 회귀: `./gradlew test --tests 'com.demo.tourwave.adapter.out.persistence.jpa.RealMysqlContainerRegressionTest'`
 
+## Development Harness
+
+이 프로젝트는 Claude Code 하네스를 사용합니다.
+
+```bash
+/harness-task <task-id> <설명>   # 작업 시작 → 구현 → 검증 → PR
+```
+
+| 파일 | 역할 |
+|---|---|
+| `harness.config.sh` | 빌드/테스트/린트 명령, Git Flow 설정 |
+| `ARCHITECTURE.md` | 레이어 규칙 (헥사고날 아키텍처) |
+| `docs/golden-principles.md` | 반복 실패에서 승격된 누적 규칙 |
+| `docs/escalation-policy.md` | 사람 승인 필수 변경 목록 |
+| `docs/exec-plans/` | 태스크별 실행 계획 (active / completed) |
+
 ## License
 
 See `LICENSE`.
