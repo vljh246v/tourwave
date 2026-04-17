@@ -52,3 +52,19 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.bootJar {
+    mainClass.set("com.demo.tourwave.TourwaveApplicationKt")
+    archiveClassifier.set("api")
+}
+
+tasks.bootRun {
+    mainClass.set("com.demo.tourwave.TourwaveApplicationKt")
+}
+
+tasks.register<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJarWorker") {
+    mainClass.set("com.demo.tourwaveworker.WorkerApplicationKt")
+    archiveClassifier.set("worker")
+    classpath = sourceSets.main.get().runtimeClasspath
+    targetJavaVersion.set(JavaVersion.toVersion(17))
+}
