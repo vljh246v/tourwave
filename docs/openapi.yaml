@@ -1495,7 +1495,6 @@ paths:
               examples:
                 idempotencyKeyReusedDifferentPayload:
                   $ref: '#/components/examples/IdempotencyKeyReusedDifferentPayload'
-        '409': { $ref: '#/components/responses/Conflict' }
 
   /bookings/{bookingId}/party-size:
     patch:
@@ -2071,25 +2070,6 @@ paths:
               schema: { $ref: '#/components/schemas/ReviewListResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-
-  /instructors/{instructorProfileId}/reviews/summary:
-    get:
-      tags: [Reviews]
-      security: []
-      summary: Instructor review summary (public)
-      description: Public summary only. Content is restricted.
-      parameters:
-        - name: instructorProfileId
-          in: path
-          required: true
-          schema: { type: integer, format: int64 }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/InstructorReviewSummaryResponse' }
-        '404': { $ref: '#/components/responses/NotFound' }
 
   /organizations/{orgId}/reviews/summary:
     get:
