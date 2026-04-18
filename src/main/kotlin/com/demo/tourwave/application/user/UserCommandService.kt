@@ -8,7 +8,7 @@ import java.time.Clock
 class UserCommandService(
     private val userRepository: UserRepository,
     private val clock: Clock = Clock.systemUTC()
-): UserCommandHandler {
+) : UserCommandHandler {
     private val passwordEncoder = BCryptPasswordEncoder()
 
     override fun registerUser(name: String, email: String): User {
@@ -24,5 +24,23 @@ class UserCommandService(
                 now = clock.instant()
             )
         )
+    }
+
+    override fun suspendUser(userId: Long, reason: String) {
+        val user = userRepository.findById(userId)
+            ?: throw NoSuchElementException("User $userId not found")
+        userRepository.save(user.suspend(clock.instant()))
+    }
+
+    override fun deleteUser(userId: Long) {
+        val user = userRepository.findById(userId)
+            ?: throw NoSuchElementException("User $userId not found")
+        userRepository.save(user.delete(clock.instant()))
+    }
+
+    override fun restoreUser(userId: Long) {
+        val user = userRepository.findById(userId)
+            ?: throw NoSuchElementException("User $userId not found")
+        userRepository.save(user.restore(clock.instant()))
     }
 }
