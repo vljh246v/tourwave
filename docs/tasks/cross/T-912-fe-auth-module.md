@@ -10,7 +10,7 @@
 - Depends on: T-911 (선택, schema.ts 없어도 느슨하게 가능)
 - Blocks: T-008, T-009, T-011, T-012, T-013, T-014, T-015, T-018, T-025
 - GitHub Issue: —
-- Status: Backlog
+- Status: Done
 
 ## 파일 소유권 (FE 리포 기준)
 WRITE:
@@ -34,10 +34,10 @@ DO NOT TOUCH:
 - 백엔드 JWT 정책 (명시 필요, 예: exp, iat, sub, scopes)
 
 ## 현재 상태 (갭)
-- [ ] 토큰 저장소 미존재 — 프론트 전용 localStorage / BE 쿠키 전략 미결정.
-- [ ] AuthContext / useAuth 훅 미존재.
-- [ ] refresh token 로직 미존재 — 만료 시 자동 갱신 메커니즘 필요.
-- [ ] 권한 캐시 미존재 — 로그인 후 역할/org 캐시 전략 필요.
+- [x] 토큰 저장소 미존재 — httpOnly cookie 전략 (CookieTokenStorage) 구현 완료.
+- [x] AuthContext / useAuth 훅 미존재 — AuthProvider + useAuth + useAuthGuard 구현 완료.
+- [x] refresh token 로직 미존재 — 단일 비행 refresh (inflightRefresh) 구현 완료.
+- [x] 권한 캐시 미존재 — MeResponse memberships 캐시 + org 파생값 구현 완료.
 
 ## 구현 지침
 
@@ -94,12 +94,12 @@ DO NOT TOUCH:
    - 예: `import { User, Organization } from '@/lib/api/schema'`
 
 ## Acceptance Criteria
-- [ ] `useAuth()` 훅 사용 가능 (로그인, 로그아웃, isAuthenticated 상태)
-- [ ] `AuthProvider` wrapping 후 context에 접근 가능
-- [ ] Token refresh 자동화 (401 응답 시 자동 갱신)
-- [ ] Logout 후 로컬 캐시 초기화 확인
-- [ ] httpOnly cookie 구현 시: credentials 옵션, middleware.ts 연동 (T-915)
-- [ ] 권한 매트릭스 문서 주석 (policies.md 참조)
+- [x] `useAuth()` 훅 사용 가능 (로그인, 로그아웃, isAuthenticated 상태)
+- [x] `AuthProvider` wrapping 후 context에 접근 가능
+- [x] Token refresh 자동화 (401 응답 시 자동 갱신)
+- [x] Logout 후 로컬 캐시 초기화 확인
+- [x] httpOnly cookie 구현 시: credentials 옵션, middleware.ts 연동 (T-915)
+- [x] 권한 매트릭스 문서 주석 (policies.md 참조)
 
 ## Verification
 ```bash

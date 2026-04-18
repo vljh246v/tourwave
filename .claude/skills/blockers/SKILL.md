@@ -43,17 +43,18 @@ tourwave의 GitHub Projects 카드(`docs/tasks/**/T-*.md`) 간 `Depends on` / `B
 
 출력 후 추가로:
 
-- **상위 블록커 1~3개**에 대해 각각 `Depends on` 필드를 확인.
-- Depends on이 **비어있거나 "없음"**인 블록커 = **지금 바로 시작 가능한 최우선 카드**.
+- **상위 블록커 1~3개**에 대해 각각 카드 파일을 읽어 `Depends on`과 `Status` 필드 확인.
+- **`Status: Done`인 카드는 건너뜀** (이미 완료된 카드는 블록커가 아님).
+- Depends on이 **비어있거나 "없음"**이고 Status가 Done이 아닌 블록커 = **지금 바로 시작 가능한 최우선 카드**.
 - 그 카드를 "추천 시작"으로 제시, 파일 경로 + `/harness-task` 명령 예시 함께.
 
 예:
 ```
 지금 당장 시작 가능한 최우선 블록커:
-  T-911 — [FE] OpenAPI 타입 생성 (14개 블로킹, Depends on: 없음)
+  T-912 — [FE] 인증 모듈 (11개 블로킹, Depends on: 없음)
 
 추천 명령:
-  /harness-task T-911 OpenAPI schema.ts 생성. 카드: docs/tasks/cross/T-911-fe-openapi-types.md
+  /harness-task T-912 인증 모듈. 카드: docs/tasks/cross/T-912-fe-auth-module.md
 ```
 
 ### 모드 B: 개별 카드 조회 (`T-XXX`)
@@ -62,9 +63,11 @@ tourwave의 GitHub Projects 카드(`docs/tasks/**/T-*.md`) 간 `Depends on` / `B
 2. 카드의 `Depends on`, `Blocks`, `Status`, `GitHub Issue` 필드 추출
 3. `./scripts/blocker-rank.sh T-XXX` 로 이 카드가 블록하는 목록
 4. **이 카드가 지금 시작 가능한지** 판정:
-   - Depends on이 비어있으면 → ✅ 즉시 가능
-   - Depends on 대상들의 GitHub 이슈 상태를 확인 (가능하면 `gh issue view`) → 모두 closed/Done이면 ✅
-   - 아니면 → ❌ 대기 (어떤 카드가 남았는지 나열)
+   - `Status: Done`이면 → ✅ 이미 완료 (시작 불필요)
+   - Depends on이 비어있거나 "없음"이면 → ✅ 즉시 가능
+   - Depends on 목록의 각 카드에 대해 카드 파일의 `Status` 필드 확인 → `Done`이면 ✅, 아니면 ❌
+   - GitHub 이슈 번호가 있으면 추가로 `gh issue view` 시도 (폴백: 카드 Status 우선)
+   - 미완료 선행 카드가 남아있으면 → ❌ 대기 (어떤 카드가 남았는지 나열)
 
 출력 예:
 ```
@@ -83,17 +86,20 @@ T-010 [FE] API Client
 
 ### 모드 C: Ready 목록
 
-`Depends on`이 "없음"이거나 비어있는 모든 카드 나열:
+`Depends on`이 "없음"이거나 비어있고 **`Status`가 Done이 아닌** 모든 카드 나열:
 
 ```bash
 find docs/tasks -type f -name 'T-*.md' | while read f; do
   deps=$(grep -m1 '^- Depends on:' "$f" | sed 's/^- Depends on: *//')
+  status=$(grep -m1 '^- Status:' "$f" | sed 's/^- Status: *//')
+  # Done 카드는 건너뜀
+  [ "$status" = "Done" ] && continue
   case "$deps" in
-    ""|"없음") 
+    ""|"없음")
       tid=$(basename "$f" | sed -E 's/^(T-[0-9]+).*/\1/')
       title=$(head -1 "$f" | sed 's/^# *//')
       block_count=$(find docs/tasks -type f -name 'T-*.md' -exec grep -lE "^- Depends on:.*$tid" {} \; 2>/dev/null | wc -l | tr -d ' ')
-      printf "%3d  %s\n" "$block_count" "$title"
+      printf "%3d  [%s] %s\n" "$block_count" "$status" "$title"
       ;;
   esac
 done | sort -rn

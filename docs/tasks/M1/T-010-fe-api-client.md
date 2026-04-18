@@ -10,7 +10,7 @@
 - Depends on: T-911 (schema.ts 생성), T-912 (인증 모듈)
 - Blocks: T-008, T-009, T-011, T-012, T-013, T-014, T-015 (모든 FE 피처)
 - GitHub Issue: #26
-- Status: Backlog
+- Status: Done
 
 ## 파일 소유권 (FE 프로젝트 기준 경로)
 

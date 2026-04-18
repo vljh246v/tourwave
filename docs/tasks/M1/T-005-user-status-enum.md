@@ -10,7 +10,7 @@
 - Depends on: 없음
 - Blocks: T-006
 - GitHub Issue: #21 (생성 전)
-- Status: Backlog
+- Status: Done
 
 ## 파일 소유권
 WRITE:

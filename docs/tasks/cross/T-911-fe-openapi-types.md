@@ -10,7 +10,7 @@
 - Depends on: 없음
 - Blocks: T-010, T-008, T-009, T-011, T-012, T-013, T-014, T-015, T-018, T-025
 - GitHub Issue: —
-- Status: Backlog
+- Status: Done
 
 ## 파일 소유권 (FE 리포 기준)
 WRITE:
@@ -69,11 +69,11 @@ DO NOT TOUCH:
    - CI: 모든 PR에서 타입 drift 검증.
 
 ## Acceptance Criteria
-- [ ] `npm run gen:api` 성공 → `src/lib/api/schema.ts` 생성 (>100줄, 주요 경로 포함)
-- [ ] `npm run sync:api && npm run gen:api` 체인 실행 가능 (오류 없음)
-- [ ] 생성된 schema.ts에 최소 10개 경로 타입 포함 (list, create, read, update, cancel 등)
-- [ ] validator 통과 (drift 감지 없음)
-- [ ] `npm run typecheck` 오류 없음 (schema.ts import 후)
+- [x] `npm run gen:api` 성공 → `src/lib/api/schema.ts` 생성 (>100줄, 주요 경로 포함)
+- [x] `npm run sync:api && npm run gen:api` 체인 실행 가능 (오류 없음)
+- [x] 생성된 schema.ts에 최소 10개 경로 타입 포함 (list, create, read, update, cancel 등)
+- [x] validator 통과 (drift 감지 없음)
+- [x] `npm run typecheck` 오류 없음 (schema.ts import 후)
 
 ## Verification
 ```bash

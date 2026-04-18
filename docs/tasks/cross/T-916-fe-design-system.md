@@ -10,7 +10,7 @@
 - Depends on: 없음
 - Blocks: T-008~T-027 (대부분 UI 태스크)
 - GitHub Issue: —
-- Status: Backlog
+- Status: Done
 
 ## 파일 소유권 (FE 리포 기준)
 WRITE:
@@ -278,15 +278,15 @@ DO NOT TOUCH:
 - shadcn/ui보다 가볍지만 유지보수 어려움
 
 ## Acceptance Criteria
-- [ ] `src/components/ui/` 디렉토리 생성 + 5개 컴포넌트 (Button, Input, Modal, Card, FormField)
-- [ ] 각 컴포넌트 TypeScript 타입 정의 명확
-- [ ] Button 최소 3개 variant (primary, secondary, danger)
-- [ ] Input label, error, helperText 지원
-- [ ] Modal header, body, footer + action 버튼 지원
-- [ ] Card header, body, footer 슬롯 지원
-- [ ] FormField Input 래퍼로 form 간단히 구성 가능
-- [ ] 모든 컴포넌트 export (index.ts)
-- [ ] npm run typecheck 통과
+- [x] `src/components/ui/` 디렉토리 생성 + 5개 컴포넌트 (Button, Input, Modal, Card, FormField)
+- [x] 각 컴포넌트 TypeScript 타입 정의 명확
+- [x] Button 최소 3개 variant (primary, secondary, danger)
+- [x] Input label, error, helperText 지원
+- [x] Modal header, body, footer + action 버튼 지원
+- [x] Card header, body, footer 슬롯 지원
+- [x] FormField Input 래퍼로 form 간단히 구성 가능
+- [x] 모든 컴포넌트 export (index.ts)
+- [x] npm run typecheck 통과
 - [ ] Storybook 기초 또는 컴포넌트 예시 주석 포함 (선택)
 
 ## Verification
