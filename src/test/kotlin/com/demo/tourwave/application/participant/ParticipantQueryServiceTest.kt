@@ -27,7 +27,11 @@ class ParticipantQueryServiceTest {
     private val occurrenceRepository = mock(OccurrenceRepository::class.java)
     private val bookingParticipantRepository = mock(BookingParticipantRepository::class.java)
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
-    private val timeWindowPolicyService = TimeWindowPolicyService()
+    private val timeWindowPolicyService = TimeWindowPolicyService(
+        invitationWindowMinutes = 360,
+        invitationExpiryHours = 48,
+        refundFullWindowHours = 48
+    )
 
     private val lifecycleService = ParticipantInvitationLifecycleService(
         bookingRepository = bookingRepository,

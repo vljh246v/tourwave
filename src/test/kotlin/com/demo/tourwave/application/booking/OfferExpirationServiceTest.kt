@@ -30,8 +30,13 @@ class OfferExpirationServiceTest {
         occurrenceRepository = occurrenceRepository,
         auditEventPort = auditEventAdapter,
         paymentLedgerService = paymentLedgerService,
-        timeWindowPolicyService = TimeWindowPolicyService(),
-        clock = clock
+        timeWindowPolicyService = TimeWindowPolicyService(
+            invitationWindowMinutes = 360,
+            invitationExpiryHours = 48,
+            refundFullWindowHours = 48
+        ),
+        clock = clock,
+        offerWindowSeconds = 86400
     )
 
     @Test

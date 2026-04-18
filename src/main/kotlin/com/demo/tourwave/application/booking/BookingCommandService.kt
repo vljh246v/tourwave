@@ -30,11 +30,9 @@ class BookingCommandService(
     private val auditEventPort: AuditEventPort,
     private val paymentLedgerService: PaymentLedgerService,
     private val timeWindowPolicyService: TimeWindowPolicyService,
-    private val clock: Clock
+    private val clock: Clock,
+    private val offerWindowSeconds: Long
 ) {
-    companion object {
-        private const val OFFER_WINDOW_SECONDS = 24 * 60 * 60L
-    }
 
     fun createBooking(command: CreateBookingCommand): CreateBookingResult {
         validateCreateRequest(command)
@@ -829,7 +827,7 @@ class BookingCommandService(
         waitlistedBookings.forEach { waitlisted ->
             if (waitlisted.partySize <= availableSeats) {
                 val promoted = bookingRepository.save(
-                    waitlisted.offer(now.plusSeconds(OFFER_WINDOW_SECONDS))
+                    waitlisted.offer(now.plusSeconds(offerWindowSeconds))
                 )
                 availableSeats -= promoted.partySize
 

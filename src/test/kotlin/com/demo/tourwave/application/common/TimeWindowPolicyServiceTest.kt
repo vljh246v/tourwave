@@ -10,7 +10,11 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TimeWindowPolicyServiceTest {
-    private val service = TimeWindowPolicyService()
+    private val service = TimeWindowPolicyService(
+        invitationWindowMinutes = 360,
+        invitationExpiryHours = 48,
+        refundFullWindowHours = 48
+    )
 
     @Test
     fun `refund deadline uses local timezone across dst transition`() {

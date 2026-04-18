@@ -6,20 +6,18 @@ import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import java.time.Instant
 import java.time.ZoneId
 
-class TimeWindowPolicyService {
-    companion object {
-        private const val INVITATION_EXPIRATION_HOURS = 48L
-        private const val INVITATION_WINDOW_CLOSE_HOURS = 6L
-        private const val LEADER_REFUND_WINDOW_HOURS = 48L
-    }
-
+class TimeWindowPolicyService(
+    private val invitationWindowMinutes: Long,
+    private val invitationExpiryHours: Long,
+    private val refundFullWindowHours: Long
+) {
     fun isOfferExpired(now: Instant, offerExpiresAtUtc: Instant?): Boolean {
         return offerExpiresAtUtc?.let(now::isAfter) == true
     }
 
     fun invitationExpiresAt(participant: BookingParticipant, occurrence: Occurrence?): Instant? {
         val invitedAt = participant.invitedAt ?: return null
-        val invitationLimit = invitedAt.plusSeconds(INVITATION_EXPIRATION_HOURS * 60 * 60)
+        val invitationLimit = invitedAt.plusSeconds(invitationExpiryHours * 60 * 60)
         val startsAtUtc = occurrence?.startsAtUtc ?: return invitationLimit
         return minOf(invitationLimit, startsAtUtc)
     }
@@ -35,12 +33,12 @@ class TimeWindowPolicyService {
     fun isInvitationWindowClosed(occurrence: Occurrence?, now: Instant): Boolean {
         val startsAtUtc = occurrence?.startsAtUtc ?: return false
         val zoneId = ZoneId.of(occurrence.timezone)
-        val closeAt = startsAtUtc.atZone(zoneId).minusHours(INVITATION_WINDOW_CLOSE_HOURS).toInstant()
+        val closeAt = startsAtUtc.atZone(zoneId).minusMinutes(invitationWindowMinutes).toInstant()
         return !now.isBefore(closeAt)
     }
 
     fun fullRefundDeadline(occurrence: Occurrence): Instant? {
         val startsAtUtc = occurrence.startsAtUtc ?: return null
-        return startsAtUtc.atZone(ZoneId.of(occurrence.timezone)).minusHours(LEADER_REFUND_WINDOW_HOURS).toInstant()
+        return startsAtUtc.atZone(ZoneId.of(occurrence.timezone)).minusHours(refundFullWindowHours).toInstant()
     }
 }
