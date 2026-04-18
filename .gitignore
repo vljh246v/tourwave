@@ -57,3 +57,4 @@ qodana.yaml.worktrees/
 # Harness Engineering
 .worktrees/
 logs/sessions/
+logs/*.log
