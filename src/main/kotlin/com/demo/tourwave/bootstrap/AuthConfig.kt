@@ -93,13 +93,11 @@ class AuthConfig {
     @Bean
     fun meService(
         userRepository: UserRepository,
-        organizationQueryService: OrganizationQueryService,
-        clock: Clock
+        organizationQueryService: OrganizationQueryService
     ): MeService {
         return MeService(
             userRepository = userRepository,
-            organizationQueryService = organizationQueryService,
-            clock = clock
+            organizationQueryService = organizationQueryService
         )
     }
 }

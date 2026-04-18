@@ -3,6 +3,7 @@ package com.demo.tourwave.support
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.tour.port.TourRepository
+import com.demo.tourwave.application.user.UserPort
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.organization.OrganizationMembership
@@ -90,6 +91,32 @@ class FakeUserRepository : UserRepository {
     override fun findByEmail(email: String): User? = users.values.firstOrNull { it.email == email.trim().lowercase() }
     override fun findAll(): List<User> = users.values.sortedBy { it.id }
     override fun clear() {
+        users.clear()
+        sequence.set(0)
+    }
+}
+
+class FakeUserPort : UserPort {
+    private val sequence = AtomicLong(0)
+    private val users = ConcurrentHashMap<Long, User>()
+
+    override fun save(user: User): User {
+        val id = user.id ?: sequence.incrementAndGet()
+        val saved = user.copy(id = id)
+        users[id] = saved
+        return saved
+    }
+
+    override fun findById(userId: Long): User? = users[userId]
+
+    override fun findByEmail(email: String): User? =
+        users.values.firstOrNull { it.email == email.trim().lowercase() }
+
+    override fun deleteById(userId: Long) {
+        users.remove(userId)
+    }
+
+    fun clear() {
         users.clear()
         sequence.set(0)
     }

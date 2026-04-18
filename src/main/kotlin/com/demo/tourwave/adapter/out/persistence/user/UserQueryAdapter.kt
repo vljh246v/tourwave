@@ -1,5 +1,6 @@
 package com.demo.tourwave.adapter.out.persistence.user
 
+import com.demo.tourwave.application.user.UserPort
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
 import org.springframework.context.annotation.Profile
@@ -9,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 @Repository
 @Profile("!mysql & !mysql-test")
-class UserQueryAdapter : UserRepository {
+class UserQueryAdapter : UserRepository, UserPort {
     private val sequence = AtomicLong(0L)
     private val usersById = ConcurrentHashMap<Long, User>()
     private val userIdByEmail = ConcurrentHashMap<String, Long>()
@@ -42,6 +43,13 @@ class UserQueryAdapter : UserRepository {
     }
 
     override fun findAll(): List<User> = usersById.values.sortedBy { it.id }
+
+    override fun deleteById(userId: Long) {
+        val user = usersById.remove(userId)
+        if (user != null) {
+            userIdByEmail.remove(user.email)
+        }
+    }
 
     override fun clear() {
         sequence.set(0L)

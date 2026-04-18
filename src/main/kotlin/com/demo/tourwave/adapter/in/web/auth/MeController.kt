@@ -2,6 +2,7 @@ package com.demo.tourwave.adapter.`in`.web.auth
 
 import com.demo.tourwave.application.common.port.AuthzGuardPort
 import com.demo.tourwave.application.user.MeService
+import com.demo.tourwave.application.user.UserService
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.user.User
 import org.springframework.http.ResponseEntity
@@ -15,6 +16,7 @@ import java.time.Instant
 
 @RestController
 class MeController(
+    private val userService: UserService,
     private val meService: MeService,
     private val authCommandService: com.demo.tourwave.application.auth.AuthCommandService,
     private val authzGuardPort: AuthzGuardPort
@@ -25,7 +27,7 @@ class MeController(
     ): ResponseEntity<MeResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
-            meService.getCurrentUser(requiredActorUserId).toMeResponse(
+            userService.getCurrentUser(requiredActorUserId).toMeResponse(
                 meService.getCurrentUserMemberships(requiredActorUserId)
             )
         )
@@ -38,7 +40,7 @@ class MeController(
     ): ResponseEntity<UserResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
-            meService.updateCurrentUser(
+            userService.updateProfile(
                 userId = requiredActorUserId,
                 displayName = request.displayName
             ).toUserResponse()
