@@ -39,5 +39,5 @@ CREATE TABLE IF NOT EXISTS notifications (
   INDEX idx_notifications_user_read (user_id, read_at)
 );
 
-ALTER TABLE organizations ADD COLUMN IF NOT EXISTS attachment_asset_ids_json TEXT NOT NULL DEFAULT '[]';
-ALTER TABLE tours ADD COLUMN IF NOT EXISTS attachment_asset_ids_json TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE organizations ADD COLUMN attachment_asset_ids_json TEXT NOT NULL DEFAULT ('[]');
+ALTER TABLE tours ADD COLUMN attachment_asset_ids_json TEXT NOT NULL DEFAULT ('[]');

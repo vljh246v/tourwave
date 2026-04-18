@@ -48,8 +48,7 @@ data class IdempotencyRecordJpaEntity(
     val state: IdempotencyPersistenceState,
     @Column(name = "response_status")
     val responseStatus: Int? = null,
-    @Lob
-    @Column(name = "response_body_json")
+    @Column(name = "response_body_json", columnDefinition = "LONGTEXT")
     val responseBodyJson: String? = null,
     @Column(name = "response_body_type", length = 255)
     val responseBodyType: String? = null,
