@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
-import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import java.time.Instant
 
@@ -23,8 +22,7 @@ data class InquiryMessageJpaEntity(
     val inquiryId: Long,
     @Column(name = "sender_user_id", nullable = false)
     val senderUserId: Long,
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     val body: String,
     @Column(name = "attachment_asset_ids_csv")
     val attachmentAssetIdsCsv: String? = null,
