@@ -7,6 +7,7 @@ import com.demo.tourwave.application.auth.port.UserActionTokenRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -18,7 +19,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import org.mockito.kotlin.whenever
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -53,19 +53,20 @@ class AuthControllerIntegrationTest {
 
     @Test
     fun `signup verify reset deactivate and auth endpoints work with jwt`() {
-        val signupResult = mockMvc.perform(
-            post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"jae@test.com","password":"Password12","displayName":"Jae"}""")
-        )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.user.email").value("jae@test.com"))
-            .andReturn()
+        val signupResult =
+            mockMvc.perform(
+                post("/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"jae@test.com","password":"Password12","displayName":"Jae"}"""),
+            )
+                .andExpect(status().isCreated)
+                .andExpect(jsonPath("$.user.email").value("jae@test.com"))
+                .andReturn()
 
         val accessToken = JsonFieldReader.read(signupResult.response.contentAsString, "accessToken")
         mockMvc.perform(
             get("/me")
-                .header("Authorization", "Bearer $accessToken")
+                .header("Authorization", "Bearer $accessToken"),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.user.displayName").value("Jae"))
@@ -74,52 +75,53 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(
             post("/auth/email/verify-confirm")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"token":"signup-verify-token"}""")
+                .content("""{"token":"signup-verify-token"}"""),
         )
             .andExpect(status().isNoContent)
 
         mockMvc.perform(
             post("/auth/email/verify-confirm")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"token":"signup-verify-token"}""")
+                .content("""{"token":"signup-verify-token"}"""),
         )
             .andExpect(status().isBadRequest)
 
         mockMvc.perform(
             post("/auth/password/reset-request")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"missing@test.com"}""")
+                .content("""{"email":"missing@test.com"}"""),
         )
             .andExpect(status().isNoContent)
 
         mockMvc.perform(
             post("/auth/password/reset-request")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"jae@test.com"}""")
+                .content("""{"email":"jae@test.com"}"""),
         )
             .andExpect(status().isNoContent)
 
         mockMvc.perform(
             post("/auth/password/reset-confirm")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"token":"reset-token","password":"Password34"}""")
+                .content("""{"token":"reset-token","password":"Password34"}"""),
         )
             .andExpect(status().isNoContent)
 
         mockMvc.perform(
             post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"jae@test.com","password":"Password12"}""")
+                .content("""{"email":"jae@test.com","password":"Password12"}"""),
         )
             .andExpect(status().isUnauthorized)
 
-        val loginResult = mockMvc.perform(
-            post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"jae@test.com","password":"Password34"}""")
-        )
-            .andExpect(status().isOk)
-            .andReturn()
+        val loginResult =
+            mockMvc.perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"jae@test.com","password":"Password34"}"""),
+            )
+                .andExpect(status().isOk)
+                .andReturn()
 
         val resetAccessToken = JsonFieldReader.read(loginResult.response.contentAsString, "accessToken")
         val resetRefreshToken = JsonFieldReader.read(loginResult.response.contentAsString, "refreshToken")
@@ -128,7 +130,7 @@ class AuthControllerIntegrationTest {
             post("/operator/organizations")
                 .header("Authorization", "Bearer $resetAccessToken")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"slug":"jae-ops","name":"Jae Ops","timezone":"Asia/Seoul"}""")
+                .content("""{"slug":"jae-ops","name":"Jae Ops","timezone":"Asia/Seoul"}"""),
         )
             .andExpect(status().isCreated)
 
@@ -136,49 +138,50 @@ class AuthControllerIntegrationTest {
             patch("/me")
                 .header("Authorization", "Bearer $resetAccessToken")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"displayName":"Jae Updated"}""")
+                .content("""{"displayName":"Jae Updated"}"""),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.displayName").value("Jae Updated"))
 
-        val refreshResult = mockMvc.perform(
-            post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"refreshToken":"$resetRefreshToken"}""")
-        )
-            .andExpect(status().isOk)
-            .andReturn()
+        val refreshResult =
+            mockMvc.perform(
+                post("/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"refreshToken":"$resetRefreshToken"}"""),
+            )
+                .andExpect(status().isOk)
+                .andReturn()
 
         val rotatedAccessToken = JsonFieldReader.read(refreshResult.response.contentAsString, "accessToken")
 
         mockMvc.perform(
             post("/auth/email/verify-request")
-                .header("Authorization", "Bearer $rotatedAccessToken")
+                .header("Authorization", "Bearer $rotatedAccessToken"),
         )
             .andExpect(status().isNoContent)
 
         mockMvc.perform(
             post("/me/deactivate")
-                .header("Authorization", "Bearer $rotatedAccessToken")
+                .header("Authorization", "Bearer $rotatedAccessToken"),
         )
             .andExpect(status().isNoContent)
 
         mockMvc.perform(
             get("/me")
-                .header("Authorization", "Bearer $rotatedAccessToken")
+                .header("Authorization", "Bearer $rotatedAccessToken"),
         ).andExpect(status().isUnauthorized)
 
         mockMvc.perform(
             post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"jae@test.com","password":"Password34"}""")
+                .content("""{"email":"jae@test.com","password":"Password34"}"""),
         )
             .andExpect(status().isUnauthorized)
 
         mockMvc.perform(
             post("/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"refreshToken":"$resetRefreshToken"}""")
+                .content("""{"refreshToken":"$resetRefreshToken"}"""),
         )
             .andExpect(status().isUnauthorized)
     }
@@ -200,7 +203,10 @@ class AuthControllerIntegrationTest {
 private object JsonFieldReader {
     private val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
 
-    fun read(json: String, field: String): String {
+    fun read(
+        json: String,
+        field: String,
+    ): String {
         return requireNotNull(mapper.readTree(json).get(field)?.asText())
     }
 }

@@ -9,20 +9,21 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaInstructorProfileRepositoryAdapter(
-    private val instructorProfileJpaRepository: InstructorProfileJpaRepository
+    private val instructorProfileJpaRepository: InstructorProfileJpaRepository,
 ) : InstructorProfileRepository {
     override fun save(instructorProfile: InstructorProfile): InstructorProfile {
         return instructorProfileJpaRepository.save(instructorProfile.toEntity()).toDomain()
     }
 
-    override fun findById(instructorProfileId: Long): InstructorProfile? =
-        instructorProfileJpaRepository.findById(instructorProfileId).orElse(null)?.toDomain()
+    override fun findById(instructorProfileId: Long): InstructorProfile? = instructorProfileJpaRepository.findById(instructorProfileId).orElse(null)?.toDomain()
 
     override fun findByOrganizationId(organizationId: Long): List<InstructorProfile> =
         instructorProfileJpaRepository.findByOrganizationIdOrderByIdAsc(organizationId).map { it.toDomain() }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): InstructorProfile? =
-        instructorProfileJpaRepository.findByOrganizationIdAndUserId(organizationId, userId)?.toDomain()
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): InstructorProfile? = instructorProfileJpaRepository.findByOrganizationIdAndUserId(organizationId, userId)?.toDomain()
 
     override fun clear() {
         instructorProfileJpaRepository.deleteAllInBatch()
@@ -44,7 +45,7 @@ private fun InstructorProfile.toEntity(): InstructorProfileJpaEntity =
         status = status,
         approvedAt = approvedAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun InstructorProfileJpaEntity.toDomain(): InstructorProfile =
@@ -62,5 +63,5 @@ private fun InstructorProfileJpaEntity.toDomain(): InstructorProfile =
         status = status,
         approvedAt = approvedAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

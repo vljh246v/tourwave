@@ -11,16 +11,21 @@ class ScheduledJobCoordinator(
     private val meterRegistry: MeterRegistry,
     private val clock: Clock,
     private val ownerId: String,
-    private val leaseDuration: Duration
+    private val leaseDuration: Duration,
 ) {
-    fun <T> run(jobName: String, onSkipped: () -> T, action: () -> T): T {
+    fun <T> run(
+        jobName: String,
+        onSkipped: () -> T,
+        action: () -> T,
+    ): T {
         val startedAtUtc = clock.instant()
-        val acquired = workerJobLockRepository.tryAcquire(
-            lockName = jobName,
-            ownerId = ownerId,
-            lockedAtUtc = startedAtUtc,
-            leaseExpiresAtUtc = startedAtUtc.plus(leaseDuration)
-        )
+        val acquired =
+            workerJobLockRepository.tryAcquire(
+                lockName = jobName,
+                ownerId = ownerId,
+                lockedAtUtc = startedAtUtc,
+                leaseExpiresAtUtc = startedAtUtc.plus(leaseDuration),
+            )
         if (!acquired) {
             jobExecutionMonitor.recordSkipped(jobName, startedAtUtc)
             meterRegistry.counter("tourwave.job.lock.skipped", "job", jobName).increment()

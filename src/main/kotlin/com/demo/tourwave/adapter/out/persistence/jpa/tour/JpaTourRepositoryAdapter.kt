@@ -11,20 +11,18 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaTourRepositoryAdapter(
-    private val tourJpaRepository: TourJpaRepository
+    private val tourJpaRepository: TourJpaRepository,
 ) : TourRepository {
     override fun save(tour: Tour): Tour {
         return tourJpaRepository.save(tour.toEntity()).toDomain()
     }
 
-    override fun findById(tourId: Long): Tour? =
-        tourJpaRepository.findById(tourId).orElse(null)?.toDomain()
+    override fun findById(tourId: Long): Tour? = tourJpaRepository.findById(tourId).orElse(null)?.toDomain()
 
     override fun findByOrganizationId(organizationId: Long): List<Tour> =
         tourJpaRepository.findByOrganizationIdOrderByIdAsc(organizationId).map { it.toDomain() }
 
-    override fun findAllPublished(): List<Tour> =
-        tourJpaRepository.findByStatusOrderByIdAsc(TourStatus.PUBLISHED).map { it.toDomain() }
+    override fun findAllPublished(): List<Tour> = tourJpaRepository.findByStatusOrderByIdAsc(TourStatus.PUBLISHED).map { it.toDomain() }
 
     override fun clear() {
         tourJpaRepository.deleteAllInBatch()
@@ -47,7 +45,7 @@ private fun Tour.toEntity(): TourJpaEntity =
         attachmentAssetIdsJson = JpaJsonCodec.writeLongList(attachmentAssetIds),
         publishedAt = publishedAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun TourJpaEntity.toDomain(): Tour =
@@ -57,16 +55,17 @@ private fun TourJpaEntity.toDomain(): Tour =
         title = title,
         summary = summary,
         status = status,
-        content = TourContent(
-            description = description,
-            highlights = JpaJsonCodec.readList(highlightsJson),
-            inclusions = JpaJsonCodec.readList(inclusionsJson),
-            exclusions = JpaJsonCodec.readList(exclusionsJson),
-            preparations = JpaJsonCodec.readList(preparationsJson),
-            policies = JpaJsonCodec.readList(policiesJson)
-        ),
+        content =
+            TourContent(
+                description = description,
+                highlights = JpaJsonCodec.readList(highlightsJson),
+                inclusions = JpaJsonCodec.readList(inclusionsJson),
+                exclusions = JpaJsonCodec.readList(exclusionsJson),
+                preparations = JpaJsonCodec.readList(preparationsJson),
+                policies = JpaJsonCodec.readList(policiesJson),
+            ),
         attachmentAssetIds = JpaJsonCodec.readLongList(attachmentAssetIdsJson),
         publishedAt = publishedAt,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

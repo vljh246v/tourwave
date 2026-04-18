@@ -11,19 +11,19 @@ data class BookingParticipant(
     val attendanceStatus: AttendanceStatus = AttendanceStatus.UNKNOWN,
     val invitedAt: Instant? = null,
     val respondedAt: Instant? = null,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 ) {
     companion object {
         fun leader(
             bookingId: Long,
             userId: Long,
-            createdAt: Instant
+            createdAt: Instant,
         ): BookingParticipant {
             return BookingParticipant(
                 bookingId = bookingId,
                 userId = userId,
                 status = BookingParticipantStatus.LEADER,
-                createdAt = createdAt
+                createdAt = createdAt,
             )
         }
     }

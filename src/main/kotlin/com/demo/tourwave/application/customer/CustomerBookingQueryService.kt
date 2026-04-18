@@ -3,9 +3,9 @@ package com.demo.tourwave.application.customer
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.common.port.ActorAuthContext
+import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.participant.ParticipantAccessPolicy
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
-import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
@@ -33,12 +33,12 @@ data class MyBookingListItem(
     val timezone: String?,
     val locationText: String?,
     val meetingPoint: String?,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class CalendarDocument(
     val fileName: String,
-    val body: String
+    val body: String,
 )
 
 class CustomerBookingQueryService(
@@ -47,12 +47,13 @@ class CustomerBookingQueryService(
     private val bookingParticipantRepository: BookingParticipantRepository,
     private val participantAccessPolicy: ParticipantAccessPolicy,
     private val tourRepository: TourRepository,
-    private val organizationRepository: OrganizationRepository
+    private val organizationRepository: OrganizationRepository,
 ) {
     fun listMyBookings(userId: Long): List<MyBookingListItem> {
         val leaderBookings = bookingRepository.findByLeaderUserId(userId)
-        val participantBookings = bookingParticipantRepository.findByUserId(userId)
-            .mapNotNull { participant -> bookingRepository.findById(participant.bookingId) }
+        val participantBookings =
+            bookingParticipantRepository.findByUserId(userId)
+                .mapNotNull { participant -> bookingRepository.findById(participant.bookingId) }
 
         return (leaderBookings + participantBookings)
             .associateBy { requireNotNull(it.id) }
@@ -76,16 +77,19 @@ class CustomerBookingQueryService(
                     timezone = occurrence.timezone,
                     locationText = occurrence.locationText,
                     meetingPoint = occurrence.meetingPoint,
-                    createdAt = booking.createdAt
+                    createdAt = booking.createdAt,
                 )
             }
             .sortedWith(
                 compareByDescending<MyBookingListItem> { it.occurrenceStartsAtUtc ?: it.createdAt }
-                    .thenByDescending { it.bookingId }
+                    .thenByDescending { it.bookingId },
             )
     }
 
-    fun bookingCalendar(bookingId: Long, actor: ActorAuthContext): CalendarDocument {
+    fun bookingCalendar(
+        bookingId: Long,
+        actor: ActorAuthContext,
+    ): CalendarDocument {
         participantAccessPolicy.authorizeBookingParticipants(bookingId = bookingId, actor = actor)
         val booking = bookingRepository.findById(bookingId) ?: throw notFound("booking $bookingId not found")
         val occurrence = occurrenceRepository.findById(booking.occurrenceId) ?: occurrenceRepository.getOrCreate(booking.occurrenceId)
@@ -96,7 +100,7 @@ class CustomerBookingQueryService(
             location = occurrence.locationText ?: occurrence.meetingPoint ?: "Tourwave",
             startsAtUtc = occurrence.startsAtUtc,
             endsAtUtc = occurrence.endsAtUtc,
-            fileName = "booking-$bookingId.ics"
+            fileName = "booking-$bookingId.ics",
         )
     }
 
@@ -116,16 +120,22 @@ class CustomerBookingQueryService(
             location = occurrence.locationText ?: occurrence.meetingPoint ?: "Tourwave",
             startsAtUtc = occurrence.startsAtUtc,
             endsAtUtc = occurrence.endsAtUtc,
-            fileName = "occurrence-$occurrenceId.ics"
+            fileName = "occurrence-$occurrenceId.ics",
         )
     }
 
-    private fun buildSummary(booking: Booking, occurrence: Occurrence): String {
+    private fun buildSummary(
+        booking: Booking,
+        occurrence: Occurrence,
+    ): String {
         val tourTitle = occurrence.tourId?.let(tourRepository::findById)?.title ?: "Tour booking"
         return "$tourTitle (${booking.status.name})"
     }
 
-    private fun buildBookingDescription(booking: Booking, occurrence: Occurrence): String {
+    private fun buildBookingDescription(
+        booking: Booking,
+        occurrence: Occurrence,
+    ): String {
         val tour = occurrence.tourId?.let(tourRepository::findById)
         return buildString {
             append(tour?.summary ?: "Tourwave booking")
@@ -142,35 +152,36 @@ class CustomerBookingQueryService(
         location: String,
         startsAtUtc: Instant?,
         endsAtUtc: Instant?,
-        fileName: String
+        fileName: String,
     ): CalendarDocument {
         val start = startsAtUtc ?: throw notFound("calendar export requires a scheduled start time")
         val end = endsAtUtc ?: start.plusSeconds(7200)
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(java.time.ZoneOffset.UTC)
-        val body = """
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Tourwave//Booking Calendar//EN
-BEGIN:VEVENT
-UID:$uid
-DTSTAMP:${formatter.format(Instant.now())}
-DTSTART:${formatter.format(start)}
-DTEND:${formatter.format(end)}
-SUMMARY:${escapeIcs(summary)}
-DESCRIPTION:${escapeIcs(description)}
-LOCATION:${escapeIcs(location)}
-END:VEVENT
-END:VCALENDAR
-        """.trimIndent()
+        val body =
+            """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Tourwave//Booking Calendar//EN
+            BEGIN:VEVENT
+            UID:$uid
+            DTSTAMP:${formatter.format(Instant.now())}
+            DTSTART:${formatter.format(start)}
+            DTEND:${formatter.format(end)}
+            SUMMARY:${escapeIcs(summary)}
+            DESCRIPTION:${escapeIcs(description)}
+            LOCATION:${escapeIcs(location)}
+            END:VEVENT
+            END:VCALENDAR
+            """.trimIndent()
         return CalendarDocument(fileName = fileName, body = body)
     }
 
-    private fun escapeIcs(value: String): String =
-        value.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+    private fun escapeIcs(value: String): String = value.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
 
-    private fun notFound(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = message
-    )
+    private fun notFound(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = message,
+        )
 }

@@ -17,7 +17,7 @@ import java.time.Instant
 @Table(
     name = "reviews",
     uniqueConstraints = [UniqueConstraint(name = "uk_reviews_occurrence_reviewer_type", columnNames = ["occurrence_id", "reviewer_user_id", "type"])],
-    indexes = [Index(name = "idx_reviews_occurrence_type", columnList = "occurrence_id,type")]
+    indexes = [Index(name = "idx_reviews_occurrence_type", columnList = "occurrence_id,type")],
 )
 data class ReviewJpaEntity(
     @Id
@@ -35,5 +35,5 @@ data class ReviewJpaEntity(
     @Column
     val comment: String? = null,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

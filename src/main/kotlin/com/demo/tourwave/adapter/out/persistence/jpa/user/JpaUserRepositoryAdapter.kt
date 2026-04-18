@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaUserRepositoryAdapter(
-    private val userJpaRepository: UserJpaRepository
+    private val userJpaRepository: UserJpaRepository,
 ) : UserRepository {
     override fun save(user: User): User = userJpaRepository.save(user.toEntity()).toDomain()
 
@@ -33,7 +33,7 @@ private fun User.toEntity(): UserJpaEntity =
         createdAt = createdAt,
         updatedAt = updatedAt,
         emailVerifiedAt = emailVerifiedAt,
-        deletedAtUtc = deletedAt
+        deletedAtUtc = deletedAt,
     )
 
 private fun UserJpaEntity.toDomain(): User =
@@ -46,5 +46,5 @@ private fun UserJpaEntity.toDomain(): User =
         createdAt = createdAt,
         updatedAt = updatedAt,
         emailVerifiedAt = emailVerifiedAt,
-        deletedAt = deletedAtUtc
+        deletedAt = deletedAtUtc,
     )

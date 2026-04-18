@@ -4,5 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface InquiryJpaRepository : JpaRepository<InquiryJpaEntity, Long> {
     fun findByBookingId(bookingId: Long): InquiryJpaEntity?
+
     fun findByCreatedByUserIdOrderByCreatedAtDescIdDesc(createdByUserId: Long): List<InquiryJpaEntity>
 }

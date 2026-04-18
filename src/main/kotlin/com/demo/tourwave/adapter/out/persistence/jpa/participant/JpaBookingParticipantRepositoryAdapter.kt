@@ -9,19 +9,19 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaBookingParticipantRepositoryAdapter(
-    private val bookingParticipantJpaRepository: BookingParticipantJpaRepository
+    private val bookingParticipantJpaRepository: BookingParticipantJpaRepository,
 ) : BookingParticipantRepository {
-    override fun save(participant: BookingParticipant): BookingParticipant =
-        bookingParticipantJpaRepository.save(participant.toEntity()).toDomain()
+    override fun save(participant: BookingParticipant): BookingParticipant = bookingParticipantJpaRepository.save(participant.toEntity()).toDomain()
 
-    override fun findById(participantId: Long): BookingParticipant? =
-        bookingParticipantJpaRepository.findById(participantId).orElse(null)?.toDomain()
+    override fun findById(participantId: Long): BookingParticipant? = bookingParticipantJpaRepository.findById(participantId).orElse(null)?.toDomain()
 
     override fun findByBookingId(bookingId: Long): List<BookingParticipant> =
         bookingParticipantJpaRepository.findByBookingIdOrderByCreatedAtAscIdAsc(bookingId).map { it.toDomain() }
 
-    override fun findByBookingIdAndUserId(bookingId: Long, userId: Long): BookingParticipant? =
-        bookingParticipantJpaRepository.findByBookingIdAndUserId(bookingId, userId)?.toDomain()
+    override fun findByBookingIdAndUserId(
+        bookingId: Long,
+        userId: Long,
+    ): BookingParticipant? = bookingParticipantJpaRepository.findByBookingIdAndUserId(bookingId, userId)?.toDomain()
 
     override fun findByUserId(userId: Long): List<BookingParticipant> =
         bookingParticipantJpaRepository.findByUserIdOrderByCreatedAtDescIdDesc(userId).map { it.toDomain() }
@@ -43,7 +43,7 @@ private fun BookingParticipant.toEntity(): BookingParticipantJpaEntity =
         attendanceStatus = attendanceStatus,
         invitedAt = invitedAt,
         respondedAt = respondedAt,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun BookingParticipantJpaEntity.toDomain(): BookingParticipant =
@@ -55,5 +55,5 @@ private fun BookingParticipantJpaEntity.toDomain(): BookingParticipant =
         attendanceStatus = attendanceStatus,
         invitedAt = invitedAt,
         respondedAt = respondedAt,
-        createdAt = createdAt
+        createdAt = createdAt,
     )

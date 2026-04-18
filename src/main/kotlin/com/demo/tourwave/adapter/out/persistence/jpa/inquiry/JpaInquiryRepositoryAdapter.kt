@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 @Profile("mysql", "mysql-test")
 class JpaInquiryRepositoryAdapter(
     private val inquiryJpaRepository: InquiryJpaRepository,
-    private val inquiryMessageJpaRepository: InquiryMessageJpaRepository
+    private val inquiryMessageJpaRepository: InquiryMessageJpaRepository,
 ) : InquiryRepository {
     override fun save(inquiry: Inquiry): Inquiry = inquiryJpaRepository.save(inquiry.toEntity()).toDomain()
 
@@ -21,11 +21,9 @@ class JpaInquiryRepositoryAdapter(
     override fun findByCreatedByUserId(createdByUserId: Long): List<Inquiry> =
         inquiryJpaRepository.findByCreatedByUserIdOrderByCreatedAtDescIdDesc(createdByUserId).map { it.toDomain() }
 
-    override fun saveMessage(message: InquiryMessage): InquiryMessage =
-        inquiryMessageJpaRepository.save(message.toEntity()).toDomain()
+    override fun saveMessage(message: InquiryMessage): InquiryMessage = inquiryMessageJpaRepository.save(message.toEntity()).toDomain()
 
-    override fun findMessageById(messageId: Long): InquiryMessage? =
-        inquiryMessageJpaRepository.findById(messageId).orElse(null)?.toDomain()
+    override fun findMessageById(messageId: Long): InquiryMessage? = inquiryMessageJpaRepository.findById(messageId).orElse(null)?.toDomain()
 
     override fun findMessagesByInquiryId(inquiryId: Long): List<InquiryMessage> =
         inquiryMessageJpaRepository.findByInquiryIdOrderByIdAsc(inquiryId).map { it.toDomain() }
@@ -45,7 +43,7 @@ private fun Inquiry.toEntity(): InquiryJpaEntity =
         createdByUserId = createdByUserId,
         subject = subject,
         status = status,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun InquiryJpaEntity.toDomain(): Inquiry =
@@ -57,7 +55,7 @@ private fun InquiryJpaEntity.toDomain(): Inquiry =
         createdByUserId = createdByUserId,
         subject = subject,
         status = status,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun InquiryMessage.toEntity(): InquiryMessageJpaEntity =
@@ -67,7 +65,7 @@ private fun InquiryMessage.toEntity(): InquiryMessageJpaEntity =
         senderUserId = senderUserId,
         body = body,
         attachmentAssetIdsCsv = attachmentAssetIds?.joinToString(","),
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun InquiryMessageJpaEntity.toDomain(): InquiryMessage =
@@ -76,9 +74,10 @@ private fun InquiryMessageJpaEntity.toDomain(): InquiryMessage =
         inquiryId = inquiryId,
         senderUserId = senderUserId,
         body = body,
-        attachmentAssetIds = attachmentAssetIdsCsv
-            ?.takeIf { it.isNotBlank() }
-            ?.split(",")
-            ?.map { it.toLong() },
-        createdAt = createdAt
+        attachmentAssetIds =
+            attachmentAssetIdsCsv
+                ?.takeIf { it.isNotBlank() }
+                ?.split(",")
+                ?.map { it.toLong() },
+        createdAt = createdAt,
     )

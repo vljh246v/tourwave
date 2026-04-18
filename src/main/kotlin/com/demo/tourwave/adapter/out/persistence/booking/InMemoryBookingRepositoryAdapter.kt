@@ -43,7 +43,10 @@ class InMemoryBookingRepositoryAdapter : BookingRepository {
             .sortedWith(compareBy<Booking> { it.createdAt }.thenBy { it.id ?: Long.MAX_VALUE })
     }
 
-    override fun findByOccurrenceAndStatuses(occurrenceId: Long, statuses: Set<BookingStatus>): List<Booking> {
+    override fun findByOccurrenceAndStatuses(
+        occurrenceId: Long,
+        statuses: Set<BookingStatus>,
+    ): List<Booking> {
         return bookings.values.filter { it.occurrenceId == occurrenceId && it.status in statuses }
     }
 
@@ -54,7 +57,7 @@ class InMemoryBookingRepositoryAdapter : BookingRepository {
                 compareBy<Booking> { it.waitlistSkipCount }
                     .thenBy { it.lastWaitlistActionAtUtc ?: it.createdAt }
                     .thenBy { it.createdAt }
-                    .thenBy { it.id ?: Long.MAX_VALUE }
+                    .thenBy { it.id ?: Long.MAX_VALUE },
             )
     }
 

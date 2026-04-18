@@ -20,7 +20,7 @@ import java.time.LocalDate
 @RestController
 class OrganizationReportController(
     private val organizationReportService: OrganizationReportService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/organizations/{organizationId}/reports/bookings")
     fun getBookingReport(
@@ -31,20 +31,21 @@ class OrganizationReportController(
         @RequestParam(required = false) tourId: Long?,
         @RequestParam(required = false) occurrenceId: Long?,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(required = false, defaultValue = "20") limit: Int
+        @RequestParam(required = false, defaultValue = "20") limit: Int,
     ): ResponseEntity<BookingReportResponse> {
-        val page = organizationReportService.getBookingReport(
-            BookingReportQuery(
-                actorUserId = authzGuardPort.requireActorUserId(actorUserId),
-                organizationId = organizationId,
-                dateFrom = dateFrom,
-                dateTo = dateTo,
-                tourId = tourId,
-                occurrenceId = occurrenceId,
-                cursor = cursor,
-                limit = limit
+        val page =
+            organizationReportService.getBookingReport(
+                BookingReportQuery(
+                    actorUserId = authzGuardPort.requireActorUserId(actorUserId),
+                    organizationId = organizationId,
+                    dateFrom = dateFrom,
+                    dateTo = dateTo,
+                    tourId = tourId,
+                    occurrenceId = occurrenceId,
+                    cursor = cursor,
+                    limit = limit,
+                ),
             )
-        )
         return ResponseEntity.ok(BookingReportResponse(page.items.map { it.toResponse() }, page.nextCursor))
     }
 
@@ -55,20 +56,21 @@ class OrganizationReportController(
         @RequestParam(required = false) dateFrom: LocalDate?,
         @RequestParam(required = false) dateTo: LocalDate?,
         @RequestParam(required = false) tourId: Long?,
-        @RequestParam(required = false) occurrenceId: Long?
+        @RequestParam(required = false) occurrenceId: Long?,
     ): ResponseEntity<String> {
-        val csv = organizationReportService.exportBookingReportCsv(
-            BookingReportQuery(
-                actorUserId = authzGuardPort.requireActorUserId(actorUserId),
-                organizationId = organizationId,
-                dateFrom = dateFrom,
-                dateTo = dateTo,
-                tourId = tourId,
-                occurrenceId = occurrenceId,
-                cursor = null,
-                limit = Int.MAX_VALUE
+        val csv =
+            organizationReportService.exportBookingReportCsv(
+                BookingReportQuery(
+                    actorUserId = authzGuardPort.requireActorUserId(actorUserId),
+                    organizationId = organizationId,
+                    dateFrom = dateFrom,
+                    dateTo = dateTo,
+                    tourId = tourId,
+                    occurrenceId = occurrenceId,
+                    cursor = null,
+                    limit = Int.MAX_VALUE,
+                ),
             )
-        )
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("text/csv"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"organization-$organizationId-bookings.csv\"")
@@ -84,20 +86,21 @@ class OrganizationReportController(
         @RequestParam(required = false) tourId: Long?,
         @RequestParam(required = false) occurrenceId: Long?,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(required = false, defaultValue = "20") limit: Int
+        @RequestParam(required = false, defaultValue = "20") limit: Int,
     ): ResponseEntity<OccurrenceOpsReportResponse> {
-        val page = organizationReportService.getOccurrenceOpsReport(
-            OccurrenceOpsReportQuery(
-                actorUserId = authzGuardPort.requireActorUserId(actorUserId),
-                organizationId = organizationId,
-                dateFrom = dateFrom,
-                dateTo = dateTo,
-                tourId = tourId,
-                occurrenceId = occurrenceId,
-                cursor = cursor,
-                limit = limit
+        val page =
+            organizationReportService.getOccurrenceOpsReport(
+                OccurrenceOpsReportQuery(
+                    actorUserId = authzGuardPort.requireActorUserId(actorUserId),
+                    organizationId = organizationId,
+                    dateFrom = dateFrom,
+                    dateTo = dateTo,
+                    tourId = tourId,
+                    occurrenceId = occurrenceId,
+                    cursor = cursor,
+                    limit = limit,
+                ),
             )
-        )
         return ResponseEntity.ok(OccurrenceOpsReportResponse(page.items.map { it.toResponse() }, page.nextCursor))
     }
 
@@ -108,20 +111,21 @@ class OrganizationReportController(
         @RequestParam(required = false) dateFrom: LocalDate?,
         @RequestParam(required = false) dateTo: LocalDate?,
         @RequestParam(required = false) tourId: Long?,
-        @RequestParam(required = false) occurrenceId: Long?
+        @RequestParam(required = false) occurrenceId: Long?,
     ): ResponseEntity<String> {
-        val csv = organizationReportService.exportOccurrenceOpsReportCsv(
-            OccurrenceOpsReportQuery(
-                actorUserId = authzGuardPort.requireActorUserId(actorUserId),
-                organizationId = organizationId,
-                dateFrom = dateFrom,
-                dateTo = dateTo,
-                tourId = tourId,
-                occurrenceId = occurrenceId,
-                cursor = null,
-                limit = Int.MAX_VALUE
+        val csv =
+            organizationReportService.exportOccurrenceOpsReportCsv(
+                OccurrenceOpsReportQuery(
+                    actorUserId = authzGuardPort.requireActorUserId(actorUserId),
+                    organizationId = organizationId,
+                    dateFrom = dateFrom,
+                    dateTo = dateTo,
+                    tourId = tourId,
+                    occurrenceId = occurrenceId,
+                    cursor = null,
+                    limit = Int.MAX_VALUE,
+                ),
             )
-        )
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType("text/csv"))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"organization-$organizationId-occurrences.csv\"")
@@ -131,7 +135,7 @@ class OrganizationReportController(
 
 data class BookingReportResponse(
     val items: List<BookingReportItemResponse>,
-    val nextCursor: String?
+    val nextCursor: String?,
 )
 
 data class BookingReportItemResponse(
@@ -143,12 +147,12 @@ data class BookingReportItemResponse(
     val status: String,
     val paymentStatus: String,
     val refundStatus: String?,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class OccurrenceOpsReportResponse(
     val items: List<OccurrenceOpsReportItemResponse>,
-    val nextCursor: String?
+    val nextCursor: String?,
 )
 
 data class OccurrenceOpsReportItemResponse(
@@ -164,7 +168,7 @@ data class OccurrenceOpsReportItemResponse(
     val attendedCount: Int,
     val noShowCount: Int,
     val refundedBookingCount: Int,
-    val refundPendingCount: Int
+    val refundPendingCount: Int,
 )
 
 private fun BookingReportItemView.toResponse(): BookingReportItemResponse =
@@ -177,7 +181,7 @@ private fun BookingReportItemView.toResponse(): BookingReportItemResponse =
         status = status.name,
         paymentStatus = paymentStatus.name,
         refundStatus = refundStatus?.name,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun OccurrenceOpsReportItemView.toResponse(): OccurrenceOpsReportItemResponse =
@@ -194,5 +198,5 @@ private fun OccurrenceOpsReportItemView.toResponse(): OccurrenceOpsReportItemRes
         attendedCount = attendedCount,
         noShowCount = noShowCount,
         refundedBookingCount = refundedBookingCount,
-        refundPendingCount = refundPendingCount
+        refundPendingCount = refundPendingCount,
     )

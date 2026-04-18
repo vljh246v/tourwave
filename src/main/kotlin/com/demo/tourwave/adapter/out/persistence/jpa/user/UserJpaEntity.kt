@@ -15,7 +15,7 @@ import java.time.Instant
 @Entity
 @Table(
     name = "users",
-    indexes = [Index(name = "uk_users_email", columnList = "email", unique = true)]
+    indexes = [Index(name = "uk_users_email", columnList = "email", unique = true)],
 )
 data class UserJpaEntity(
     @Id
@@ -37,5 +37,5 @@ data class UserJpaEntity(
     @Column(name = "email_verified_at")
     val emailVerifiedAt: Instant? = null,
     @Column(name = "deleted_at_utc")
-    val deletedAtUtc: Instant? = null
+    val deletedAtUtc: Instant? = null,
 )

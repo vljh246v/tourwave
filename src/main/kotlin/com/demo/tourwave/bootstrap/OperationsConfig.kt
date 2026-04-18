@@ -1,16 +1,16 @@
 package com.demo.tourwave.bootstrap
 
+import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.common.JobExecutionMonitor
 import com.demo.tourwave.application.common.ScheduledJobCoordinator
 import com.demo.tourwave.application.common.port.AuditEventPort
-import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.common.port.WorkerJobLockRepository
+import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.operations.OperatorRemediationQueueService
 import com.demo.tourwave.application.operations.port.OperatorFailureRecordRepository
 import com.demo.tourwave.application.payment.PaymentWebhookService
 import com.demo.tourwave.application.payment.RefundOperationsService
-import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.payment.port.PaymentProviderEventRepository
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.beans.factory.annotation.Value
@@ -35,7 +35,7 @@ class OperationsConfig {
         @Value("\${tourwave.jobs.lock.owner-id:}")
         configuredOwnerId: String,
         @Value("\${tourwave.jobs.lock.lease-seconds:120}")
-        leaseSeconds: Long
+        leaseSeconds: Long,
     ): ScheduledJobCoordinator {
         return ScheduledJobCoordinator(
             workerJobLockRepository = workerJobLockRepository,
@@ -43,7 +43,7 @@ class OperationsConfig {
             meterRegistry = meterRegistry,
             clock = clock,
             ownerId = resolveOwnerId(configuredOwnerId),
-            leaseDuration = Duration.ofSeconds(leaseSeconds)
+            leaseDuration = Duration.ofSeconds(leaseSeconds),
         )
     }
 
@@ -57,7 +57,7 @@ class OperationsConfig {
         paymentWebhookService: PaymentWebhookService,
         operatorFailureRecordRepository: OperatorFailureRecordRepository,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): OperatorRemediationQueueService {
         return OperatorRemediationQueueService(
             paymentRecordRepository = paymentRecordRepository,
@@ -68,7 +68,7 @@ class OperationsConfig {
             paymentWebhookService = paymentWebhookService,
             operatorFailureRecordRepository = operatorFailureRecordRepository,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 

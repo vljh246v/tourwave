@@ -6,7 +6,7 @@ interface IdempotencyStore {
         method: String,
         pathTemplate: String,
         idempotencyKey: String,
-        requestHash: String
+        requestHash: String,
     ): IdempotencyDecision
 
     fun complete(
@@ -15,7 +15,7 @@ interface IdempotencyStore {
         pathTemplate: String,
         idempotencyKey: String,
         status: Int,
-        body: Any
+        body: Any,
     )
 
     fun markInProgressForTest(
@@ -23,7 +23,7 @@ interface IdempotencyStore {
         method: String,
         pathTemplate: String,
         idempotencyKey: String,
-        requestHash: String
+        requestHash: String,
     )
 
     fun clear()
@@ -31,9 +31,10 @@ interface IdempotencyStore {
 
 sealed interface IdempotencyDecision {
     data object Reserved : IdempotencyDecision
+
     data class Replay(
         val status: Int,
-        val body: Any
+        val body: Any,
     ) : IdempotencyDecision
 }
 

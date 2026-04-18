@@ -22,11 +22,12 @@ class InMemoryFavoriteRepositoryAdapter : FavoriteRepository {
         return saved
     }
 
-    override fun findByUserId(userId: Long): List<Favorite> =
-        favorites.values.filter { it.userId == userId }.sortedByDescending { it.createdAt }
+    override fun findByUserId(userId: Long): List<Favorite> = favorites.values.filter { it.userId == userId }.sortedByDescending { it.createdAt }
 
-    override fun findByUserIdAndTourId(userId: Long, tourId: Long): Favorite? =
-        favorites.values.firstOrNull { it.userId == userId && it.tourId == tourId }
+    override fun findByUserIdAndTourId(
+        userId: Long,
+        tourId: Long,
+    ): Favorite? = favorites.values.firstOrNull { it.userId == userId && it.tourId == tourId }
 
     override fun delete(favoriteId: Long) {
         favorites.remove(favoriteId)

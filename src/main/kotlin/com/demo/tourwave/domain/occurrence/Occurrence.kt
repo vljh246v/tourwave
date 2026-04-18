@@ -17,7 +17,7 @@ data class Occurrence(
     val meetingPoint: String? = null,
     val status: OccurrenceStatus = OccurrenceStatus.SCHEDULED,
     val createdAt: Instant = Instant.EPOCH,
-    val updatedAt: Instant = createdAt
+    val updatedAt: Instant = createdAt,
 ) {
     companion object {
         fun create(
@@ -32,7 +32,7 @@ data class Occurrence(
             currency: String,
             locationText: String?,
             meetingPoint: String?,
-            now: Instant
+            now: Instant,
         ): Occurrence {
             return Occurrence(
                 id = 0L,
@@ -48,7 +48,7 @@ data class Occurrence(
                 locationText = locationText,
                 meetingPoint = meetingPoint,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }
@@ -61,7 +61,7 @@ data class Occurrence(
         timezone: String,
         locationText: String?,
         meetingPoint: String?,
-        now: Instant
+        now: Instant,
     ): Occurrence {
         return copy(
             instructorProfileId = instructorProfileId,
@@ -71,7 +71,7 @@ data class Occurrence(
             timezone = timezone,
             locationText = locationText,
             meetingPoint = meetingPoint,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -81,7 +81,7 @@ data class Occurrence(
         timezone: String,
         locationText: String?,
         meetingPoint: String?,
-        now: Instant
+        now: Instant,
     ): Occurrence {
         return copy(
             startsAtUtc = startsAtUtc,
@@ -89,7 +89,7 @@ data class Occurrence(
             timezone = timezone,
             locationText = locationText,
             meetingPoint = meetingPoint,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 }

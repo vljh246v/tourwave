@@ -15,8 +15,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTest(
     properties = [
-        "tourwave.auth.allow-header-auth-fallback=false"
-    ]
+        "tourwave.auth.allow-header-auth-fallback=false",
+    ],
 )
 @AutoConfigureMockMvc
 class RealModeSecurityIntegrationTest {
@@ -43,7 +43,7 @@ class RealModeSecurityIntegrationTest {
     fun `header fallback can be disabled for runtime security`() {
         mockMvc.perform(
             get("/me")
-                .header("X-Actor-User-Id", "101")
+                .header("X-Actor-User-Id", "101"),
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"))

@@ -18,7 +18,7 @@ data class RefundRetryJobResult(
     val eligibleCount: Int,
     val refundedCount: Int,
     val reviewRequiredCount: Int,
-    val stillRetryableCount: Int
+    val stillRetryableCount: Int,
 )
 
 @Transactional
@@ -29,7 +29,7 @@ class RefundRetryService(
     private val auditEventPort: AuditEventPort,
     private val maxRetryAttempts: Int,
     private val retryCooldown: Duration,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun retryPendingRefunds(): RefundRetryJobResult {
         val records = paymentRecordRepository.findByStatuses(setOf(PaymentRecordStatus.REFUND_FAILED_RETRYABLE))
@@ -44,16 +44,18 @@ class RefundRetryService(
             val nextRetryCount = record.refundRetryCount + 1
             val attemptedAt = clock.instant()
             when (
-                val result = refundExecutionPort.executeRefund(
-                    RefundExecutionRequest(
-                        bookingId = record.bookingId,
-                        actorUserId = 0L,
-                        refundRequestId = requestId,
-                        reasonCode = com.demo.tourwave.domain.booking.RefundReasonCode.valueOf(
-                            record.lastRefundReasonCode ?: "UNKNOWN"
-                        )
+                val result =
+                    refundExecutionPort.executeRefund(
+                        RefundExecutionRequest(
+                            bookingId = record.bookingId,
+                            actorUserId = 0L,
+                            refundRequestId = requestId,
+                            reasonCode =
+                                com.demo.tourwave.domain.booking.RefundReasonCode.valueOf(
+                                    record.lastRefundReasonCode ?: "UNKNOWN",
+                                ),
+                        ),
                     )
-                )
             ) {
                 is RefundExecutionResult.Success -> {
                     refundedCount += 1
@@ -66,8 +68,8 @@ class RefundRetryService(
                             refundRetryCount = nextRetryCount,
                             lastRefundAttemptedAtUtc = attemptedAt,
                             nextRetryAtUtc = null,
-                            updatedAtUtc = clock.instant()
-                        )
+                            updatedAtUtc = clock.instant(),
+                        ),
                     )
                     bookingRepository.save(booking.copy(paymentStatus = com.demo.tourwave.domain.booking.PaymentStatus.REFUNDED))
                 }
@@ -82,8 +84,8 @@ class RefundRetryService(
                             refundRetryCount = nextRetryCount,
                             lastRefundAttemptedAtUtc = attemptedAt,
                             nextRetryAtUtc = null,
-                            updatedAtUtc = clock.instant()
-                        )
+                            updatedAtUtc = clock.instant(),
+                        ),
                     )
                 }
 
@@ -91,18 +93,19 @@ class RefundRetryService(
                     stillRetryableCount += 1
                     paymentRecordRepository.save(
                         record.copy(
-                            status = if (nextRetryCount >= maxRetryAttempts) {
-                                PaymentRecordStatus.REFUND_REVIEW_REQUIRED
-                            } else {
-                                PaymentRecordStatus.REFUND_FAILED_RETRYABLE
-                            },
+                            status =
+                                if (nextRetryCount >= maxRetryAttempts) {
+                                    PaymentRecordStatus.REFUND_REVIEW_REQUIRED
+                                } else {
+                                    PaymentRecordStatus.REFUND_FAILED_RETRYABLE
+                                },
                             lastRefundRequestId = requestId,
                             lastErrorCode = result.errorCode,
                             refundRetryCount = nextRetryCount,
                             lastRefundAttemptedAtUtc = attemptedAt,
                             nextRetryAtUtc = nextRetryAt(attemptedAt, nextRetryCount),
-                            updatedAtUtc = clock.instant()
-                        )
+                            updatedAtUtc = clock.instant(),
+                        ),
                     )
                 }
             }
@@ -115,11 +118,12 @@ class RefundRetryService(
                     resourceId = requireNotNull(record.id),
                     occurredAtUtc = clock.instant(),
                     reasonCode = "REFUND_RETRY",
-                    afterJson = mapOf(
-                        "bookingId" to record.bookingId,
-                        "status" to paymentRecordRepository.findByBookingId(record.bookingId)?.status?.name
-                    )
-                )
+                    afterJson =
+                        mapOf(
+                            "bookingId" to record.bookingId,
+                            "status" to paymentRecordRepository.findByBookingId(record.bookingId)?.status?.name,
+                        ),
+                ),
             )
         }
 
@@ -128,13 +132,14 @@ class RefundRetryService(
             eligibleCount = eligibleRecords.size,
             refundedCount = refundedCount,
             reviewRequiredCount = reviewRequiredCount,
-            stillRetryableCount = stillRetryableCount
+            stillRetryableCount = stillRetryableCount,
         )
     }
 
     fun retryBookingRefund(bookingId: Long): PaymentRecordStatus {
-        val record = paymentRecordRepository.findByBookingId(bookingId)
-            ?: throw IllegalArgumentException("Payment record not found for booking $bookingId")
+        val record =
+            paymentRecordRepository.findByBookingId(bookingId)
+                ?: throw IllegalArgumentException("Payment record not found for booking $bookingId")
         require(record.status == PaymentRecordStatus.REFUND_FAILED_RETRYABLE || record.status == PaymentRecordStatus.REFUND_REVIEW_REQUIRED) {
             "Booking $bookingId is not waiting for refund remediation"
         }
@@ -142,8 +147,8 @@ class RefundRetryService(
             paymentRecordRepository.save(
                 record.copy(
                     status = PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
-                    updatedAtUtc = clock.instant()
-                )
+                    updatedAtUtc = clock.instant(),
+                ),
             )
             return PaymentRecordStatus.REFUND_REVIEW_REQUIRED
         }
@@ -152,72 +157,78 @@ class RefundRetryService(
         val requestId = record.lastRefundRequestId ?: "manual-$bookingId-${clock.instant().toEpochMilli()}"
         val nextRetryCount = record.refundRetryCount + 1
         val attemptedAt = clock.instant()
-        val updatedStatus = when (
-            val result = refundExecutionPort.executeRefund(
-                RefundExecutionRequest(
-                    bookingId = bookingId,
-                    actorUserId = 0L,
-                    refundRequestId = requestId,
-                    reasonCode = com.demo.tourwave.domain.booking.RefundReasonCode.valueOf(record.lastRefundReasonCode ?: "UNKNOWN")
-                )
-            )
-        ) {
-            is RefundExecutionResult.Success -> {
-                paymentRecordRepository.save(
-                    record.copy(
-                        status = PaymentRecordStatus.REFUNDED,
-                        lastRefundRequestId = requestId,
-                        lastProviderReference = result.externalReference,
-                        lastErrorCode = null,
-                        refundRetryCount = nextRetryCount,
-                        lastRefundAttemptedAtUtc = attemptedAt,
-                        nextRetryAtUtc = null,
-                        updatedAtUtc = clock.instant()
+        val updatedStatus =
+            when (
+                val result =
+                    refundExecutionPort.executeRefund(
+                        RefundExecutionRequest(
+                            bookingId = bookingId,
+                            actorUserId = 0L,
+                            refundRequestId = requestId,
+                            reasonCode = com.demo.tourwave.domain.booking.RefundReasonCode.valueOf(record.lastRefundReasonCode ?: "UNKNOWN"),
+                        ),
                     )
-                )
-                bookingRepository.save(booking.copy(paymentStatus = com.demo.tourwave.domain.booking.PaymentStatus.REFUNDED))
-                PaymentRecordStatus.REFUNDED
-            }
-
-            is RefundExecutionResult.ReviewRequired -> {
-                paymentRecordRepository.save(
-                    record.copy(
-                        status = PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
-                        lastRefundRequestId = requestId,
-                        lastErrorCode = result.errorCode,
-                        refundRetryCount = nextRetryCount,
-                        lastRefundAttemptedAtUtc = attemptedAt,
-                        nextRetryAtUtc = null,
-                        updatedAtUtc = clock.instant()
+            ) {
+                is RefundExecutionResult.Success -> {
+                    paymentRecordRepository.save(
+                        record.copy(
+                            status = PaymentRecordStatus.REFUNDED,
+                            lastRefundRequestId = requestId,
+                            lastProviderReference = result.externalReference,
+                            lastErrorCode = null,
+                            refundRetryCount = nextRetryCount,
+                            lastRefundAttemptedAtUtc = attemptedAt,
+                            nextRetryAtUtc = null,
+                            updatedAtUtc = clock.instant(),
+                        ),
                     )
-                )
-                PaymentRecordStatus.REFUND_REVIEW_REQUIRED
-            }
-
-            is RefundExecutionResult.RetryableFailure -> {
-                val resolvedStatus = if (nextRetryCount >= maxRetryAttempts) {
-                    PaymentRecordStatus.REFUND_REVIEW_REQUIRED
-                } else {
-                    PaymentRecordStatus.REFUND_FAILED_RETRYABLE
+                    bookingRepository.save(booking.copy(paymentStatus = com.demo.tourwave.domain.booking.PaymentStatus.REFUNDED))
+                    PaymentRecordStatus.REFUNDED
                 }
-                paymentRecordRepository.save(
-                    record.copy(
-                        status = resolvedStatus,
-                        lastRefundRequestId = requestId,
-                        lastErrorCode = result.errorCode,
-                        refundRetryCount = nextRetryCount,
-                        lastRefundAttemptedAtUtc = attemptedAt,
-                        nextRetryAtUtc = nextRetryAt(attemptedAt, nextRetryCount),
-                        updatedAtUtc = clock.instant()
+
+                is RefundExecutionResult.ReviewRequired -> {
+                    paymentRecordRepository.save(
+                        record.copy(
+                            status = PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
+                            lastRefundRequestId = requestId,
+                            lastErrorCode = result.errorCode,
+                            refundRetryCount = nextRetryCount,
+                            lastRefundAttemptedAtUtc = attemptedAt,
+                            nextRetryAtUtc = null,
+                            updatedAtUtc = clock.instant(),
+                        ),
                     )
-                )
-                resolvedStatus
+                    PaymentRecordStatus.REFUND_REVIEW_REQUIRED
+                }
+
+                is RefundExecutionResult.RetryableFailure -> {
+                    val resolvedStatus =
+                        if (nextRetryCount >= maxRetryAttempts) {
+                            PaymentRecordStatus.REFUND_REVIEW_REQUIRED
+                        } else {
+                            PaymentRecordStatus.REFUND_FAILED_RETRYABLE
+                        }
+                    paymentRecordRepository.save(
+                        record.copy(
+                            status = resolvedStatus,
+                            lastRefundRequestId = requestId,
+                            lastErrorCode = result.errorCode,
+                            refundRetryCount = nextRetryCount,
+                            lastRefundAttemptedAtUtc = attemptedAt,
+                            nextRetryAtUtc = nextRetryAt(attemptedAt, nextRetryCount),
+                            updatedAtUtc = clock.instant(),
+                        ),
+                    )
+                    resolvedStatus
+                }
             }
-        }
         return updatedStatus
     }
 
-    private fun nextRetryAt(attemptedAt: Instant, nextRetryCount: Int): Instant? {
+    private fun nextRetryAt(
+        attemptedAt: Instant,
+        nextRetryCount: Int,
+    ): Instant? {
         return if (nextRetryCount >= maxRetryAttempts) {
             null
         } else {

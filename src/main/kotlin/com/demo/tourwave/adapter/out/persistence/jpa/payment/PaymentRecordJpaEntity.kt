@@ -16,7 +16,7 @@ import java.time.Instant
 @Entity
 @Table(
     name = "payment_records",
-    indexes = [Index(name = "idx_payment_records_booking", columnList = "booking_id", unique = true)]
+    indexes = [Index(name = "idx_payment_records_booking", columnList = "booking_id", unique = true)],
 )
 data class PaymentRecordJpaEntity(
     @Id
@@ -61,5 +61,5 @@ data class PaymentRecordJpaEntity(
     @Column(name = "created_at_utc", nullable = false)
     val createdAtUtc: Instant,
     @Column(name = "updated_at_utc", nullable = false)
-    val updatedAtUtc: Instant
+    val updatedAtUtc: Instant,
 )

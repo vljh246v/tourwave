@@ -20,8 +20,8 @@ import java.time.Instant
     uniqueConstraints = [UniqueConstraint(name = "uk_booking_participants_booking_user", columnNames = ["booking_id", "user_id"])],
     indexes = [
         Index(name = "idx_booking_participants_booking", columnList = "booking_id"),
-        Index(name = "idx_booking_participants_status", columnList = "status")
-    ]
+        Index(name = "idx_booking_participants_status", columnList = "status"),
+    ],
 )
 data class BookingParticipantJpaEntity(
     @Id
@@ -42,5 +42,5 @@ data class BookingParticipantJpaEntity(
     @Column(name = "responded_at")
     val respondedAt: Instant? = null,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

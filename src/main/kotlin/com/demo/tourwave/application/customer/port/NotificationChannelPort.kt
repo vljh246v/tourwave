@@ -8,16 +8,16 @@ data class SendNotificationMessage(
     val subject: String,
     val body: String,
     val templateCode: String,
-    val idempotencyKey: String
+    val idempotencyKey: String,
 )
 
 data class NotificationChannelSendResult(
-    val providerMessageId: String?
+    val providerMessageId: String?,
 )
 
 class NotificationChannelException(
     override val message: String,
-    val retryable: Boolean
+    val retryable: Boolean,
 ) : RuntimeException(message)
 
 interface NotificationChannelPort {

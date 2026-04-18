@@ -1,19 +1,19 @@
 package com.demo.tourwave.application.booking
 
+import com.demo.tourwave.application.booking.port.BookingRepository
+import com.demo.tourwave.application.booking.port.OccurrenceRepository
+import com.demo.tourwave.application.common.TimeWindowPolicyService
+import com.demo.tourwave.application.common.port.AuditEventCommand
+import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyDecision
+import com.demo.tourwave.application.common.port.IdempotencyStore
+import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.booking.RefundPolicyAction
-import com.demo.tourwave.application.common.TimeWindowPolicyService
-import com.demo.tourwave.application.common.port.AuditEventCommand
-import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
-import com.demo.tourwave.application.booking.port.BookingRepository
-import com.demo.tourwave.application.booking.port.OccurrenceRepository
-import com.demo.tourwave.application.common.port.IdempotencyDecision
-import com.demo.tourwave.application.common.port.IdempotencyStore
-import com.demo.tourwave.application.participant.port.BookingParticipantRepository
 import com.demo.tourwave.domain.occurrence.Occurrence
 import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import com.demo.tourwave.domain.participant.BookingParticipant
@@ -30,7 +30,7 @@ class BookingCommandService(
     private val auditEventPort: AuditEventPort,
     private val paymentLedgerService: PaymentLedgerService,
     private val timeWindowPolicyService: TimeWindowPolicyService,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     companion object {
         private const val OFFER_WINDOW_SECONDS = 24 * 60 * 60L
@@ -43,18 +43,20 @@ class BookingCommandService(
         val requestHash = requestHash(command)
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
-            is IdempotencyDecision.Replay -> CreateBookingResult(
-                status = decision.status,
-                booking = decision.body as BookingCreated
-            )
+            is IdempotencyDecision.Replay ->
+                CreateBookingResult(
+                    status = decision.status,
+                    booking = decision.body as BookingCreated,
+                )
 
             IdempotencyDecision.Reserved -> {
                 occurrenceRepository.lock(command.occurrenceId)
@@ -65,7 +67,7 @@ class BookingCommandService(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Occurrence is already finished",
-                        details = mapOf("occurrenceId" to command.occurrenceId, "status" to occurrence.status)
+                        details = mapOf("occurrenceId" to command.occurrenceId, "status" to occurrence.status),
                     )
                 }
 
@@ -74,50 +76,53 @@ class BookingCommandService(
                         errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
                         status = 409,
                         message = "Occurrence is already canceled",
-                        details = mapOf("occurrenceId" to command.occurrenceId)
+                        details = mapOf("occurrenceId" to command.occurrenceId),
                     )
                 }
 
-                val availableSeats = availableSeatsForOccurrence(
-                    occurrenceId = command.occurrenceId,
-                    excludeBookingId = null,
-                    now = clock.instant()
-                )
+                val availableSeats =
+                    availableSeatsForOccurrence(
+                        occurrenceId = command.occurrenceId,
+                        excludeBookingId = null,
+                        now = clock.instant(),
+                    )
 
-                val created = bookingRepository.save(
-                    Booking.create(
-                        occurrenceId = occurrence.id,
-                        organizationId = occurrence.organizationId,
-                        leaderUserId = command.actorUserId,
-                        partySize = command.partySize,
-                        availableSeats = availableSeats
-                    ).copy(createdAt = clock.instant())
-                )
+                val created =
+                    bookingRepository.save(
+                        Booking.create(
+                            occurrenceId = occurrence.id,
+                            organizationId = occurrence.organizationId,
+                            leaderUserId = command.actorUserId,
+                            partySize = command.partySize,
+                            availableSeats = availableSeats,
+                        ).copy(createdAt = clock.instant()),
+                    )
 
                 bookingParticipantRepository.save(
                     BookingParticipant.leader(
                         bookingId = requireNotNull(created.id),
                         userId = created.leaderUserId,
-                        createdAt = created.createdAt
-                    )
+                        createdAt = created.createdAt,
+                    ),
                 )
 
                 paymentLedgerService.initialize(
                     booking = created,
                     occurrence = occurrence,
-                    actorUserId = command.actorUserId
+                    actorUserId = command.actorUserId,
                 )
 
-                val response = BookingCreated(
-                    id = requireNotNull(created.id),
-                    organizationId = created.organizationId,
-                    occurrenceId = created.occurrenceId,
-                    userId = created.leaderUserId,
-                    partySize = created.partySize,
-                    status = created.status,
-                    paymentStatus = created.paymentStatus,
-                    createdAt = created.createdAt
-                )
+                val response =
+                    BookingCreated(
+                        id = requireNotNull(created.id),
+                        organizationId = created.organizationId,
+                        occurrenceId = created.occurrenceId,
+                        userId = created.leaderUserId,
+                        partySize = created.partySize,
+                        status = created.status,
+                        paymentStatus = created.paymentStatus,
+                        createdAt = created.createdAt,
+                    )
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -125,7 +130,7 @@ class BookingCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 201,
-                    body = response
+                    body = response,
                 )
 
                 auditEventPort.append(
@@ -135,8 +140,8 @@ class BookingCommandService(
                         resourceType = "BOOKING",
                         resourceId = response.id,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
-                    )
+                        requestId = command.requestId,
+                    ),
                 )
 
                 CreateBookingResult(status = 201, booking = response)
@@ -149,13 +154,14 @@ class BookingCommandService(
         val requestHash = hash("${command.occurrenceId}|finish")
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
             is IdempotencyDecision.Replay -> FinishOccurrenceResult(status = decision.status)
             IdempotencyDecision.Reserved -> {
@@ -166,14 +172,14 @@ class BookingCommandService(
                         errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
                         status = 409,
                         message = "Occurrence is already canceled",
-                        details = mapOf("occurrenceId" to command.occurrenceId)
+                        details = mapOf("occurrenceId" to command.occurrenceId),
                     )
 
                     OccurrenceStatus.FINISHED -> throw DomainException(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Occurrence is already finished",
-                        details = mapOf("occurrenceId" to command.occurrenceId, "status" to occurrence.status)
+                        details = mapOf("occurrenceId" to command.occurrenceId, "status" to occurrence.status),
                     )
 
                     OccurrenceStatus.SCHEDULED -> {
@@ -187,7 +193,7 @@ class BookingCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 204,
-                    body = mapOf("ok" to true)
+                    body = mapOf("ok" to true),
                 )
 
                 auditEventPort.append(
@@ -197,8 +203,8 @@ class BookingCommandService(
                         resourceType = "OCCURRENCE",
                         resourceId = occurrence.id,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
-                    )
+                        requestId = command.requestId,
+                    ),
                 )
 
                 FinishOccurrenceResult(status = 204)
@@ -211,13 +217,14 @@ class BookingCommandService(
         val requestHash = hash("${command.occurrenceId}|cancel")
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
             is IdempotencyDecision.Replay -> CancelOccurrenceResult(status = decision.status)
             IdempotencyDecision.Reserved -> {
@@ -228,29 +235,31 @@ class BookingCommandService(
                     occurrenceRepository.save(occurrence.copy(status = OccurrenceStatus.CANCELED))
                 }
 
-                val nonTerminalStatuses = setOf(
-                    BookingStatus.REQUESTED,
-                    BookingStatus.WAITLISTED,
-                    BookingStatus.OFFERED,
-                    BookingStatus.CONFIRMED
-                )
+                val nonTerminalStatuses =
+                    setOf(
+                        BookingStatus.REQUESTED,
+                        BookingStatus.WAITLISTED,
+                        BookingStatus.OFFERED,
+                        BookingStatus.CONFIRMED,
+                    )
                 val bookingsToCancel = bookingRepository.findByOccurrenceAndStatuses(command.occurrenceId, nonTerminalStatuses)
 
                 bookingsToCancel.forEach { booking ->
                     val canceled = bookingRepository.save(booking.cancel())
-                    val refunded = paymentLedgerService.applyRefundPolicy(
-                        booking = canceled,
-                        occurrence = occurrence,
-                        action = RefundPolicyAction.OCCURRENCE_CANCEL,
-                        actorUserId = command.actorUserId
-                    )
+                    val refunded =
+                        paymentLedgerService.applyRefundPolicy(
+                            booking = canceled,
+                            occurrence = occurrence,
+                            action = RefundPolicyAction.OCCURRENCE_CANCEL,
+                            actorUserId = command.actorUserId,
+                        )
                     val settled = bookingRepository.save(refunded)
                     cancelParticipants(bookingId = requireNotNull(settled.id), canceledAt = clock.instant())
                     appendBookingStatusAudit(
                         actorUserId = command.actorUserId,
                         booking = settled,
                         action = "BOOKING_CANCELED_BY_OCCURRENCE",
-                        requestId = command.requestId
+                        requestId = command.requestId,
                     )
                 }
 
@@ -260,7 +269,7 @@ class BookingCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 204,
-                    body = mapOf("ok" to true)
+                    body = mapOf("ok" to true),
                 )
 
                 auditEventPort.append(
@@ -270,8 +279,8 @@ class BookingCommandService(
                         resourceType = "OCCURRENCE",
                         resourceId = occurrence.id,
                         occurredAtUtc = clock.instant(),
-                        requestId = command.requestId
-                    )
+                        requestId = command.requestId,
+                    ),
                 )
 
                 CancelOccurrenceResult(status = 204)
@@ -283,53 +292,57 @@ class BookingCommandService(
         val requestHash = requestHashForMutation(command)
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = command.mutationType.httpMethod,
-                pathTemplate = command.mutationType.pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = command.mutationType.httpMethod,
+                    pathTemplate = command.mutationType.pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
             is IdempotencyDecision.Replay -> {
                 val replayedBooking = if (decision.status == 200) decision.body as Booking else null
                 MutateBookingResult(status = decision.status, booking = replayedBooking)
             }
             IdempotencyDecision.Reserved -> {
-                val booking = bookingRepository.findById(command.bookingId)
-                    ?: throw DomainException(
-                        errorCode = ErrorCode.VALIDATION_ERROR,
-                        status = 422,
-                        message = "Booking not found",
-                        details = mapOf("bookingId" to command.bookingId)
-                    )
+                val booking =
+                    bookingRepository.findById(command.bookingId)
+                        ?: throw DomainException(
+                            errorCode = ErrorCode.VALIDATION_ERROR,
+                            status = 422,
+                            message = "Booking not found",
+                            details = mapOf("bookingId" to command.bookingId),
+                        )
                 occurrenceRepository.lock(booking.occurrenceId)
 
-                val mutated = when (command.mutationType) {
-                    BookingMutationType.APPROVE -> approveBooking(booking)
-                    BookingMutationType.REJECT -> rejectBooking(booking)
-                    BookingMutationType.CANCEL -> cancelBooking(booking)
-                    BookingMutationType.OFFER_ACCEPT -> acceptOffer(booking, command.actorUserId, command.requestId)
-                    BookingMutationType.OFFER_DECLINE -> declineOffer(booking, command.actorUserId, command.requestId)
-                    BookingMutationType.PARTY_SIZE_PATCH -> patchPartySize(booking, command.actorUserId, command.partySize)
-                    BookingMutationType.COMPLETE -> completeBooking(booking)
-                }
+                val mutated =
+                    when (command.mutationType) {
+                        BookingMutationType.APPROVE -> approveBooking(booking)
+                        BookingMutationType.REJECT -> rejectBooking(booking)
+                        BookingMutationType.CANCEL -> cancelBooking(booking)
+                        BookingMutationType.OFFER_ACCEPT -> acceptOffer(booking, command.actorUserId, command.requestId)
+                        BookingMutationType.OFFER_DECLINE -> declineOffer(booking, command.actorUserId, command.requestId)
+                        BookingMutationType.PARTY_SIZE_PATCH -> patchPartySize(booking, command.actorUserId, command.partySize)
+                        BookingMutationType.COMPLETE -> completeBooking(booking)
+                    }
 
                 var persisted = bookingRepository.save(mutated)
-                persisted = applyPaymentLifecycle(
-                    before = booking,
-                    after = persisted,
-                    mutationType = command.mutationType,
-                    actorUserId = command.actorUserId,
-                    requestId = command.requestId
-                )
+                persisted =
+                    applyPaymentLifecycle(
+                        before = booking,
+                        after = persisted,
+                        mutationType = command.mutationType,
+                        actorUserId = command.actorUserId,
+                        requestId = command.requestId,
+                    )
                 if (persisted != mutated) {
                     persisted = bookingRepository.save(persisted)
                 }
                 if (command.mutationType == BookingMutationType.CANCEL) {
                     cancelParticipants(
                         bookingId = requireNotNull(persisted.id),
-                        canceledAt = clock.instant()
+                        canceledAt = clock.instant(),
                     )
                 }
                 promoteWaitlistIfSeatReleased(command, booking, persisted)
@@ -340,7 +353,7 @@ class BookingCommandService(
                     pathTemplate = command.mutationType.pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) 200 else 204,
-                    body = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) persisted else mapOf("ok" to true)
+                    body = if (command.mutationType == BookingMutationType.PARTY_SIZE_PATCH) persisted else mapOf("ok" to true),
                 )
 
                 appendBookingMutationAudit(command, persisted)
@@ -357,7 +370,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.PARTY_SIZE_OUT_OF_RANGE,
                 status = 422,
                 message = "partySize must be between 1 and 50",
-                details = mapOf("partySize" to command.partySize)
+                details = mapOf("partySize" to command.partySize),
             )
         }
     }
@@ -383,7 +396,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
                 status = 409,
                 message = "Booking is in terminal state",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
         if (booking.status != BookingStatus.REQUESTED) {
@@ -391,14 +404,14 @@ class BookingCommandService(
                 errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                 status = 409,
                 message = "Only REQUESTED booking can be approved",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
         ensureCapacityAvailable(
             occurrenceId = booking.occurrenceId,
             excludeBookingId = booking.id,
-            additionalSeats = booking.partySize
+            additionalSeats = booking.partySize,
         )
 
         return booking.approve()
@@ -410,7 +423,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
                 status = 409,
                 message = "Booking is in terminal state",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
         if (booking.status != BookingStatus.REQUESTED) {
@@ -418,7 +431,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                 status = 409,
                 message = "Only REQUESTED booking can be rejected",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
         return booking.reject()
@@ -430,7 +443,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
                 status = 409,
                 message = "Booking is in terminal state",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
@@ -443,7 +456,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
                 status = 409,
                 message = "Booking is in terminal state",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
@@ -452,14 +465,18 @@ class BookingCommandService(
                 errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                 status = 409,
                 message = "Only CONFIRMED booking can be completed",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
         return booking.complete()
     }
 
-    private fun acceptOffer(booking: Booking, actorUserId: Long, requestId: String?): Booking {
+    private fun acceptOffer(
+        booking: Booking,
+        actorUserId: Long,
+        requestId: String?,
+    ): Booking {
         ensureLeader(actorUserId, booking)
         ensureOccurrenceNotCanceled(booking.occurrenceId)
 
@@ -469,58 +486,64 @@ class BookingCommandService(
                 errorCode = code,
                 status = 409,
                 message = "Offer is not active",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
-        val offerExpiresAtUtc = booking.offerExpiresAtUtc
-            ?: throw DomainException(
-                errorCode = ErrorCode.OFFER_NOT_ACTIVE,
-                status = 409,
-                message = "Offer expiration is missing",
-                details = mapOf("bookingId" to booking.id)
-            )
+        val offerExpiresAtUtc =
+            booking.offerExpiresAtUtc
+                ?: throw DomainException(
+                    errorCode = ErrorCode.OFFER_NOT_ACTIVE,
+                    status = 409,
+                    message = "Offer expiration is missing",
+                    details = mapOf("bookingId" to booking.id),
+                )
 
         val now = clock.instant()
         if (timeWindowPolicyService.isOfferExpired(now, offerExpiresAtUtc)) {
             val expired = bookingRepository.save(booking.expireOffer())
-            val settled = bookingRepository.save(
-                paymentLedgerService.applyRefundPolicy(
-                    booking = expired,
-                    occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId),
-                    action = RefundPolicyAction.OFFER_EXPIRED,
-                    actorUserId = actorUserId
+            val settled =
+                bookingRepository.save(
+                    paymentLedgerService.applyRefundPolicy(
+                        booking = expired,
+                        occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId),
+                        action = RefundPolicyAction.OFFER_EXPIRED,
+                        actorUserId = actorUserId,
+                    ),
                 )
-            )
             appendBookingStatusAudit(
                 actorUserId = actorUserId,
                 booking = settled,
                 action = "OFFER_EXPIRED",
-                requestId = requestId
+                requestId = requestId,
             )
             promoteWaitlist(
                 occurrenceId = booking.occurrenceId,
                 actorUserId = actorUserId,
-                requestId = requestId
+                requestId = requestId,
             )
             throw DomainException(
                 errorCode = ErrorCode.OFFER_EXPIRED,
                 status = 409,
                 message = "Offer is expired",
-                details = mapOf("bookingId" to booking.id, "offerExpiresAtUtc" to offerExpiresAtUtc)
+                details = mapOf("bookingId" to booking.id, "offerExpiresAtUtc" to offerExpiresAtUtc),
             )
         }
 
         ensureCapacityAvailable(
             occurrenceId = booking.occurrenceId,
             excludeBookingId = booking.id,
-            additionalSeats = booking.partySize
+            additionalSeats = booking.partySize,
         )
 
         return booking.acceptOffer(now)
     }
 
-    private fun declineOffer(booking: Booking, actorUserId: Long, requestId: String?): Booking {
+    private fun declineOffer(
+        booking: Booking,
+        actorUserId: Long,
+        requestId: String?,
+    ): Booking {
         ensureLeader(actorUserId, booking)
         ensureOccurrenceNotCanceled(booking.occurrenceId)
 
@@ -530,58 +553,63 @@ class BookingCommandService(
                 errorCode = code,
                 status = 409,
                 message = "Offer is not active",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
-        val offerExpiresAtUtc = booking.offerExpiresAtUtc
-            ?: throw DomainException(
-                errorCode = ErrorCode.OFFER_NOT_ACTIVE,
-                status = 409,
-                message = "Offer expiration is missing",
-                details = mapOf("bookingId" to booking.id)
-            )
+        val offerExpiresAtUtc =
+            booking.offerExpiresAtUtc
+                ?: throw DomainException(
+                    errorCode = ErrorCode.OFFER_NOT_ACTIVE,
+                    status = 409,
+                    message = "Offer expiration is missing",
+                    details = mapOf("bookingId" to booking.id),
+                )
 
         val now = clock.instant()
         if (now.isAfter(offerExpiresAtUtc)) {
             val expired = bookingRepository.save(booking.expireOffer())
-            val settled = bookingRepository.save(
-                paymentLedgerService.applyRefundPolicy(
-                    booking = expired,
-                    occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId),
-                    action = RefundPolicyAction.OFFER_EXPIRED,
-                    actorUserId = actorUserId
+            val settled =
+                bookingRepository.save(
+                    paymentLedgerService.applyRefundPolicy(
+                        booking = expired,
+                        occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId),
+                        action = RefundPolicyAction.OFFER_EXPIRED,
+                        actorUserId = actorUserId,
+                    ),
                 )
-            )
             appendBookingStatusAudit(
                 actorUserId = actorUserId,
                 booking = settled,
                 action = "OFFER_EXPIRED",
-                requestId = requestId
+                requestId = requestId,
             )
             promoteWaitlist(
                 occurrenceId = booking.occurrenceId,
                 actorUserId = actorUserId,
-                requestId = requestId
+                requestId = requestId,
             )
             throw DomainException(
                 errorCode = ErrorCode.OFFER_EXPIRED,
                 status = 409,
                 message = "Offer is expired",
-                details = mapOf("bookingId" to booking.id, "offerExpiresAtUtc" to offerExpiresAtUtc)
+                details = mapOf("bookingId" to booking.id, "offerExpiresAtUtc" to offerExpiresAtUtc),
             )
         }
 
         return booking.declineOffer(now)
     }
 
-    private fun ensureLeader(actorUserId: Long, booking: Booking) {
+    private fun ensureLeader(
+        actorUserId: Long,
+        booking: Booking,
+    ) {
         if (actorUserId != booking.leaderUserId) {
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
                 message = "Only booking leader can perform this action",
-                details = mapOf("bookingId" to booking.id, "actorUserId" to actorUserId)
+                details = mapOf("bookingId" to booking.id, "actorUserId" to actorUserId),
             )
         }
     }
@@ -589,28 +617,30 @@ class BookingCommandService(
     private fun ensureCapacityAvailable(
         occurrenceId: Long,
         excludeBookingId: Long?,
-        additionalSeats: Int
+        additionalSeats: Int,
     ) {
         val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
         ensureOccurrenceCanAllocate(occurrence)
 
-        val occupiedSeats = occupiedSeatsForOccurrence(
-            occurrenceId = occurrenceId,
-            excludeBookingId = excludeBookingId,
-            now = clock.instant()
-        )
+        val occupiedSeats =
+            occupiedSeatsForOccurrence(
+                occurrenceId = occurrenceId,
+                excludeBookingId = excludeBookingId,
+                now = clock.instant(),
+            )
 
         if (occupiedSeats + additionalSeats > occurrence.capacity) {
             throw DomainException(
                 errorCode = ErrorCode.CAPACITY_EXCEEDED,
                 status = 409,
                 message = "Seat allocation exceeds occurrence capacity",
-                details = mapOf(
-                    "occurrenceId" to occurrenceId,
-                    "capacity" to occurrence.capacity,
-                    "occupiedSeats" to occupiedSeats,
-                    "requestedSeats" to additionalSeats
-                )
+                details =
+                    mapOf(
+                        "occurrenceId" to occurrenceId,
+                        "capacity" to occurrence.capacity,
+                        "occupiedSeats" to occupiedSeats,
+                        "requestedSeats" to additionalSeats,
+                    ),
             )
         }
     }
@@ -621,7 +651,7 @@ class BookingCommandService(
                 errorCode = ErrorCode.OCCURRENCE_ALREADY_CANCELED,
                 status = 409,
                 message = "Occurrence is already canceled",
-                details = mapOf("occurrenceId" to occurrence.id)
+                details = mapOf("occurrenceId" to occurrence.id),
             )
         }
     }
@@ -631,7 +661,11 @@ class BookingCommandService(
         ensureOccurrenceCanAllocate(occurrence)
     }
 
-    private fun patchPartySize(booking: Booking, actorUserId: Long, partySize: Int?): Booking {
+    private fun patchPartySize(
+        booking: Booking,
+        actorUserId: Long,
+        partySize: Int?,
+    ): Booking {
         ensureLeader(actorUserId, booking)
 
         if (booking.status != BookingStatus.CONFIRMED) {
@@ -639,27 +673,29 @@ class BookingCommandService(
                 errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                 status = 409,
                 message = "Only CONFIRMED booking can update party size",
-                details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                details = mapOf("bookingId" to booking.id, "status" to booking.status),
             )
         }
 
-        val targetPartySize = partySize ?: throw DomainException(
-            errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
-            status = 422,
-            message = "partySize is required",
-            details = mapOf("field" to "partySize")
-        )
+        val targetPartySize =
+            partySize ?: throw DomainException(
+                errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
+                status = 422,
+                message = "partySize is required",
+                details = mapOf("field" to "partySize"),
+            )
 
         if (targetPartySize > booking.partySize) {
             throw DomainException(
                 errorCode = ErrorCode.PARTY_SIZE_INCREASE_NOT_ALLOWED,
                 status = 422,
                 message = "partySize can only be decreased",
-                details = mapOf(
-                    "bookingId" to booking.id,
-                    "currentPartySize" to booking.partySize,
-                    "requestedPartySize" to targetPartySize
-                )
+                details =
+                    mapOf(
+                        "bookingId" to booking.id,
+                        "currentPartySize" to booking.partySize,
+                        "requestedPartySize" to targetPartySize,
+                    ),
             )
         }
 
@@ -669,33 +705,38 @@ class BookingCommandService(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
                 message = "partySize cannot be lower than active participant count",
-                details = mapOf(
-                    "bookingId" to booking.id,
-                    "activeParticipantCount" to activeParticipants,
-                    "requestedPartySize" to targetPartySize
-                )
+                details =
+                    mapOf(
+                        "bookingId" to booking.id,
+                        "activeParticipantCount" to activeParticipants,
+                        "requestedPartySize" to targetPartySize,
+                    ),
             )
         }
 
         return booking.decreasePartySize(targetPartySize)
     }
 
-    private fun appendBookingMutationAudit(command: MutateBookingCommand, booking: Booking) {
-        val action = when (command.mutationType) {
-            BookingMutationType.APPROVE -> "BOOKING_APPROVED"
-            BookingMutationType.REJECT -> "BOOKING_REJECTED"
-            BookingMutationType.CANCEL -> "BOOKING_CANCELED"
-            BookingMutationType.OFFER_ACCEPT -> "OFFER_ACCEPTED"
-            BookingMutationType.OFFER_DECLINE -> "OFFER_DECLINED"
-            BookingMutationType.PARTY_SIZE_PATCH -> "PARTY_SIZE_CHANGED"
-            BookingMutationType.COMPLETE -> "BOOKING_COMPLETED"
-        }
+    private fun appendBookingMutationAudit(
+        command: MutateBookingCommand,
+        booking: Booking,
+    ) {
+        val action =
+            when (command.mutationType) {
+                BookingMutationType.APPROVE -> "BOOKING_APPROVED"
+                BookingMutationType.REJECT -> "BOOKING_REJECTED"
+                BookingMutationType.CANCEL -> "BOOKING_CANCELED"
+                BookingMutationType.OFFER_ACCEPT -> "OFFER_ACCEPTED"
+                BookingMutationType.OFFER_DECLINE -> "OFFER_DECLINED"
+                BookingMutationType.PARTY_SIZE_PATCH -> "PARTY_SIZE_CHANGED"
+                BookingMutationType.COMPLETE -> "BOOKING_COMPLETED"
+            }
 
         appendBookingStatusAudit(
             actorUserId = command.actorUserId,
             booking = booking,
             action = action,
-            requestId = command.requestId
+            requestId = command.requestId,
         )
     }
 
@@ -704,61 +745,70 @@ class BookingCommandService(
         after: Booking,
         mutationType: BookingMutationType,
         actorUserId: Long,
-        requestId: String?
+        requestId: String?,
     ): Booking {
-        val occurrence = when (mutationType) {
-            BookingMutationType.APPROVE,
-            BookingMutationType.REJECT,
-            BookingMutationType.CANCEL,
-            BookingMutationType.OFFER_ACCEPT,
-            BookingMutationType.OFFER_DECLINE -> occurrenceRepository.getOrCreate(after.occurrenceId)
+        val occurrence =
+            when (mutationType) {
+                BookingMutationType.APPROVE,
+                BookingMutationType.REJECT,
+                BookingMutationType.CANCEL,
+                BookingMutationType.OFFER_ACCEPT,
+                BookingMutationType.OFFER_DECLINE,
+                -> occurrenceRepository.getOrCreate(after.occurrenceId)
 
-            BookingMutationType.PARTY_SIZE_PATCH,
-            BookingMutationType.COMPLETE -> null
-        }
+                BookingMutationType.PARTY_SIZE_PATCH,
+                BookingMutationType.COMPLETE,
+                -> null
+            }
 
-        val settled = when (mutationType) {
-            BookingMutationType.APPROVE,
-            BookingMutationType.OFFER_ACCEPT -> paymentLedgerService.capture(after, actorUserId)
+        val settled =
+            when (mutationType) {
+                BookingMutationType.APPROVE,
+                BookingMutationType.OFFER_ACCEPT,
+                -> paymentLedgerService.capture(after, actorUserId)
 
-            BookingMutationType.REJECT -> paymentLedgerService.applyRefundPolicy(
-                booking = after,
-                occurrence = requireNotNull(occurrence),
-                action = RefundPolicyAction.BOOKING_REJECTED,
-                actorUserId = actorUserId
-            )
+                BookingMutationType.REJECT ->
+                    paymentLedgerService.applyRefundPolicy(
+                        booking = after,
+                        occurrence = requireNotNull(occurrence),
+                        action = RefundPolicyAction.BOOKING_REJECTED,
+                        actorUserId = actorUserId,
+                    )
 
-            BookingMutationType.CANCEL -> paymentLedgerService.applyRefundPolicy(
-                booking = after,
-                occurrence = requireNotNull(occurrence),
-                action = RefundPolicyAction.LEADER_CANCEL,
-                actorUserId = actorUserId
-            )
+                BookingMutationType.CANCEL ->
+                    paymentLedgerService.applyRefundPolicy(
+                        booking = after,
+                        occurrence = requireNotNull(occurrence),
+                        action = RefundPolicyAction.LEADER_CANCEL,
+                        actorUserId = actorUserId,
+                    )
 
-            BookingMutationType.OFFER_DECLINE -> paymentLedgerService.applyRefundPolicy(
-                booking = after,
-                occurrence = requireNotNull(occurrence),
-                action = RefundPolicyAction.OFFER_DECLINED,
-                actorUserId = actorUserId
-            )
+                BookingMutationType.OFFER_DECLINE ->
+                    paymentLedgerService.applyRefundPolicy(
+                        booking = after,
+                        occurrence = requireNotNull(occurrence),
+                        action = RefundPolicyAction.OFFER_DECLINED,
+                        actorUserId = actorUserId,
+                    )
 
-            BookingMutationType.PARTY_SIZE_PATCH,
-            BookingMutationType.COMPLETE -> after
-        }
+                BookingMutationType.PARTY_SIZE_PATCH,
+                BookingMutationType.COMPLETE,
+                -> after
+            }
 
         if (mutationType == BookingMutationType.CANCEL && before != settled && settled.paymentStatus == PaymentStatus.REFUND_PENDING) {
             auditEventPort.append(
-                    AuditEventCommand(
-                        actor = "USER:$actorUserId",
-                        action = "REFUND_PENDING",
-                        resourceType = "BOOKING",
-                        resourceId = requireNotNull(after.id),
-                        occurredAtUtc = clock.instant(),
-                        requestId = requestId,
-                        reasonCode = "REFUND_EXECUTION_PENDING",
-                        beforeJson = bookingSnapshot(before),
-                        afterJson = bookingSnapshot(settled)
-                    )
+                AuditEventCommand(
+                    actor = "USER:$actorUserId",
+                    action = "REFUND_PENDING",
+                    resourceType = "BOOKING",
+                    resourceId = requireNotNull(after.id),
+                    occurredAtUtc = clock.instant(),
+                    requestId = requestId,
+                    reasonCode = "REFUND_EXECUTION_PENDING",
+                    beforeJson = bookingSnapshot(before),
+                    afterJson = bookingSnapshot(settled),
+                ),
             )
         }
 
@@ -769,7 +819,7 @@ class BookingCommandService(
         actorUserId: Long,
         booking: Booking,
         action: String,
-        requestId: String?
+        requestId: String?,
     ) {
         auditEventPort.append(
             AuditEventCommand(
@@ -780,21 +830,27 @@ class BookingCommandService(
                 occurredAtUtc = clock.instant(),
                 requestId = requestId,
                 reasonCode = action,
-                afterJson = bookingSnapshot(booking)
-            )
+                afterJson = bookingSnapshot(booking),
+            ),
         )
     }
 
-    private fun promoteWaitlistIfSeatReleased(command: MutateBookingCommand, before: Booking, after: Booking) {
-        val shouldPromote = when (command.mutationType) {
-            BookingMutationType.CANCEL -> isSeatHolding(before, clock.instant())
-            BookingMutationType.OFFER_DECLINE -> before.status == BookingStatus.OFFERED
-            BookingMutationType.PARTY_SIZE_PATCH -> after.partySize < before.partySize
-            BookingMutationType.APPROVE,
-            BookingMutationType.REJECT,
-            BookingMutationType.OFFER_ACCEPT,
-            BookingMutationType.COMPLETE -> false
-        }
+    private fun promoteWaitlistIfSeatReleased(
+        command: MutateBookingCommand,
+        before: Booking,
+        after: Booking,
+    ) {
+        val shouldPromote =
+            when (command.mutationType) {
+                BookingMutationType.CANCEL -> isSeatHolding(before, clock.instant())
+                BookingMutationType.OFFER_DECLINE -> before.status == BookingStatus.OFFERED
+                BookingMutationType.PARTY_SIZE_PATCH -> after.partySize < before.partySize
+                BookingMutationType.APPROVE,
+                BookingMutationType.REJECT,
+                BookingMutationType.OFFER_ACCEPT,
+                BookingMutationType.COMPLETE,
+                -> false
+            }
 
         if (!shouldPromote) {
             return
@@ -803,22 +859,27 @@ class BookingCommandService(
         promoteWaitlist(
             occurrenceId = after.occurrenceId,
             actorUserId = command.actorUserId,
-            requestId = command.requestId
+            requestId = command.requestId,
         )
     }
 
-    private fun promoteWaitlist(occurrenceId: Long, actorUserId: Long, requestId: String?) {
+    private fun promoteWaitlist(
+        occurrenceId: Long,
+        actorUserId: Long,
+        requestId: String?,
+    ) {
         val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
         if (occurrence.status == OccurrenceStatus.CANCELED) {
             return
         }
 
         val now = clock.instant()
-        var availableSeats = availableSeatsForOccurrence(
-            occurrenceId = occurrenceId,
-            excludeBookingId = null,
-            now = now
-        )
+        var availableSeats =
+            availableSeatsForOccurrence(
+                occurrenceId = occurrenceId,
+                excludeBookingId = null,
+                now = now,
+            )
 
         if (availableSeats <= 0) {
             return
@@ -828,16 +889,17 @@ class BookingCommandService(
 
         waitlistedBookings.forEach { waitlisted ->
             if (waitlisted.partySize <= availableSeats) {
-                val promoted = bookingRepository.save(
-                    waitlisted.offer(now.plusSeconds(OFFER_WINDOW_SECONDS))
-                )
+                val promoted =
+                    bookingRepository.save(
+                        waitlisted.offer(now.plusSeconds(OFFER_WINDOW_SECONDS)),
+                    )
                 availableSeats -= promoted.partySize
 
                 appendBookingStatusAudit(
                     actorUserId = actorUserId,
                     booking = promoted,
                     action = "WAITLIST_PROMOTED_TO_OFFER",
-                    requestId = requestId
+                    requestId = requestId,
                 )
             }
         }
@@ -846,7 +908,7 @@ class BookingCommandService(
     private fun availableSeatsForOccurrence(
         occurrenceId: Long,
         excludeBookingId: Long?,
-        now: java.time.Instant
+        now: java.time.Instant,
     ): Int {
         val occurrence = occurrenceRepository.getOrCreate(occurrenceId)
         val occupiedSeats = occupiedSeatsForOccurrence(occurrenceId, excludeBookingId, now)
@@ -856,18 +918,21 @@ class BookingCommandService(
     private fun occupiedSeatsForOccurrence(
         occurrenceId: Long,
         excludeBookingId: Long?,
-        now: java.time.Instant
+        now: java.time.Instant,
     ): Int {
         return bookingRepository.findByOccurrenceAndStatuses(
             occurrenceId = occurrenceId,
-            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED)
+            statuses = setOf(BookingStatus.CONFIRMED, BookingStatus.OFFERED),
         )
             .filterNot { excludeBookingId != null && it.id == excludeBookingId }
             .filter { isSeatHolding(it, now) }
             .sumOf { it.partySize }
     }
 
-    private fun isSeatHolding(booking: Booking, now: java.time.Instant): Boolean {
+    private fun isSeatHolding(
+        booking: Booking,
+        now: java.time.Instant,
+    ): Boolean {
         return when (booking.status) {
             BookingStatus.CONFIRMED -> true
             BookingStatus.OFFERED -> {
@@ -879,7 +944,10 @@ class BookingCommandService(
         }
     }
 
-    private fun cancelParticipants(bookingId: Long, canceledAt: java.time.Instant) {
+    private fun cancelParticipants(
+        bookingId: Long,
+        canceledAt: java.time.Instant,
+    ) {
         bookingParticipantRepository.findByBookingId(bookingId)
             .forEach { participant ->
                 bookingParticipantRepository.save(participant.cancel(canceledAt))
@@ -892,7 +960,7 @@ class BookingCommandService(
             "paymentStatus" to booking.paymentStatus.name,
             "partySize" to booking.partySize,
             "offerExpiresAtUtc" to booking.offerExpiresAtUtc?.toString(),
-            "waitlistSkipCount" to booking.waitlistSkipCount
+            "waitlistSkipCount" to booking.waitlistSkipCount,
         )
     }
 }

@@ -13,8 +13,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 class HttpPaymentProviderAdapterTest {
     private val server = HttpServer.create(InetSocketAddress(0), 0)
@@ -41,14 +41,15 @@ class HttpPaymentProviderAdapterTest {
 
         val authorization = adapter.authorize(PaymentAuthorizationRequest(bookingId = 1L, actorUserId = 2L, amount = 10000, currency = "KRW"))
         val capture = adapter.capture(PaymentCaptureRequest(bookingId = 1L, actorUserId = 2L, providerPaymentKey = "pay-1"))
-        val refund = adapter.executeRefund(
-            RefundExecutionRequest(
-                bookingId = 1L,
-                actorUserId = 2L,
-                refundRequestId = "refund-1",
-                reasonCode = RefundReasonCode.BOOKING_REJECTED
+        val refund =
+            adapter.executeRefund(
+                RefundExecutionRequest(
+                    bookingId = 1L,
+                    actorUserId = 2L,
+                    refundRequestId = "refund-1",
+                    reasonCode = RefundReasonCode.BOOKING_REJECTED,
+                ),
             )
-        )
 
         assertEquals("pay-1", authorization.providerPaymentKey)
         assertEquals("cap-1", capture.captureId)
@@ -66,17 +67,19 @@ class HttpPaymentProviderAdapterTest {
         server.start()
         val adapter = adapter()
 
-        val exception = assertFailsWith<DomainException> {
-            adapter.authorize(PaymentAuthorizationRequest(bookingId = 1L, actorUserId = 2L, amount = 10000, currency = "KRW"))
-        }
-        val refund = adapter.executeRefund(
-            RefundExecutionRequest(
-                bookingId = 1L,
-                actorUserId = 2L,
-                refundRequestId = "refund-1",
-                reasonCode = RefundReasonCode.BOOKING_REJECTED
+        val exception =
+            assertFailsWith<DomainException> {
+                adapter.authorize(PaymentAuthorizationRequest(bookingId = 1L, actorUserId = 2L, amount = 10000, currency = "KRW"))
+            }
+        val refund =
+            adapter.executeRefund(
+                RefundExecutionRequest(
+                    bookingId = 1L,
+                    actorUserId = 2L,
+                    refundRequestId = "refund-1",
+                    reasonCode = RefundReasonCode.BOOKING_REJECTED,
+                ),
             )
-        )
 
         assertEquals(422, exception.status)
         assertIs<RefundExecutionResult.RetryableFailure>(refund)
@@ -88,11 +91,15 @@ class HttpPaymentProviderAdapterTest {
             baseUrl = "http://localhost:${server.address.port}",
             apiKey = "test-key",
             providerName = "tourwave-pay",
-            objectMapper = objectMapper
+            objectMapper = objectMapper,
         )
     }
 
-    private fun respond(exchange: HttpExchange, status: Int, body: String) {
+    private fun respond(
+        exchange: HttpExchange,
+        status: Int,
+        body: String,
+    ) {
         exchange.sendResponseHeaders(status, body.toByteArray().size.toLong())
         exchange.responseBody.use { it.write(body.toByteArray()) }
     }

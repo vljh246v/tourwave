@@ -16,7 +16,7 @@ data class InstructorProfile(
     val status: InstructorProfileStatus = InstructorProfileStatus.ACTIVE,
     val approvedAt: Instant? = null,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     fun update(
         headline: String?,
@@ -26,7 +26,7 @@ data class InstructorProfile(
         certifications: List<String>,
         yearsOfExperience: Int?,
         internalNote: String?,
-        now: Instant
+        now: Instant,
     ): InstructorProfile {
         return copy(
             headline = headline,
@@ -36,7 +36,7 @@ data class InstructorProfile(
             certifications = certifications,
             yearsOfExperience = yearsOfExperience,
             internalNote = internalNote,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -52,7 +52,7 @@ data class InstructorProfile(
             yearsOfExperience: Int?,
             internalNote: String?,
             approvedAt: Instant?,
-            now: Instant
+            now: Instant,
         ): InstructorProfile {
             return InstructorProfile(
                 userId = userId,
@@ -67,7 +67,7 @@ data class InstructorProfile(
                 status = InstructorProfileStatus.ACTIVE,
                 approvedAt = approvedAt,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }

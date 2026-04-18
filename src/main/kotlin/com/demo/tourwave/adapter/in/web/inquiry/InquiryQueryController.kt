@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class InquiryQueryController(
     private val inquiryQueryService: InquiryQueryService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/inquiries/{inquiryId}")
     fun getInquiryDetail(
@@ -29,22 +29,24 @@ class InquiryQueryController(
         @RequestHeader("X-Actor-Role", required = false) actorRole: String?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
-        @RequestHeader("X-Request-Id", required = false) requestId: String?
+        @RequestHeader("X-Request-Id", required = false) requestId: String?,
     ): ResponseEntity<InquiryDetailWebResponse> {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorRole = actorRole,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId,
-            requestId = requestId
-        )
-
-        val result = inquiryQueryService.getInquiryDetail(
-            GetInquiryDetailQuery(
-                inquiryId = inquiryId,
-                actor = actor
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorRole = actorRole,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
+                requestId = requestId,
             )
-        )
+
+        val result =
+            inquiryQueryService.getInquiryDetail(
+                GetInquiryDetailQuery(
+                    inquiryId = inquiryId,
+                    actor = actor,
+                ),
+            )
         return ResponseEntity.ok(result.toWebResponse())
     }
 
@@ -53,17 +55,18 @@ class InquiryQueryController(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestParam(required = false) status: InquiryStatus?,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(required = false) limit: Int?
+        @RequestParam(required = false) limit: Int?,
     ): ResponseEntity<InquiryListWebResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
-        val result = inquiryQueryService.listMyInquiries(
-            ListMyInquiriesQuery(
-                actorUserId = requiredActorUserId,
-                status = status,
-                cursor = cursor,
-                limit = limit
+        val result =
+            inquiryQueryService.listMyInquiries(
+                ListMyInquiriesQuery(
+                    actorUserId = requiredActorUserId,
+                    status = status,
+                    cursor = cursor,
+                    limit = limit,
+                ),
             )
-        )
         return ResponseEntity.ok(result.toWebResponse())
     }
 
@@ -76,23 +79,25 @@ class InquiryQueryController(
         @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(required = false) limit: Int?
+        @RequestParam(required = false) limit: Int?,
     ): ResponseEntity<InquiryMessageListWebResponse> {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorRole = actorRole,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId,
-            requestId = requestId
-        )
-        val result = inquiryQueryService.listMessages(
-            ListInquiryMessagesQuery(
-                inquiryId = inquiryId,
-                actor = actor,
-                cursor = cursor,
-                limit = limit
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorRole = actorRole,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
+                requestId = requestId,
             )
-        )
+        val result =
+            inquiryQueryService.listMessages(
+                ListInquiryMessagesQuery(
+                    inquiryId = inquiryId,
+                    actor = actor,
+                    cursor = cursor,
+                    limit = limit,
+                ),
+            )
         return ResponseEntity.ok(result.toWebResponse())
     }
 
@@ -106,21 +111,21 @@ class InquiryQueryController(
             subject = subject,
             status = status,
             createdAt = createdAt,
-            lastMessageAt = lastMessageAt
+            lastMessageAt = lastMessageAt,
         )
     }
 
     private fun InquiryListResult.toWebResponse(): InquiryListWebResponse {
         return InquiryListWebResponse(
             items = items.map { it.toWebResponse() },
-            nextCursor = nextCursor
+            nextCursor = nextCursor,
         )
     }
 
     private fun InquiryMessageListResult.toWebResponse(): InquiryMessageListWebResponse {
         return InquiryMessageListWebResponse(
             items = items.map { it.toWebResponse() },
-            nextCursor = nextCursor
+            nextCursor = nextCursor,
         )
     }
 
@@ -131,7 +136,7 @@ class InquiryQueryController(
             senderUserId = senderUserId,
             body = body,
             attachmentAssetIds = attachmentAssetIds,
-            createdAt = createdAt
+            createdAt = createdAt,
         )
     }
 }

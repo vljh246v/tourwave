@@ -7,7 +7,7 @@ import java.time.Instant
 
 data class ListBookingParticipantsQuery(
     val bookingId: Long,
-    val actor: ActorAuthContext
+    val actor: ActorAuthContext,
 )
 
 data class BookingParticipantView(
@@ -17,36 +17,37 @@ data class BookingParticipantView(
     val status: BookingParticipantStatus,
     val attendanceStatus: AttendanceStatus,
     val invitedAt: Instant?,
-    val respondedAt: Instant?
+    val respondedAt: Instant?,
 )
 
 data class BookingParticipantListResult(
-    val items: List<BookingParticipantView>
+    val items: List<BookingParticipantView>,
 )
 
 class ParticipantQueryService(
     private val participantAccessPolicy: ParticipantAccessPolicy,
-    private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService
+    private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
 ) {
     fun listBookingParticipants(query: ListBookingParticipantsQuery): BookingParticipantListResult {
         participantAccessPolicy.authorizeBookingParticipants(
             bookingId = query.bookingId,
-            actor = query.actor
+            actor = query.actor,
         )
 
-        val items = participantInvitationLifecycleService.refreshBookingParticipants(query.bookingId)
-            .sortedBy { requireNotNull(it.id) }
-            .map {
-                BookingParticipantView(
-                    id = requireNotNull(it.id),
-                    bookingId = it.bookingId,
-                    userId = it.userId,
-                    status = it.status,
-                    attendanceStatus = it.attendanceStatus,
-                    invitedAt = it.invitedAt,
-                    respondedAt = it.respondedAt
-                )
-            }
+        val items =
+            participantInvitationLifecycleService.refreshBookingParticipants(query.bookingId)
+                .sortedBy { requireNotNull(it.id) }
+                .map {
+                    BookingParticipantView(
+                        id = requireNotNull(it.id),
+                        bookingId = it.bookingId,
+                        userId = it.userId,
+                        status = it.status,
+                        attendanceStatus = it.attendanceStatus,
+                        invitedAt = it.invitedAt,
+                        respondedAt = it.respondedAt,
+                    )
+                }
 
         return BookingParticipantListResult(items = items)
     }

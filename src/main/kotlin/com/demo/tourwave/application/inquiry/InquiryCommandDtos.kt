@@ -11,7 +11,7 @@ data class CreateInquiryCommand(
     val bookingId: Long?,
     val subject: String? = null,
     val message: String,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class PostInquiryMessageCommand(
@@ -19,32 +19,32 @@ data class PostInquiryMessageCommand(
     val actor: ActorAuthContext,
     val idempotencyKey: String,
     val body: String?,
-    val attachmentAssetIds: List<Long>? = null
+    val attachmentAssetIds: List<Long>? = null,
 )
 
 data class CloseInquiryCommand(
     val inquiryId: Long,
     val actor: ActorAuthContext,
-    val idempotencyKey: String
+    val idempotencyKey: String,
 )
 
 data class ListInquiryMessagesQuery(
     val inquiryId: Long,
     val actor: ActorAuthContext,
     val cursor: String? = null,
-    val limit: Int? = null
+    val limit: Int? = null,
 )
 
 data class GetInquiryDetailQuery(
     val inquiryId: Long,
-    val actor: ActorAuthContext
+    val actor: ActorAuthContext,
 )
 
 data class ListMyInquiriesQuery(
     val actorUserId: Long,
     val status: InquiryStatus? = null,
     val cursor: String? = null,
-    val limit: Int? = null
+    val limit: Int? = null,
 )
 
 data class InquiryCreated(
@@ -55,7 +55,7 @@ data class InquiryCreated(
     val createdByUserId: Long,
     val subject: String? = null,
     val status: InquiryStatus,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class InquiryDetailView(
@@ -67,7 +67,7 @@ data class InquiryDetailView(
     val subject: String? = null,
     val status: InquiryStatus,
     val createdAt: Instant,
-    val lastMessageAt: Instant? = null
+    val lastMessageAt: Instant? = null,
 )
 
 data class InquiryMessageView(
@@ -76,29 +76,29 @@ data class InquiryMessageView(
     val senderUserId: Long,
     val body: String,
     val attachmentAssetIds: List<Long>? = null,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class CreateInquiryResult(
     val status: Int,
-    val inquiry: InquiryCreated
+    val inquiry: InquiryCreated,
 )
 
 data class PostInquiryMessageResult(
     val status: Int,
-    val message: InquiryMessageView
+    val message: InquiryMessageView,
 )
 
 data class InquiryMessageListResult(
     val items: List<InquiryMessageView>,
-    val nextCursor: String? = null
+    val nextCursor: String? = null,
 )
 
 data class InquiryListResult(
     val items: List<InquiryDetailView>,
-    val nextCursor: String? = null
+    val nextCursor: String? = null,
 )
 
 data class CloseInquiryResult(
-    val status: Int
+    val status: Int,
 )

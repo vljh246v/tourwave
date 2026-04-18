@@ -13,7 +13,7 @@ data class CreateOrganizationCommand(
     val websiteUrl: String? = null,
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
-    val timezone: String
+    val timezone: String,
 )
 
 data class UpdateOrganizationProfileCommand(
@@ -27,31 +27,31 @@ data class UpdateOrganizationProfileCommand(
     val websiteUrl: String? = null,
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
-    val timezone: String
+    val timezone: String,
 )
 
 data class InviteOrganizationMemberCommand(
     val actorUserId: Long,
     val organizationId: Long,
     val userId: Long,
-    val role: OrganizationRole
+    val role: OrganizationRole,
 )
 
 data class AcceptOrganizationInvitationCommand(
     val actorUserId: Long,
     val organizationId: Long,
-    val token: String? = null
+    val token: String? = null,
 )
 
 data class ChangeOrganizationMemberRoleCommand(
     val actorUserId: Long,
     val organizationId: Long,
     val memberUserId: Long,
-    val role: OrganizationRole
+    val role: OrganizationRole,
 )
 
 data class DeactivateOrganizationMemberCommand(
     val actorUserId: Long,
     val organizationId: Long,
-    val memberUserId: Long
+    val memberUserId: Long,
 )

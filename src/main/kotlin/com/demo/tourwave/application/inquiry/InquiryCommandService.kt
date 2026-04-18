@@ -23,22 +23,23 @@ class InquiryCommandService(
     private val inquiryAccessPolicy: InquiryAccessPolicy,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun createInquiry(command: CreateInquiryCommand): CreateInquiryResult {
-        val bookingId = command.bookingId ?: throw DomainException(
-            errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
-            status = 422,
-            message = "bookingId is required",
-            details = mapOf("field" to "bookingId")
-        )
+        val bookingId =
+            command.bookingId ?: throw DomainException(
+                errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
+                status = 422,
+                message = "bookingId is required",
+                details = mapOf("field" to "bookingId"),
+            )
         val messageBody = command.message.trim()
         if (messageBody.isEmpty()) {
             throw DomainException(
                 errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
                 status = 422,
                 message = "message is required",
-                details = mapOf("field" to "message")
+                details = mapOf("field" to "message"),
             )
         }
 
@@ -46,34 +47,37 @@ class InquiryCommandService(
         val requestHash = hashForCreate(command, bookingId)
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
-            is IdempotencyDecision.Replay -> CreateInquiryResult(
-                status = decision.status,
-                inquiry = decision.body as InquiryCreated
-            )
+            is IdempotencyDecision.Replay ->
+                CreateInquiryResult(
+                    status = decision.status,
+                    inquiry = decision.body as InquiryCreated,
+                )
 
             IdempotencyDecision.Reserved -> {
-                val booking = bookingRepository.findById(bookingId)
-                    ?: throw DomainException(
-                        errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
-                        status = 422,
-                        message = "bookingId does not match occurrence or organization scope",
-                        details = mapOf("occurrenceId" to command.occurrenceId, "bookingId" to bookingId)
-                    )
+                val booking =
+                    bookingRepository.findById(bookingId)
+                        ?: throw DomainException(
+                            errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
+                            status = 422,
+                            message = "bookingId does not match occurrence or organization scope",
+                            details = mapOf("occurrenceId" to command.occurrenceId, "bookingId" to bookingId),
+                        )
 
                 if (booking.occurrenceId != command.occurrenceId) {
                     throw DomainException(
                         errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
                         status = 422,
                         message = "bookingId does not match occurrence or organization scope",
-                        details = mapOf("occurrenceId" to command.occurrenceId, "bookingId" to bookingId)
+                        details = mapOf("occurrenceId" to command.occurrenceId, "bookingId" to bookingId),
                     )
                 }
 
@@ -82,47 +86,50 @@ class InquiryCommandService(
                         errorCode = ErrorCode.FORBIDDEN,
                         status = 403,
                         message = "Only booking leader can create inquiry",
-                        details = mapOf("bookingId" to bookingId, "actorUserId" to command.actorUserId)
+                        details = mapOf("bookingId" to bookingId, "actorUserId" to command.actorUserId),
                     )
                 }
 
                 val now = clock.instant()
 
                 val existing = inquiryRepository.findByBookingId(bookingId)
-                val saved = if (existing != null) {
-                    existing
-                } else {
-                    val created = inquiryRepository.save(
-                        Inquiry(
-                            organizationId = booking.organizationId,
-                            occurrenceId = command.occurrenceId,
-                            bookingId = bookingId,
-                            createdByUserId = command.actorUserId,
-                            subject = command.subject,
-                            createdAt = now
+                val saved =
+                    if (existing != null) {
+                        existing
+                    } else {
+                        val created =
+                            inquiryRepository.save(
+                                Inquiry(
+                                    organizationId = booking.organizationId,
+                                    occurrenceId = command.occurrenceId,
+                                    bookingId = bookingId,
+                                    createdByUserId = command.actorUserId,
+                                    subject = command.subject,
+                                    createdAt = now,
+                                ),
+                            )
+                        inquiryRepository.saveMessage(
+                            InquiryMessage(
+                                inquiryId = requireNotNull(created.id),
+                                senderUserId = command.actorUserId,
+                                body = messageBody,
+                                createdAt = now,
+                            ),
                         )
-                    )
-                    inquiryRepository.saveMessage(
-                        InquiryMessage(
-                            inquiryId = requireNotNull(created.id),
-                            senderUserId = command.actorUserId,
-                            body = messageBody,
-                            createdAt = now
-                        )
-                    )
-                    created
-                }
+                        created
+                    }
 
-                val response = InquiryCreated(
-                    id = requireNotNull(saved.id),
-                    organizationId = saved.organizationId,
-                    occurrenceId = saved.occurrenceId,
-                    bookingId = saved.bookingId,
-                    createdByUserId = saved.createdByUserId,
-                    subject = saved.subject,
-                    status = saved.status,
-                    createdAt = saved.createdAt
-                )
+                val response =
+                    InquiryCreated(
+                        id = requireNotNull(saved.id),
+                        organizationId = saved.organizationId,
+                        occurrenceId = saved.occurrenceId,
+                        bookingId = saved.bookingId,
+                        createdByUserId = saved.createdByUserId,
+                        subject = saved.subject,
+                        status = saved.status,
+                        createdAt = saved.createdAt,
+                    )
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -130,7 +137,7 @@ class InquiryCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 201,
-                    body = response
+                    body = response,
                 )
 
                 auditEventPort.append(
@@ -142,8 +149,8 @@ class InquiryCommandService(
                         occurredAtUtc = clock.instant(),
                         requestId = command.requestId,
                         reasonCode = "INQUIRY_CREATED",
-                        afterJson = inquirySnapshot(saved)
-                    )
+                        afterJson = inquirySnapshot(saved),
+                    ),
                 )
 
                 CreateInquiryResult(status = 201, inquiry = response)
@@ -161,7 +168,7 @@ class InquiryCommandService(
                 errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
                 status = 422,
                 message = "body is required",
-                details = mapOf("field" to "body")
+                details = mapOf("field" to "body"),
             )
         }
 
@@ -169,18 +176,20 @@ class InquiryCommandService(
         val requestHash = hashForMessage(command.inquiryId, body, command.attachmentAssetIds)
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actor.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actor.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
-            is IdempotencyDecision.Replay -> PostInquiryMessageResult(
-                status = decision.status,
-                message = decision.body as InquiryMessageView
-            )
+            is IdempotencyDecision.Replay ->
+                PostInquiryMessageResult(
+                    status = decision.status,
+                    message = decision.body as InquiryMessageView,
+                )
 
             IdempotencyDecision.Reserved -> {
                 if (inquiry.status == InquiryStatus.CLOSED) {
@@ -188,28 +197,30 @@ class InquiryCommandService(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Inquiry is already closed",
-                        details = mapOf("inquiryId" to command.inquiryId, "status" to inquiry.status)
+                        details = mapOf("inquiryId" to command.inquiryId, "status" to inquiry.status),
                     )
                 }
 
-                val saved = inquiryRepository.saveMessage(
-                    InquiryMessage(
-                        inquiryId = command.inquiryId,
-                        senderUserId = command.actor.actorUserId,
-                        body = body,
-                        attachmentAssetIds = command.attachmentAssetIds,
-                        createdAt = clock.instant()
+                val saved =
+                    inquiryRepository.saveMessage(
+                        InquiryMessage(
+                            inquiryId = command.inquiryId,
+                            senderUserId = command.actor.actorUserId,
+                            body = body,
+                            attachmentAssetIds = command.attachmentAssetIds,
+                            createdAt = clock.instant(),
+                        ),
                     )
-                )
 
-                val response = InquiryMessageView(
-                    id = requireNotNull(saved.id),
-                    inquiryId = saved.inquiryId,
-                    senderUserId = saved.senderUserId,
-                    body = saved.body,
-                    attachmentAssetIds = saved.attachmentAssetIds,
-                    createdAt = saved.createdAt
-                )
+                val response =
+                    InquiryMessageView(
+                        id = requireNotNull(saved.id),
+                        inquiryId = saved.inquiryId,
+                        senderUserId = saved.senderUserId,
+                        body = saved.body,
+                        attachmentAssetIds = saved.attachmentAssetIds,
+                        createdAt = saved.createdAt,
+                    )
 
                 idempotencyStore.complete(
                     actorUserId = command.actor.actorUserId,
@@ -217,7 +228,7 @@ class InquiryCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 201,
-                    body = response
+                    body = response,
                 )
 
                 auditEventPort.append(
@@ -229,8 +240,8 @@ class InquiryCommandService(
                         occurredAtUtc = clock.instant(),
                         requestId = command.actor.requestId,
                         reasonCode = "INQUIRY_MESSAGE_POSTED",
-                        afterJson = inquiryMessageSnapshot(saved)
-                    )
+                        afterJson = inquiryMessageSnapshot(saved),
+                    ),
                 )
 
                 PostInquiryMessageResult(status = 201, message = response)
@@ -246,13 +257,14 @@ class InquiryCommandService(
         val requestHash = hash("${command.inquiryId}|CLOSE")
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actor.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actor.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
             is IdempotencyDecision.Replay -> CloseInquiryResult(status = decision.status)
 
@@ -262,7 +274,7 @@ class InquiryCommandService(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Inquiry is already closed",
-                        details = mapOf("inquiryId" to command.inquiryId, "status" to inquiry.status)
+                        details = mapOf("inquiryId" to command.inquiryId, "status" to inquiry.status),
                     )
                 }
 
@@ -275,7 +287,7 @@ class InquiryCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 204,
-                    body = mapOf("ok" to true)
+                    body = mapOf("ok" to true),
                 )
 
                 auditEventPort.append(
@@ -288,8 +300,8 @@ class InquiryCommandService(
                         requestId = command.actor.requestId,
                         reasonCode = "INQUIRY_CLOSED",
                         beforeJson = inquirySnapshot(inquiry),
-                        afterJson = inquirySnapshot(closed)
-                    )
+                        afterJson = inquirySnapshot(closed),
+                    ),
                 )
 
                 CloseInquiryResult(status = 204)
@@ -297,12 +309,19 @@ class InquiryCommandService(
         }
     }
 
-    private fun hashForCreate(command: CreateInquiryCommand, bookingId: Long): String {
+    private fun hashForCreate(
+        command: CreateInquiryCommand,
+        bookingId: Long,
+    ): String {
         val raw = "${command.occurrenceId}|$bookingId|${command.subject ?: ""}|${command.message}"
         return hash(raw)
     }
 
-    private fun hashForMessage(inquiryId: Long, body: String, attachmentAssetIds: List<Long>?): String {
+    private fun hashForMessage(
+        inquiryId: Long,
+        body: String,
+        attachmentAssetIds: List<Long>?,
+    ): String {
         val attachments = attachmentAssetIds?.joinToString(",") ?: ""
         return hash("$inquiryId|$body|$attachments")
     }
@@ -318,11 +337,14 @@ class InquiryCommandService(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 404,
                 message = "Inquiry not found",
-                details = mapOf("inquiryId" to inquiryId)
+                details = mapOf("inquiryId" to inquiryId),
             )
     }
 
-    private fun actorLabel(actor: ActorAuthContext, accessType: InquiryAccessType): String {
+    private fun actorLabel(
+        actor: ActorAuthContext,
+        accessType: InquiryAccessType,
+    ): String {
         return if (accessType == InquiryAccessType.ORG_OPERATOR) {
             "OPERATOR:${actor.actorUserId}"
         } else {
@@ -337,7 +359,7 @@ class InquiryCommandService(
             "bookingId" to inquiry.bookingId,
             "createdByUserId" to inquiry.createdByUserId,
             "subject" to inquiry.subject,
-            "status" to inquiry.status.name
+            "status" to inquiry.status.name,
         )
     }
 
@@ -346,7 +368,7 @@ class InquiryCommandService(
             "inquiryId" to message.inquiryId,
             "senderUserId" to message.senderUserId,
             "body" to message.body,
-            "attachmentAssetIds" to message.attachmentAssetIds
+            "attachmentAssetIds" to message.attachmentAssetIds,
         )
     }
 }

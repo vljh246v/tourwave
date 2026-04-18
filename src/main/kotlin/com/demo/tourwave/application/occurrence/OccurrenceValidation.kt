@@ -10,7 +10,7 @@ internal fun requireValidOccurrenceCapacity(capacity: Int): Int {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "capacity must be between 1 and 500"
+            message = "capacity must be between 1 and 500",
         )
     }
     return capacity
@@ -18,13 +18,13 @@ internal fun requireValidOccurrenceCapacity(capacity: Int): Int {
 
 internal fun requireValidOccurrenceWindow(
     startsAtUtc: Instant,
-    endsAtUtc: Instant
+    endsAtUtc: Instant,
 ) {
     if (!endsAtUtc.isAfter(startsAtUtc)) {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "end time must be after start time"
+            message = "end time must be after start time",
         )
     }
 }
@@ -35,7 +35,7 @@ internal fun requireValidCurrency(currency: String): String {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "currency must be an ISO-4217 style 3-letter code"
+            message = "currency must be an ISO-4217 style 3-letter code",
         )
     }
     return normalized
@@ -46,7 +46,7 @@ internal fun requireValidUnitPrice(unitPrice: Int): Int {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "unit price cannot be negative"
+            message = "unit price cannot be negative",
         )
     }
     return unitPrice
@@ -55,7 +55,7 @@ internal fun requireValidUnitPrice(unitPrice: Int): Int {
 internal fun normalizeOptionalShortText(
     value: String?,
     fieldName: String,
-    maxLength: Int
+    maxLength: Int,
 ): String? = normalizeOptionalText(value, maxLength, fieldName)
 
 internal fun requireValidPartySize(partySize: Int): Int {
@@ -63,7 +63,7 @@ internal fun requireValidPartySize(partySize: Int): Int {
         throw DomainException(
             errorCode = ErrorCode.PARTY_SIZE_OUT_OF_RANGE,
             status = 422,
-            message = "party size must be at least 1"
+            message = "party size must be at least 1",
         )
     }
     return partySize
@@ -75,7 +75,7 @@ internal fun requireValidLimit(limit: Int?): Int {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "limit must be between 1 and 100"
+            message = "limit must be between 1 and 100",
         )
     }
     return resolved
@@ -88,6 +88,6 @@ internal fun parseCursor(cursor: String?): Long? {
     return cursor.toLongOrNull() ?: throw DomainException(
         errorCode = ErrorCode.VALIDATION_ERROR,
         status = 422,
-        message = "cursor must be a numeric occurrence id"
+        message = "cursor must be a numeric occurrence id",
     )
 }

@@ -5,7 +5,7 @@ import java.time.Instant
 enum class AnnouncementVisibility {
     DRAFT,
     PUBLIC,
-    INTERNAL
+    INTERNAL,
 }
 
 data class Announcement(
@@ -17,7 +17,7 @@ data class Announcement(
     val publishStartsAtUtc: Instant? = null,
     val publishEndsAtUtc: Instant? = null,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     init {
         require(title.isNotBlank()) { "title must not be blank" }
@@ -35,7 +35,7 @@ data class Announcement(
         visibility: AnnouncementVisibility = this.visibility,
         publishStartsAtUtc: Instant? = this.publishStartsAtUtc,
         publishEndsAtUtc: Instant? = this.publishEndsAtUtc,
-        now: Instant
+        now: Instant,
     ): Announcement {
         return copy(
             title = title,
@@ -43,7 +43,7 @@ data class Announcement(
             visibility = visibility,
             publishStartsAtUtc = publishStartsAtUtc,
             publishEndsAtUtc = publishEndsAtUtc,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -68,7 +68,7 @@ data class Announcement(
             visibility: AnnouncementVisibility,
             publishStartsAtUtc: Instant?,
             publishEndsAtUtc: Instant?,
-            now: Instant
+            now: Instant,
         ): Announcement {
             return Announcement(
                 organizationId = organizationId,
@@ -78,7 +78,7 @@ data class Announcement(
                 publishStartsAtUtc = publishStartsAtUtc,
                 publishEndsAtUtc = publishEndsAtUtc,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }

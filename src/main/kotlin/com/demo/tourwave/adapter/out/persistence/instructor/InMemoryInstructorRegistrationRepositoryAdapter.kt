@@ -27,8 +27,10 @@ class InMemoryInstructorRegistrationRepositoryAdapter : InstructorRegistrationRe
     override fun findByOrganizationId(organizationId: Long): List<InstructorRegistration> =
         registrations.values.filter { it.organizationId == organizationId }.sortedBy { it.id }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): InstructorRegistration? =
-        registrationIdsByOrgUser[keyOf(organizationId, userId)]?.let(registrations::get)
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): InstructorRegistration? = registrationIdsByOrgUser[keyOf(organizationId, userId)]?.let(registrations::get)
 
     override fun clear() {
         sequence.set(0L)
@@ -36,5 +38,8 @@ class InMemoryInstructorRegistrationRepositoryAdapter : InstructorRegistrationRe
         registrationIdsByOrgUser.clear()
     }
 
-    private fun keyOf(organizationId: Long, userId: Long) = "$organizationId:$userId"
+    private fun keyOf(
+        organizationId: Long,
+        userId: Long,
+    ) = "$organizationId:$userId"
 }

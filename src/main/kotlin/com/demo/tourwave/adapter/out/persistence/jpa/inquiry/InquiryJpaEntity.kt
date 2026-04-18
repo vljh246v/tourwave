@@ -19,8 +19,8 @@ import java.time.Instant
     uniqueConstraints = [UniqueConstraint(name = "uk_inquiries_booking", columnNames = ["booking_id"])],
     indexes = [
         Index(name = "idx_inquiries_booking", columnList = "booking_id"),
-        Index(name = "idx_inquiries_creator_created", columnList = "created_by_user_id,created_at")
-    ]
+        Index(name = "idx_inquiries_creator_created", columnList = "created_by_user_id,created_at"),
+    ],
 )
 data class InquiryJpaEntity(
     @Id
@@ -40,5 +40,5 @@ data class InquiryJpaEntity(
     @Column(nullable = false, length = 16)
     val status: InquiryStatus = InquiryStatus.OPEN,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

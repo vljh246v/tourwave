@@ -1,41 +1,41 @@
 package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.booking.BookingCommandService
+import com.demo.tourwave.application.booking.BookingQueryService
 import com.demo.tourwave.application.booking.BookingRefundPreviewService
 import com.demo.tourwave.application.booking.OfferExpirationService
 import com.demo.tourwave.application.booking.PaymentLedgerService
 import com.demo.tourwave.application.booking.RefundRetryService
 import com.demo.tourwave.application.booking.WaitlistOperatorService
-import com.demo.tourwave.application.booking.BookingQueryService
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.OccurrenceRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.booking.port.RefundExecutionPort
-import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.common.IdempotencyPurgeService
+import com.demo.tourwave.application.common.TimeWindowPolicyService
 import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyMaintenancePort
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.inquiry.InquiryAccessPolicy
 import com.demo.tourwave.application.inquiry.InquiryCommandService
 import com.demo.tourwave.application.inquiry.InquiryQueryService
+import com.demo.tourwave.application.inquiry.port.InquiryRepository
+import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
+import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.participant.InvitedParticipantExpirationService
 import com.demo.tourwave.application.participant.ParticipantAccessPolicy
-import com.demo.tourwave.application.inquiry.port.InquiryRepository
 import com.demo.tourwave.application.participant.ParticipantCommandService
 import com.demo.tourwave.application.participant.ParticipantInvitationLifecycleService
 import com.demo.tourwave.application.participant.ParticipantQueryService
 import com.demo.tourwave.application.participant.ParticipantRosterQueryService
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
+import com.demo.tourwave.application.payment.PaymentProviderPort
 import com.demo.tourwave.application.review.ReviewCommandService
 import com.demo.tourwave.application.review.ReviewQueryService
 import com.demo.tourwave.application.review.port.ReviewRepository
-import com.demo.tourwave.application.organization.OrganizationAccessGuard
-import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.UserCommandService
 import com.demo.tourwave.application.user.port.UserRepository
-import com.demo.tourwave.application.payment.PaymentProviderPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
@@ -55,7 +55,7 @@ class UseCaseConfig {
         auditEventPort: AuditEventPort,
         paymentLedgerService: PaymentLedgerService,
         timeWindowPolicyService: TimeWindowPolicyService,
-        clock: Clock
+        clock: Clock,
     ): BookingCommandService {
         return BookingCommandService(
             bookingRepository = bookingRepository,
@@ -65,7 +65,7 @@ class UseCaseConfig {
             auditEventPort = auditEventPort,
             paymentLedgerService = paymentLedgerService,
             timeWindowPolicyService = timeWindowPolicyService,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -74,13 +74,13 @@ class UseCaseConfig {
         paymentRecordRepository: PaymentRecordRepository,
         paymentProviderPort: PaymentProviderPort,
         refundExecutionPort: RefundExecutionPort,
-        clock: Clock
+        clock: Clock,
     ): PaymentLedgerService {
         return PaymentLedgerService(
             paymentRecordRepository = paymentRecordRepository,
             paymentProviderPort = paymentProviderPort,
             refundExecutionPort = refundExecutionPort,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -92,7 +92,7 @@ class UseCaseConfig {
         auditEventPort: AuditEventPort,
         @org.springframework.beans.factory.annotation.Value("\${tourwave.payment.refund.max-retry-attempts:5}") maxRetryAttempts: Int,
         @org.springframework.beans.factory.annotation.Value("\${tourwave.payment.refund.retry-cooldown-seconds:600}") retryCooldownSeconds: Long,
-        clock: Clock
+        clock: Clock,
     ): RefundRetryService {
         return RefundRetryService(
             paymentRecordRepository = paymentRecordRepository,
@@ -101,7 +101,7 @@ class UseCaseConfig {
             auditEventPort = auditEventPort,
             maxRetryAttempts = maxRetryAttempts,
             retryCooldown = Duration.ofSeconds(retryCooldownSeconds),
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -109,12 +109,12 @@ class UseCaseConfig {
     fun idempotencyPurgeService(
         idempotencyMaintenancePort: IdempotencyMaintenancePort,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): IdempotencyPurgeService {
         return IdempotencyPurgeService(
             idempotencyMaintenancePort = idempotencyMaintenancePort,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -123,13 +123,13 @@ class UseCaseConfig {
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
         participantAccessPolicy: ParticipantAccessPolicy,
-        participantInvitationLifecycleService: ParticipantInvitationLifecycleService
+        participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
     ): BookingQueryService {
         return BookingQueryService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
             participantAccessPolicy = participantAccessPolicy,
-            participantInvitationLifecycleService = participantInvitationLifecycleService
+            participantInvitationLifecycleService = participantInvitationLifecycleService,
         )
     }
 
@@ -139,14 +139,14 @@ class UseCaseConfig {
         occurrenceRepository: OccurrenceRepository,
         participantAccessPolicy: ParticipantAccessPolicy,
         paymentLedgerService: PaymentLedgerService,
-        clock: Clock
+        clock: Clock,
     ): BookingRefundPreviewService {
         return BookingRefundPreviewService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
             participantAccessPolicy = participantAccessPolicy,
             paymentLedgerService = paymentLedgerService,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -155,13 +155,13 @@ class UseCaseConfig {
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): WaitlistOperatorService {
         return WaitlistOperatorService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -172,7 +172,7 @@ class UseCaseConfig {
         inquiryAccessPolicy: InquiryAccessPolicy,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): InquiryCommandService {
         return InquiryCommandService(
             bookingRepository = bookingRepository,
@@ -180,14 +180,12 @@ class UseCaseConfig {
             inquiryAccessPolicy = inquiryAccessPolicy,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
     @Bean
-    fun inquiryAccessPolicy(
-        bookingRepository: BookingRepository
-    ): InquiryAccessPolicy {
+    fun inquiryAccessPolicy(bookingRepository: BookingRepository): InquiryAccessPolicy {
         return InquiryAccessPolicy(bookingRepository)
     }
 
@@ -200,7 +198,7 @@ class UseCaseConfig {
         timeWindowPolicyService: TimeWindowPolicyService,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): ParticipantCommandService {
         return ParticipantCommandService(
             bookingRepository = bookingRepository,
@@ -210,7 +208,7 @@ class UseCaseConfig {
             timeWindowPolicyService = timeWindowPolicyService,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -220,14 +218,14 @@ class UseCaseConfig {
         occurrenceRepository: OccurrenceRepository,
         bookingParticipantRepository: BookingParticipantRepository,
         timeWindowPolicyService: TimeWindowPolicyService,
-        clock: Clock
+        clock: Clock,
     ): ParticipantInvitationLifecycleService {
         return ParticipantInvitationLifecycleService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
             bookingParticipantRepository = bookingParticipantRepository,
             timeWindowPolicyService = timeWindowPolicyService,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -238,7 +236,7 @@ class UseCaseConfig {
         auditEventPort: AuditEventPort,
         paymentLedgerService: PaymentLedgerService,
         timeWindowPolicyService: TimeWindowPolicyService,
-        clock: Clock
+        clock: Clock,
     ): OfferExpirationService {
         return OfferExpirationService(
             bookingRepository = bookingRepository,
@@ -246,7 +244,7 @@ class UseCaseConfig {
             auditEventPort = auditEventPort,
             paymentLedgerService = paymentLedgerService,
             timeWindowPolicyService = timeWindowPolicyService,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -254,34 +252,34 @@ class UseCaseConfig {
     fun invitedParticipantExpirationService(
         participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): InvitedParticipantExpirationService {
         return InvitedParticipantExpirationService(
             participantInvitationLifecycleService = participantInvitationLifecycleService,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
     @Bean
     fun participantAccessPolicy(
         bookingRepository: BookingRepository,
-        bookingParticipantRepository: BookingParticipantRepository
+        bookingParticipantRepository: BookingParticipantRepository,
     ): ParticipantAccessPolicy {
         return ParticipantAccessPolicy(
             bookingRepository = bookingRepository,
-            bookingParticipantRepository = bookingParticipantRepository
+            bookingParticipantRepository = bookingParticipantRepository,
         )
     }
 
     @Bean
     fun participantQueryService(
         participantAccessPolicy: ParticipantAccessPolicy,
-        participantInvitationLifecycleService: ParticipantInvitationLifecycleService
+        participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
     ): ParticipantQueryService {
         return ParticipantQueryService(
             participantAccessPolicy = participantAccessPolicy,
-            participantInvitationLifecycleService = participantInvitationLifecycleService
+            participantInvitationLifecycleService = participantInvitationLifecycleService,
         )
     }
 
@@ -289,30 +287,28 @@ class UseCaseConfig {
     fun participantRosterQueryService(
         bookingRepository: BookingRepository,
         occurrenceRepository: OccurrenceRepository,
-        bookingParticipantRepository: BookingParticipantRepository
+        bookingParticipantRepository: BookingParticipantRepository,
     ): ParticipantRosterQueryService {
         return ParticipantRosterQueryService(
             bookingRepository = bookingRepository,
             occurrenceRepository = occurrenceRepository,
-            bookingParticipantRepository = bookingParticipantRepository
+            bookingParticipantRepository = bookingParticipantRepository,
         )
     }
 
     @Bean
     fun inquiryQueryService(
         inquiryRepository: InquiryRepository,
-        inquiryAccessPolicy: InquiryAccessPolicy
+        inquiryAccessPolicy: InquiryAccessPolicy,
     ): InquiryQueryService {
         return InquiryQueryService(
             inquiryRepository = inquiryRepository,
-            inquiryAccessPolicy = inquiryAccessPolicy
+            inquiryAccessPolicy = inquiryAccessPolicy,
         )
     }
 
     @Bean
-    fun userCommandService(
-        userRepository: UserRepository
-    ): UserCommandService {
+    fun userCommandService(userRepository: UserRepository): UserCommandService {
         return UserCommandService(userRepository)
     }
 
@@ -323,7 +319,7 @@ class UseCaseConfig {
         reviewRepository: ReviewRepository,
         idempotencyStore: IdempotencyStore,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): ReviewCommandService {
         return ReviewCommandService(
             bookingRepository = bookingRepository,
@@ -331,7 +327,7 @@ class UseCaseConfig {
             reviewRepository = reviewRepository,
             idempotencyStore = idempotencyStore,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 
@@ -341,14 +337,14 @@ class UseCaseConfig {
         occurrenceRepository: OccurrenceRepository,
         tourRepository: TourRepository,
         instructorProfileRepository: InstructorProfileRepository,
-        organizationAccessGuard: OrganizationAccessGuard
+        organizationAccessGuard: OrganizationAccessGuard,
     ): ReviewQueryService {
         return ReviewQueryService(
             reviewRepository = reviewRepository,
             occurrenceRepository = occurrenceRepository,
             tourRepository = tourRepository,
             instructorProfileRepository = instructorProfileRepository,
-            organizationAccessGuard = organizationAccessGuard
+            organizationAccessGuard = organizationAccessGuard,
         )
     }
 }

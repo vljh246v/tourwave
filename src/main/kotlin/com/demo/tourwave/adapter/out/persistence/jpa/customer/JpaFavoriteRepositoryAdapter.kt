@@ -15,8 +15,7 @@ class JpaFavoriteRepositoryAdapter(
         return existing?.toDomain() ?: favoriteJpaRepository.save(favorite.toEntity()).toDomain()
     }
 
-    override fun findByUserId(userId: Long): List<Favorite> =
-        favoriteJpaRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDomain() }
+    override fun findByUserId(userId: Long): List<Favorite> = favoriteJpaRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDomain() }
 
     override fun findByUserIdAndTourId(
         userId: Long,

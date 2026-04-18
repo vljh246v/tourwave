@@ -15,7 +15,10 @@ class InMemoryInstructorProfileRepositoryAdapter : InstructorProfileRepository {
     private val profileIdsByOrgUser = ConcurrentHashMap<String, Long>()
 
     override fun save(instructorProfile: InstructorProfile): InstructorProfile {
-        val instructorProfileId = instructorProfile.id ?: profileIdsByOrgUser[keyOf(instructorProfile.organizationId, instructorProfile.userId)] ?: sequence.incrementAndGet()
+        val instructorProfileId =
+            instructorProfile.id
+                ?: profileIdsByOrgUser[keyOf(instructorProfile.organizationId, instructorProfile.userId)]
+                ?: sequence.incrementAndGet()
         val saved = instructorProfile.copy(id = instructorProfileId)
         instructorProfiles[instructorProfileId] = saved
         profileIdsByOrgUser[keyOf(saved.organizationId, saved.userId)] = instructorProfileId
@@ -28,7 +31,10 @@ class InMemoryInstructorProfileRepositoryAdapter : InstructorProfileRepository {
         return instructorProfiles.values.filter { it.organizationId == organizationId }.sortedBy { it.id }
     }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): InstructorProfile? {
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): InstructorProfile? {
         return profileIdsByOrgUser[keyOf(organizationId, userId)]?.let(instructorProfiles::get)
     }
 
@@ -38,5 +44,8 @@ class InMemoryInstructorProfileRepositoryAdapter : InstructorProfileRepository {
         profileIdsByOrgUser.clear()
     }
 
-    private fun keyOf(organizationId: Long, userId: Long) = "$organizationId:$userId"
+    private fun keyOf(
+        organizationId: Long,
+        userId: Long,
+    ) = "$organizationId:$userId"
 }

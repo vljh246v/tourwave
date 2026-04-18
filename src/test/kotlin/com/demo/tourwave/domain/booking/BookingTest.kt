@@ -6,16 +6,16 @@ import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 
 class BookingTest {
-
     @Test
     fun `create should set REQUESTED when seats are enough`() {
-        val booking = Booking.create(
-            occurrenceId = 1L,
-            organizationId = 10L,
-            leaderUserId = 100L,
-            partySize = 2,
-            availableSeats = 2
-        )
+        val booking =
+            Booking.create(
+                occurrenceId = 1L,
+                organizationId = 10L,
+                leaderUserId = 100L,
+                partySize = 2,
+                availableSeats = 2,
+            )
 
         assertEquals(BookingStatus.REQUESTED, booking.status)
         assertEquals(PaymentStatus.AUTHORIZED, booking.paymentStatus)
@@ -23,13 +23,14 @@ class BookingTest {
 
     @Test
     fun `create should set WAITLISTED when seats are insufficient`() {
-        val booking = Booking.create(
-            occurrenceId = 1L,
-            organizationId = 10L,
-            leaderUserId = 100L,
-            partySize = 3,
-            availableSeats = 2
-        )
+        val booking =
+            Booking.create(
+                occurrenceId = 1L,
+                organizationId = 10L,
+                leaderUserId = 100L,
+                partySize = 3,
+                availableSeats = 2,
+            )
 
         assertEquals(BookingStatus.WAITLISTED, booking.status)
     }

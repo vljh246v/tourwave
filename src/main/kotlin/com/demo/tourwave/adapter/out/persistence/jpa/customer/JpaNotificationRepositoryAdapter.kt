@@ -9,18 +9,18 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaNotificationRepositoryAdapter(
-    private val notificationJpaRepository: NotificationJpaRepository
+    private val notificationJpaRepository: NotificationJpaRepository,
 ) : NotificationRepository {
-    override fun save(notification: Notification): Notification =
-        notificationJpaRepository.save(notification.toEntity()).toDomain()
+    override fun save(notification: Notification): Notification = notificationJpaRepository.save(notification.toEntity()).toDomain()
 
-    override fun findById(notificationId: Long): Notification? =
-        notificationJpaRepository.findById(notificationId).orElse(null)?.toDomain()
+    override fun findById(notificationId: Long): Notification? = notificationJpaRepository.findById(notificationId).orElse(null)?.toDomain()
 
-    override fun findByUserId(userId: Long): List<Notification> =
-        notificationJpaRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDomain() }
+    override fun findByUserId(userId: Long): List<Notification> = notificationJpaRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDomain() }
 
-    override fun markAllRead(userId: Long, notificationIds: List<Long>) {
+    override fun markAllRead(
+        userId: Long,
+        notificationIds: List<Long>,
+    ) {
         if (notificationIds.isEmpty()) return
         val now = Instant.now()
         val entities = notificationJpaRepository.findAllById(notificationIds).filter { it.userId == userId }
@@ -42,7 +42,7 @@ private fun Notification.toEntity(): NotificationJpaEntity =
         resourceType = resourceType,
         resourceId = resourceId,
         readAt = readAt,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun NotificationJpaEntity.toDomain(): Notification =
@@ -55,5 +55,5 @@ private fun NotificationJpaEntity.toDomain(): Notification =
         resourceType = resourceType,
         resourceId = resourceId,
         readAt = readAt,
-        createdAt = createdAt
+        createdAt = createdAt,
     )

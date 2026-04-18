@@ -8,6 +8,5 @@ data class InquiryMessage(
     val senderUserId: Long,
     val body: String,
     val attachmentAssetIds: List<Long>? = null,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 )
-

@@ -15,7 +15,7 @@ data class CreateAnnouncementCommand(
     val body: String,
     val visibility: AnnouncementVisibility,
     val publishStartsAtUtc: java.time.Instant?,
-    val publishEndsAtUtc: java.time.Instant?
+    val publishEndsAtUtc: java.time.Instant?,
 )
 
 data class UpdateAnnouncementCommand(
@@ -25,18 +25,18 @@ data class UpdateAnnouncementCommand(
     val body: String?,
     val visibility: AnnouncementVisibility?,
     val publishStartsAtUtc: java.time.Instant?,
-    val publishEndsAtUtc: java.time.Instant?
+    val publishEndsAtUtc: java.time.Instant?,
 )
 
 data class AnnouncementCursorPage(
     val items: List<Announcement>,
-    val nextCursor: String?
+    val nextCursor: String?,
 )
 
 class AnnouncementService(
     private val announcementRepository: AnnouncementRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun create(command: CreateAnnouncementCommand): Announcement {
         organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
@@ -48,8 +48,8 @@ class AnnouncementService(
                 visibility = command.visibility,
                 publishStartsAtUtc = command.publishStartsAtUtc,
                 publishEndsAtUtc = command.publishEndsAtUtc,
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
@@ -57,25 +57,28 @@ class AnnouncementService(
         actorUserId: Long,
         organizationId: Long,
         cursor: String?,
-        limit: Int
+        limit: Int,
     ): AnnouncementCursorPage {
         organizationAccessGuard.requireOperator(actorUserId, organizationId)
         return paginate(
             announcements = announcementRepository.findByOrganizationId(organizationId),
             cursor = cursor,
-            limit = limit
+            limit = limit,
         )
     }
 
     fun listPublicAnnouncements(
         organizationId: Long?,
         cursor: String?,
-        limit: Int
+        limit: Int,
     ): AnnouncementCursorPage {
         val now = clock.instant()
-        val announcements = (organizationId?.let(announcementRepository::findByOrganizationId)
-            ?: announcementRepository.findAll())
-            .filter { it.isVisibleToPublic(now) }
+        val announcements =
+            (
+                organizationId?.let(announcementRepository::findByOrganizationId)
+                    ?: announcementRepository.findAll()
+            )
+                .filter { it.isVisibleToPublic(now) }
         return paginate(announcements, cursor, limit)
     }
 
@@ -89,12 +92,15 @@ class AnnouncementService(
                 visibility = command.visibility ?: existing.visibility,
                 publishStartsAtUtc = command.publishStartsAtUtc ?: existing.publishStartsAtUtc,
                 publishEndsAtUtc = command.publishEndsAtUtc ?: existing.publishEndsAtUtc,
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
-    fun delete(actorUserId: Long, announcementId: Long) {
+    fun delete(
+        actorUserId: Long,
+        announcementId: Long,
+    ) {
         val existing = requireAnnouncement(announcementId)
         organizationAccessGuard.requireOperator(actorUserId, existing.organizationId)
         announcementRepository.deleteById(announcementId)
@@ -104,20 +110,21 @@ class AnnouncementService(
         return announcementRepository.findById(announcementId) ?: throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 404,
-            message = "announcement $announcementId not found"
+            message = "announcement $announcementId not found",
         )
     }
 
     private fun paginate(
         announcements: List<Announcement>,
         cursor: String?,
-        limit: Int
+        limit: Int,
     ): AnnouncementCursorPage {
         val safeLimit = limit.coerceIn(1, 100)
         val sorted = announcements.sortedWith(compareByDescending<Announcement> { it.updatedAt }.thenByDescending { it.id ?: -1L })
-        val filtered = cursor?.toLongOrNull()?.let { cursorId ->
-            sorted.dropWhile { (it.id ?: Long.MIN_VALUE) != cursorId }.drop(1)
-        } ?: sorted
+        val filtered =
+            cursor?.toLongOrNull()?.let { cursorId ->
+                sorted.dropWhile { (it.id ?: Long.MIN_VALUE) != cursorId }.drop(1)
+            } ?: sorted
         val items = filtered.take(safeLimit)
         val nextCursor = items.takeIf { filtered.size > safeLimit }?.lastOrNull()?.id?.toString()
         return AnnouncementCursorPage(items = items, nextCursor = nextCursor)

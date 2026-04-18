@@ -4,21 +4,23 @@ import com.demo.tourwave.application.organization.normalizeOptionalText
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 
-internal fun normalizeOptionalHeadline(value: String?): String? =
-    normalizeOptionalText(value, 255, "headline")
+internal fun normalizeOptionalHeadline(value: String?): String? = normalizeOptionalText(value, 255, "headline")
 
-internal fun normalizeOptionalInstructorBio(value: String?): String? =
-    normalizeOptionalText(value, 4000, "bio")
+internal fun normalizeOptionalInstructorBio(value: String?): String? = normalizeOptionalText(value, 4000, "bio")
 
-internal fun normalizeOptionalInternalNote(value: String?): String? =
-    normalizeOptionalText(value, 4000, "internalNote")
+internal fun normalizeOptionalInternalNote(value: String?): String? = normalizeOptionalText(value, 4000, "internalNote")
 
-internal fun normalizeStringList(values: List<String>, fieldName: String, maxItems: Int = 20, maxLength: Int = 80): List<String> {
+internal fun normalizeStringList(
+    values: List<String>,
+    fieldName: String,
+    maxItems: Int = 20,
+    maxLength: Int = 80,
+): List<String> {
     if (values.size > maxItems) {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "$fieldName exceeds maximum item count"
+            message = "$fieldName exceeds maximum item count",
         )
     }
     return values.map { value ->
@@ -27,14 +29,14 @@ internal fun normalizeStringList(values: List<String>, fieldName: String, maxIte
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
-                message = "$fieldName cannot contain blank items"
+                message = "$fieldName cannot contain blank items",
             )
         }
         if (normalized.length > maxLength) {
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
-                message = "$fieldName item exceeds max length"
+                message = "$fieldName item exceeds max length",
             )
         }
         normalized
@@ -49,7 +51,7 @@ internal fun normalizeYearsOfExperience(value: Int?): Int? {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "yearsOfExperience must be between 0 and 60"
+            message = "yearsOfExperience must be between 0 and 60",
         )
     }
     return value

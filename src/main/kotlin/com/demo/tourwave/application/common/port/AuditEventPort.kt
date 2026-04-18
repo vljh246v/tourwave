@@ -6,7 +6,7 @@ enum class AuditActorType {
     USER,
     OPERATOR,
     SYSTEM,
-    JOB
+    JOB,
 }
 
 data class AuditEventCommand(
@@ -21,7 +21,7 @@ data class AuditEventCommand(
     val actorId: Long? = parseActorId(actor),
     val reasonCode: String? = null,
     val beforeJson: Map<String, Any?>? = null,
-    val afterJson: Map<String, Any?>? = null
+    val afterJson: Map<String, Any?>? = null,
 ) {
     companion object {
         private fun parseActorType(actor: String): AuditActorType {

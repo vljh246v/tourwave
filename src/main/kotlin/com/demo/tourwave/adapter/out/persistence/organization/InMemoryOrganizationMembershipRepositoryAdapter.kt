@@ -22,7 +22,10 @@ class InMemoryOrganizationMembershipRepositoryAdapter : OrganizationMembershipRe
         return saved
     }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): OrganizationMembership? {
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): OrganizationMembership? {
         return membershipIdsByOrgAndUser[keyOf(organizationId, userId)]?.let(memberships::get)
     }
 
@@ -40,5 +43,8 @@ class InMemoryOrganizationMembershipRepositoryAdapter : OrganizationMembershipRe
         membershipIdsByOrgAndUser.clear()
     }
 
-    private fun keyOf(organizationId: Long, userId: Long): String = "$organizationId:$userId"
+    private fun keyOf(
+        organizationId: Long,
+        userId: Long,
+    ): String = "$organizationId:$userId"
 }

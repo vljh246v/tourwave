@@ -8,19 +8,19 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaAnnouncementRepositoryAdapter(
-    private val announcementJpaRepository: AnnouncementJpaRepository
+    private val announcementJpaRepository: AnnouncementJpaRepository,
 ) : AnnouncementRepository {
-    override fun save(announcement: Announcement): Announcement =
-        announcementJpaRepository.save(announcement.toEntity()).toDomain()
+    override fun save(announcement: Announcement): Announcement = announcementJpaRepository.save(announcement.toEntity()).toDomain()
 
-    override fun findById(announcementId: Long): Announcement? =
-        announcementJpaRepository.findById(announcementId).orElse(null)?.toDomain()
+    override fun findById(announcementId: Long): Announcement? = announcementJpaRepository.findById(announcementId).orElse(null)?.toDomain()
 
     override fun findByOrganizationId(organizationId: Long): List<Announcement> =
         announcementJpaRepository.findByOrganizationIdOrderByUpdatedAtDescIdDesc(organizationId).map { it.toDomain() }
 
     override fun findAll(): List<Announcement> =
-        announcementJpaRepository.findAll().map { it.toDomain() }.sortedWith(compareByDescending<Announcement> { it.updatedAt }.thenByDescending { it.id ?: -1L })
+        announcementJpaRepository.findAll().map { it.toDomain() }.sortedWith(
+            compareByDescending<Announcement> { it.updatedAt }.thenByDescending { it.id ?: -1L },
+        )
 
     override fun deleteById(announcementId: Long) {
         announcementJpaRepository.deleteById(announcementId)
@@ -41,7 +41,7 @@ private fun Announcement.toEntity(): AnnouncementJpaEntity =
         publishStartsAtUtc = publishStartsAtUtc,
         publishEndsAtUtc = publishEndsAtUtc,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun AnnouncementJpaEntity.toDomain(): Announcement =
@@ -54,5 +54,5 @@ private fun AnnouncementJpaEntity.toDomain(): Announcement =
         publishStartsAtUtc = publishStartsAtUtc,
         publishEndsAtUtc = publishEndsAtUtc,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

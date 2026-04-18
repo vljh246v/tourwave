@@ -11,7 +11,7 @@ import com.demo.tourwave.domain.organization.OrganizationStatus
 class OrganizationQueryService(
     private val organizationRepository: OrganizationRepository,
     private val membershipRepository: OrganizationMembershipRepository,
-    private val organizationAccessGuard: OrganizationAccessGuard
+    private val organizationAccessGuard: OrganizationAccessGuard,
 ) {
     fun getPublicOrganization(organizationId: Long): Organization {
         val organization = organizationRepository.findById(organizationId) ?: throw notFound(organizationId)
@@ -21,7 +21,10 @@ class OrganizationQueryService(
         return organization
     }
 
-    fun getOperatorOrganization(actorUserId: Long, organizationId: Long): Organization {
+    fun getOperatorOrganization(
+        actorUserId: Long,
+        organizationId: Long,
+    ): Organization {
         organizationAccessGuard.requireMembership(actorUserId, organizationId)
         return organizationRepository.findById(organizationId) ?: throw notFound(organizationId)
     }
@@ -34,7 +37,7 @@ class OrganizationQueryService(
         return DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 404,
-            message = "organization $organizationId not found"
+            message = "organization $organizationId not found",
         )
     }
 }

@@ -17,14 +17,15 @@ class ScheduledJobCoordinatorTest {
     private val workerJobLockRepository = InMemoryWorkerJobLockRepositoryAdapter()
     private val jobExecutionMonitor = JobExecutionMonitor()
     private val meterRegistry = SimpleMeterRegistry()
-    private val coordinator = ScheduledJobCoordinator(
-        workerJobLockRepository = workerJobLockRepository,
-        jobExecutionMonitor = jobExecutionMonitor,
-        meterRegistry = meterRegistry,
-        clock = clock,
-        ownerId = "worker-a",
-        leaseDuration = Duration.ofSeconds(120)
-    )
+    private val coordinator =
+        ScheduledJobCoordinator(
+            workerJobLockRepository = workerJobLockRepository,
+            jobExecutionMonitor = jobExecutionMonitor,
+            meterRegistry = meterRegistry,
+            clock = clock,
+            ownerId = "worker-a",
+            leaseDuration = Duration.ofSeconds(120),
+        )
 
     @BeforeEach
     fun setUp() {
@@ -35,12 +36,13 @@ class ScheduledJobCoordinatorTest {
 
     @Test
     fun `coordinator records success metrics and releases lock`() {
-        val result = coordinator.run(
-            jobName = "offer-expiration",
-            onSkipped = { "skipped" }
-        ) {
-            "ok"
-        }
+        val result =
+            coordinator.run(
+                jobName = "offer-expiration",
+                onSkipped = { "skipped" },
+            ) {
+                "ok"
+            }
 
         assertEquals("ok", result)
         assertEquals(0, workerJobLockRepository.findAll().size)
@@ -55,15 +57,16 @@ class ScheduledJobCoordinatorTest {
             lockName = "refund-retry",
             ownerId = "worker-b",
             lockedAtUtc = clock.instant(),
-            leaseExpiresAtUtc = clock.instant().plusSeconds(60)
+            leaseExpiresAtUtc = clock.instant().plusSeconds(60),
         )
 
-        val result = coordinator.run(
-            jobName = "refund-retry",
-            onSkipped = { "skipped" }
-        ) {
-            "executed"
-        }
+        val result =
+            coordinator.run(
+                jobName = "refund-retry",
+                onSkipped = { "skipped" },
+            ) {
+                "executed"
+            }
 
         assertEquals("skipped", result)
         val snapshot = requireNotNull(jobExecutionMonitor.getSnapshot("refund-retry"))
@@ -76,7 +79,7 @@ class ScheduledJobCoordinatorTest {
         assertFailsWith<IllegalStateException> {
             coordinator.run(
                 jobName = "finance-reconciliation",
-                onSkipped = { "skipped" }
+                onSkipped = { "skipped" },
             ) {
                 error("boom")
             }

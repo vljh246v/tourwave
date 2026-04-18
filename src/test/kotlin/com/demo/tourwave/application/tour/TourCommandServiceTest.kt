@@ -7,7 +7,6 @@ import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizati
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
-import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
