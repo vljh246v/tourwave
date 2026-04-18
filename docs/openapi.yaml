@@ -3660,97 +3660,6 @@ components:
               additionalProperties: true
               nullable: true
 
-  x-error-code-map:
-    conflict_409:
-      - code: INVALID_STATE_TRANSITION
-        when: Transition is not allowed from current booking state
-        example_endpoints:
-          - POST /bookings/{bookingId}/approve
-          - POST /bookings/{bookingId}/offer/accept
-      - code: BOOKING_TERMINAL_STATE
-        when: Command targets terminal booking (REJECTED/EXPIRED/CANCELED/COMPLETED)
-        example_endpoints:
-          - POST /bookings/{bookingId}/cancel
-          - POST /bookings/{bookingId}/complete
-      - code: OFFER_NOT_ACTIVE
-        when: Offer command requested while booking is not in OFFERED
-        example_endpoints:
-          - POST /bookings/{bookingId}/offer/accept
-          - POST /bookings/{bookingId}/offer/decline
-      - code: OFFER_EXPIRED
-        when: Offer exists but now is later than offerExpiresAtUtc
-        example_endpoints:
-          - POST /bookings/{bookingId}/offer/accept
-      - code: OCCURRENCE_ALREADY_CANCELED
-        when: Occurrence-level command called after occurrence canceled
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/bookings
-      - code: CAPACITY_EXCEEDED
-        when: Requested seat allocation exceeds available seats
-        example_endpoints:
-          - POST /bookings/{bookingId}/approve
-          - POST /bookings/{bookingId}/offer/accept
-      - code: PARTY_SIZE_INCREASE_NOT_ALLOWED
-        when: Party-size patch attempts to increase current value
-        example_endpoints:
-          - PATCH /bookings/{bookingId}/party-size
-      - code: WAITLIST_PROMOTION_NOT_POSSIBLE
-        when: Waitlist item cannot be promoted due to seat/eligibility constraints
-        example_endpoints:
-          - POST /waitlist/{waitlistId}/promote
-      - code: DUPLICATE_REVIEW
-        when: Same author submits duplicate review for same target scope
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/reviews/tour
-          - POST /occurrences/{occurrenceId}/reviews/instructor
-      - code: INQUIRY_ALREADY_EXISTS
-        when: Inquiry uniqueness rule violated (e.g., one inquiry per booking)
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/inquiries
-      - code: IDEMPOTENCY_IN_PROGRESS
-        when: Same idempotency key is currently being processed
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/bookings
-          - POST /bookings/{bookingId}/offer/accept
-      - code: PAYMENT_ALREADY_REFUNDED
-        when: Refund already completed and duplicate refund attempt detected
-        example_endpoints:
-          - POST /bookings/{bookingId}/cancel
-
-    unprocessable_422:
-      - code: VALIDATION_ERROR
-        when: Generic request payload validation failed
-      - code: REQUIRED_FIELD_MISSING
-        when: Mandatory input field is missing
-      - code: PARTY_SIZE_OUT_OF_RANGE
-        when: partySize is below 1 or above configured maximum
-      - code: BOOKING_SCOPE_MISMATCH
-        when: bookingId does not belong to occurrence/org scope in request
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/inquiries
-      - code: INVITE_WINDOW_CLOSED
-        when: Participant invite requested within blocked time window before start
-        example_endpoints:
-          - POST /bookings/{bookingId}/participants
-      - code: ATTENDANCE_NOT_ELIGIBLE
-        when: Review attempted without ATTENDED status
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/reviews/tour
-      - code: INVALID_PARTICIPANT_STATUS
-        when: Participant state update violates invitation lifecycle
-        example_endpoints:
-          - POST /participants/{participantId}/accept
-          - POST /participants/{participantId}/decline
-      - code: OFFER_EXPIRY_INVALID
-        when: Offer extension payload has invalid expiresAtUtc
-        example_endpoints:
-          - POST /bookings/{bookingId}/extend-offer
-      - code: IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD
-        when: Same idempotency key is reused with a different request payload
-        example_endpoints:
-          - POST /occurrences/{occurrenceId}/bookings
-          - POST /occurrences/{occurrenceId}/inquiries
-
     # ---- Auth ----
     SignupRequest:
       type: object
@@ -3916,6 +3825,97 @@ components:
           type: array
           items: { type: object, additionalProperties: true }
         nextCursor: { type: string, nullable: true }
+
+  x-error-code-map:
+    conflict_409:
+      - code: INVALID_STATE_TRANSITION
+        when: Transition is not allowed from current booking state
+        example_endpoints:
+          - POST /bookings/{bookingId}/approve
+          - POST /bookings/{bookingId}/offer/accept
+      - code: BOOKING_TERMINAL_STATE
+        when: Command targets terminal booking (REJECTED/EXPIRED/CANCELED/COMPLETED)
+        example_endpoints:
+          - POST /bookings/{bookingId}/cancel
+          - POST /bookings/{bookingId}/complete
+      - code: OFFER_NOT_ACTIVE
+        when: Offer command requested while booking is not in OFFERED
+        example_endpoints:
+          - POST /bookings/{bookingId}/offer/accept
+          - POST /bookings/{bookingId}/offer/decline
+      - code: OFFER_EXPIRED
+        when: Offer exists but now is later than offerExpiresAtUtc
+        example_endpoints:
+          - POST /bookings/{bookingId}/offer/accept
+      - code: OCCURRENCE_ALREADY_CANCELED
+        when: Occurrence-level command called after occurrence canceled
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/bookings
+      - code: CAPACITY_EXCEEDED
+        when: Requested seat allocation exceeds available seats
+        example_endpoints:
+          - POST /bookings/{bookingId}/approve
+          - POST /bookings/{bookingId}/offer/accept
+      - code: PARTY_SIZE_INCREASE_NOT_ALLOWED
+        when: Party-size patch attempts to increase current value
+        example_endpoints:
+          - PATCH /bookings/{bookingId}/party-size
+      - code: WAITLIST_PROMOTION_NOT_POSSIBLE
+        when: Waitlist item cannot be promoted due to seat/eligibility constraints
+        example_endpoints:
+          - POST /waitlist/{waitlistId}/promote
+      - code: DUPLICATE_REVIEW
+        when: Same author submits duplicate review for same target scope
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/reviews/tour
+          - POST /occurrences/{occurrenceId}/reviews/instructor
+      - code: INQUIRY_ALREADY_EXISTS
+        when: Inquiry uniqueness rule violated (e.g., one inquiry per booking)
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/inquiries
+      - code: IDEMPOTENCY_IN_PROGRESS
+        when: Same idempotency key is currently being processed
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/bookings
+          - POST /bookings/{bookingId}/offer/accept
+      - code: PAYMENT_ALREADY_REFUNDED
+        when: Refund already completed and duplicate refund attempt detected
+        example_endpoints:
+          - POST /bookings/{bookingId}/cancel
+
+    unprocessable_422:
+      - code: VALIDATION_ERROR
+        when: Generic request payload validation failed
+      - code: REQUIRED_FIELD_MISSING
+        when: Mandatory input field is missing
+      - code: PARTY_SIZE_OUT_OF_RANGE
+        when: partySize is below 1 or above configured maximum
+      - code: BOOKING_SCOPE_MISMATCH
+        when: bookingId does not belong to occurrence/org scope in request
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/inquiries
+      - code: INVITE_WINDOW_CLOSED
+        when: Participant invite requested within blocked time window before start
+        example_endpoints:
+          - POST /bookings/{bookingId}/participants
+      - code: ATTENDANCE_NOT_ELIGIBLE
+        when: Review attempted without ATTENDED status
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/reviews/tour
+      - code: INVALID_PARTICIPANT_STATUS
+        when: Participant state update violates invitation lifecycle
+        example_endpoints:
+          - POST /participants/{participantId}/accept
+          - POST /participants/{participantId}/decline
+      - code: OFFER_EXPIRY_INVALID
+        when: Offer extension payload has invalid expiresAtUtc
+        example_endpoints:
+          - POST /bookings/{bookingId}/extend-offer
+      - code: IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD
+        when: Same idempotency key is reused with a different request payload
+        example_endpoints:
+          - POST /occurrences/{occurrenceId}/bookings
+          - POST /occurrences/{occurrenceId}/inquiries
   responses:
     BadRequest:
       description: Bad Request
