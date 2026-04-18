@@ -32,7 +32,8 @@ private fun User.toEntity(): UserJpaEntity =
         status = status,
         createdAt = createdAt,
         updatedAt = updatedAt,
-        emailVerifiedAt = emailVerifiedAt
+        emailVerifiedAt = emailVerifiedAt,
+        deletedAtUtc = deletedAt
     )
 
 private fun UserJpaEntity.toDomain(): User =
@@ -44,5 +45,6 @@ private fun UserJpaEntity.toDomain(): User =
         status = status,
         createdAt = createdAt,
         updatedAt = updatedAt,
-        emailVerifiedAt = emailVerifiedAt
+        emailVerifiedAt = emailVerifiedAt,
+        deletedAt = deletedAtUtc
     )

@@ -35,5 +35,7 @@ data class UserJpaEntity(
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant,
     @Column(name = "email_verified_at")
-    val emailVerifiedAt: Instant? = null
+    val emailVerifiedAt: Instant? = null,
+    @Column(name = "deleted_at_utc")
+    val deletedAtUtc: Instant? = null
 )
