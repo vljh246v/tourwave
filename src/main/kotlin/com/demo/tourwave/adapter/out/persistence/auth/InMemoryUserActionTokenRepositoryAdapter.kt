@@ -29,7 +29,7 @@ class InMemoryUserActionTokenRepositoryAdapter : UserActionTokenRepository {
     override fun findActiveByUserIdAndPurpose(
         userId: Long,
         purpose: UserActionTokenPurpose,
-        now: Instant
+        now: Instant,
     ): List<UserActionToken> {
         return tokensById.values
             .filter { it.userId == userId && it.purpose == purpose && it.isActive(now) }

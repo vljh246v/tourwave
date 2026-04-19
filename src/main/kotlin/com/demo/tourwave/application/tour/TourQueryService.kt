@@ -10,9 +10,12 @@ import com.demo.tourwave.domain.tour.TourStatus
 
 class TourQueryService(
     private val tourRepository: TourRepository,
-    private val organizationAccessGuard: OrganizationAccessGuard
+    private val organizationAccessGuard: OrganizationAccessGuard,
 ) {
-    fun listByOrganization(actorUserId: Long, organizationId: Long): List<Tour> {
+    fun listByOrganization(
+        actorUserId: Long,
+        organizationId: Long,
+    ): List<Tour> {
         organizationAccessGuard.requireMembership(actorUserId, organizationId)
         return tourRepository.findByOrganizationId(organizationId)
     }
@@ -25,9 +28,10 @@ class TourQueryService(
         return tour.content
     }
 
-    private fun notFound(tourId: Long) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = "tour $tourId not found"
-    )
+    private fun notFound(tourId: Long) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = "tour $tourId not found",
+        )
 }

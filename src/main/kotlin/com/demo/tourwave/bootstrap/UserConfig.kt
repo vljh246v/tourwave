@@ -13,12 +13,12 @@ class UserConfig {
     fun userService(
         userPort: UserPort,
         auditEventPort: AuditEventPort,
-        clock: Clock
+        clock: Clock,
     ): UserService {
         return UserService(
             userPort = userPort,
             auditEventPort = auditEventPort,
-            clock = clock
+            clock = clock,
         )
     }
 }

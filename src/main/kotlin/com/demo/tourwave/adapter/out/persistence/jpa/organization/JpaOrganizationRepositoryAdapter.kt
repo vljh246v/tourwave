@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaOrganizationRepositoryAdapter(
-    private val organizationJpaRepository: OrganizationJpaRepository
+    private val organizationJpaRepository: OrganizationJpaRepository,
 ) : OrganizationRepository {
     override fun save(organization: Organization): Organization {
         return organizationJpaRepository.save(organization.toEntity()).toDomain()
@@ -44,7 +44,7 @@ private fun Organization.toEntity(): OrganizationJpaEntity =
         timezone = timezone,
         status = status,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun OrganizationJpaEntity.toDomain(): Organization =
@@ -63,5 +63,5 @@ private fun OrganizationJpaEntity.toDomain(): Organization =
         timezone = timezone,
         status = status,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

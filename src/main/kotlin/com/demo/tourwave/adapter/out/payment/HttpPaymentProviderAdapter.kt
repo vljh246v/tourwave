@@ -28,7 +28,7 @@ class HttpPaymentProviderAdapter(
     @Value("\${integration.payment.base-url}") private val baseUrl: String,
     @Value("\${integration.payment.api-key}") private val apiKey: String,
     @Value("\${integration.payment.provider-name:tourwave-pay}") private val providerName: String,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : PaymentProviderPort, RefundExecutionPort {
     private val httpClient = HttpClient.newBuilder().build()
 
@@ -41,7 +41,7 @@ class HttpPaymentProviderAdapter(
         return PaymentAuthorizationResult(
             providerName = body.text("providerName") ?: providerName,
             providerPaymentKey = requireField(body, "paymentKey"),
-            authorizationId = requireField(body, "authorizationId")
+            authorizationId = requireField(body, "authorizationId"),
         )
     }
 
@@ -54,7 +54,7 @@ class HttpPaymentProviderAdapter(
         return PaymentCaptureResult(
             providerName = body.text("providerName") ?: providerName,
             providerReference = requireField(body, "providerReference"),
-            captureId = requireField(body, "captureId")
+            captureId = requireField(body, "captureId"),
         )
     }
 
@@ -66,7 +66,7 @@ class HttpPaymentProviderAdapter(
         val body = objectMapper.readTree(response.body())
         return PaymentAuthorizationCancelResult(
             providerName = body.text("providerName") ?: providerName,
-            providerReference = requireField(body, "providerReference")
+            providerReference = requireField(body, "providerReference"),
         )
     }
 
@@ -82,14 +82,17 @@ class HttpPaymentProviderAdapter(
         }
     }
 
-    private fun send(path: String, payload: Any): HttpResponse<String> {
+    private fun send(
+        path: String,
+        payload: Any,
+    ): HttpResponse<String> {
         return httpClient.send(
             HttpRequest.newBuilder(URI.create("${baseUrl.trimEnd('/')}$path"))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer $apiKey")
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
                 .build(),
-            HttpResponse.BodyHandlers.ofString()
+            HttpResponse.BodyHandlers.ofString(),
         )
     }
 
@@ -101,11 +104,12 @@ class HttpPaymentProviderAdapter(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = if (response.statusCode() == 429 || response.statusCode() >= 500) 503 else 422,
             message = message,
-            details = mapOf(
-                "provider" to providerName,
-                "providerStatus" to response.statusCode(),
-                "providerErrorCode" to code
-            )
+            details =
+                mapOf(
+                    "provider" to providerName,
+                    "providerStatus" to response.statusCode(),
+                    "providerErrorCode" to code,
+                ),
         )
     }
 
@@ -114,13 +118,16 @@ class HttpPaymentProviderAdapter(
         return if (node.isMissingNode || node.isNull) null else node.asText()
     }
 
-    private fun requireField(body: JsonNode, fieldName: String): String {
+    private fun requireField(
+        body: JsonNode,
+        fieldName: String,
+    ): String {
         return body.text(fieldName)
             ?: throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 503,
                 message = "payment provider response is missing $fieldName",
-                details = mapOf("provider" to providerName)
+                details = mapOf("provider" to providerName),
             )
     }
 }

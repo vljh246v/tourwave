@@ -1,8 +1,8 @@
 package com.demo.tourwave.adapter.`in`.web.organization
 
+import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
-import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.user.User
 import org.junit.jupiter.api.BeforeEach
@@ -47,8 +47,14 @@ class OrganizationControllerIntegrationTest {
 
     @Test
     fun `operator organization APIs support create update membership and public query`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
-        val invitee = userRepository.save(User.create(displayName = "Invitee", email = "invitee@test.com", passwordHash = "hash", now = Instant.now()))
+        val owner =
+            userRepository.save(
+                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()),
+            )
+        val invitee =
+            userRepository.save(
+                User.create(displayName = "Invitee", email = "invitee@test.com", passwordHash = "hash", now = Instant.now()),
+            )
 
         mockMvc.perform(
             post("/operator/organizations")
@@ -61,8 +67,8 @@ class OrganizationControllerIntegrationTest {
                       "publicDescription":"Public profile",
                       "contactEmail":"ops@seoul.test",
                       "timezone":"Asia/Seoul"
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.slug").value("seoul-operators"))
@@ -79,8 +85,8 @@ class OrganizationControllerIntegrationTest {
                       "publicDescription":"Updated public profile",
                       "contactEmail":"team@seoul.test",
                       "timezone":"Asia/Seoul"
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name").value("Seoul Operators Updated"))
@@ -89,22 +95,23 @@ class OrganizationControllerIntegrationTest {
             post("/operator/organizations/$organizationId/members/invitations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"userId":${requireNotNull(invitee.id)},"role":"MEMBER"}""")
+                .content("""{"userId":${requireNotNull(invitee.id)},"role":"MEMBER"}"""),
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.status").value("INVITED"))
         val inviteDelivery = notificationDeliveryRepository.findAll().single()
-        val token = Regex("token=([^\\s.]+)")
-            .find(inviteDelivery.body)
-            ?.groupValues
-            ?.get(1)
-            ?: error("invitation token not found in delivery body")
+        val token =
+            Regex("token=([^\\s.]+)")
+                .find(inviteDelivery.body)
+                ?.groupValues
+                ?.get(1)
+                ?: error("invitation token not found in delivery body")
 
         mockMvc.perform(
             post("/organizations/$organizationId/memberships/accept")
                 .header("X-Actor-User-Id", requireNotNull(invitee.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"token":"$token"}""")
+                .content("""{"token":"$token"}"""),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("ACTIVE"))
@@ -113,14 +120,14 @@ class OrganizationControllerIntegrationTest {
             patch("/operator/organizations/$organizationId/members/${requireNotNull(invitee.id)}/role")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"role":"ADMIN"}""")
+                .content("""{"role":"ADMIN"}"""),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.role").value("ADMIN"))
 
         mockMvc.perform(
             get("/operator/organizations/$organizationId/members")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].role").value("OWNER"))
@@ -133,19 +140,25 @@ class OrganizationControllerIntegrationTest {
 
     @Test
     fun `organization access is denied without active membership`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
-        val outsider = userRepository.save(User.create(displayName = "Outsider", email = "outsider@test.com", passwordHash = "hash", now = Instant.now()))
+        val owner =
+            userRepository.save(
+                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()),
+            )
+        val outsider =
+            userRepository.save(
+                User.create(displayName = "Outsider", email = "outsider@test.com", passwordHash = "hash", now = Instant.now()),
+            )
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"slug":"jeju-ops","name":"Jeju Ops","timezone":"Asia/Seoul"}""")
+                .content("""{"slug":"jeju-ops","name":"Jeju Ops","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
         val organizationId = requireNotNull(organizationRepository.findBySlug("jeju-ops")?.id)
 
         mockMvc.perform(
             get("/operator/organizations/$organizationId")
-                .header("X-Actor-User-Id", requireNotNull(outsider.id))
+                .header("X-Actor-User-Id", requireNotNull(outsider.id)),
         )
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))

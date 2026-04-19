@@ -21,7 +21,11 @@ class InMemoryReviewRepositoryAdapter : ReviewRepository {
         return saved
     }
 
-    override fun findByOccurrenceAndReviewerAndType(occurrenceId: Long, reviewerUserId: Long, type: ReviewType): Review? {
+    override fun findByOccurrenceAndReviewerAndType(
+        occurrenceId: Long,
+        reviewerUserId: Long,
+        type: ReviewType,
+    ): Review? {
         return reviews.values.firstOrNull {
             it.occurrenceId == occurrenceId &&
                 it.reviewerUserId == reviewerUserId &&
@@ -29,7 +33,10 @@ class InMemoryReviewRepositoryAdapter : ReviewRepository {
         }
     }
 
-    override fun findByOccurrenceAndType(occurrenceId: Long, type: ReviewType): List<Review> {
+    override fun findByOccurrenceAndType(
+        occurrenceId: Long,
+        type: ReviewType,
+    ): List<Review> {
         return reviews.values
             .filter { it.occurrenceId == occurrenceId && it.type == type }
             .sortedBy { it.createdAt }

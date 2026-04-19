@@ -3,11 +3,11 @@ package com.demo.tourwave.application.payment
 import com.demo.tourwave.application.booking.port.BookingRepository
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.payment.port.PaymentProviderEventRepository
+import com.demo.tourwave.application.payment.port.PaymentReconciliationSummaryRepository
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.payment.PaymentProviderEventType
-import com.demo.tourwave.application.payment.port.PaymentReconciliationSummaryRepository
-import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import com.demo.tourwave.domain.payment.PaymentReconciliationDailySummary
+import com.demo.tourwave.domain.payment.PaymentRecordStatus
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -15,7 +15,7 @@ import java.time.ZoneOffset
 enum class PaymentReconciliationMismatchType {
     PROVIDER_CAPTURE_NOT_APPLIED,
     PROVIDER_REFUND_NOT_APPLIED,
-    INTERNAL_STATUS_DRIFT
+    INTERNAL_STATUS_DRIFT,
 }
 
 data class PaymentReconciliationMismatch(
@@ -26,12 +26,12 @@ data class PaymentReconciliationMismatch(
     val bookingPaymentStatus: String? = null,
     val recordStatus: String? = null,
     val providerEventType: String? = null,
-    val note: String? = null
+    val note: String? = null,
 )
 
 data class FinanceReconciliationJobResult(
     val refreshedDate: LocalDate,
-    val refreshedAtUtc: java.time.Instant
+    val refreshedAtUtc: java.time.Instant,
 )
 
 class ReconciliationService(
@@ -39,7 +39,7 @@ class ReconciliationService(
     private val paymentRecordRepository: PaymentRecordRepository,
     private val paymentProviderEventRepository: PaymentProviderEventRepository,
     private val paymentReconciliationSummaryRepository: PaymentReconciliationSummaryRepository,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun refreshDailySummary(summaryDate: LocalDate): PaymentReconciliationDailySummary {
         val start = summaryDate.atStartOfDay().toInstant(ZoneOffset.UTC)
@@ -68,8 +68,8 @@ class ReconciliationService(
                 captureMismatchCount = mismatches.count { it.mismatchType == PaymentReconciliationMismatchType.PROVIDER_CAPTURE_NOT_APPLIED },
                 refundMismatchCount = mismatches.count { it.mismatchType == PaymentReconciliationMismatchType.PROVIDER_REFUND_NOT_APPLIED },
                 internalStatusMismatchCount = mismatches.count { it.mismatchType == PaymentReconciliationMismatchType.INTERNAL_STATUS_DRIFT },
-                refreshedAtUtc = clock.instant()
-            )
+                refreshedAtUtc = clock.instant(),
+            ),
         )
     }
 
@@ -77,14 +77,24 @@ class ReconciliationService(
         return paymentReconciliationSummaryRepository.findByDate(summaryDate) ?: refreshDailySummary(summaryDate)
     }
 
-    fun listDailySummaries(startDate: LocalDate, endDate: LocalDate): List<PaymentReconciliationDailySummary> {
+    fun listDailySummaries(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<PaymentReconciliationDailySummary> {
         return paymentReconciliationSummaryRepository.findBetween(startDate, endDate)
     }
 
-    fun exportDailySummariesCsv(startDate: LocalDate, endDate: LocalDate): String {
+    fun exportDailySummariesCsv(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): String {
         val rows = listDailySummaries(startDate, endDate)
         return buildString {
-            append("date,bookingCreatedCount,authorizedCount,capturedCount,providerCapturedCount,providerRefundedCount,refundPendingCount,refundedCount,noRefundCount,refundFailedRetryableCount,refundReviewRequiredCount,captureMismatchCount,refundMismatchCount,internalStatusMismatchCount,refreshedAtUtc\n")
+            append(
+                "date,bookingCreatedCount,authorizedCount,capturedCount,providerCapturedCount,providerRefundedCount," +
+                    "refundPendingCount,refundedCount,noRefundCount,refundFailedRetryableCount,refundReviewRequiredCount," +
+                    "captureMismatchCount,refundMismatchCount,internalStatusMismatchCount,refreshedAtUtc\n",
+            )
             rows.forEach { row ->
                 append(row.summaryDate).append(',')
                 append(row.bookingCreatedCount).append(',')
@@ -105,7 +115,10 @@ class ReconciliationService(
         }
     }
 
-    fun listMismatches(startDate: LocalDate, endDate: LocalDate): List<PaymentReconciliationMismatch> {
+    fun listMismatches(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<PaymentReconciliationMismatch> {
         val start = startDate.atStartOfDay().toInstant(ZoneOffset.UTC)
         val end = endDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
         val bookings = bookingRepository.findAll().associateBy { requireNotNull(it.id) }
@@ -120,31 +133,33 @@ class ReconciliationService(
                 when (event.eventType) {
                     PaymentProviderEventType.CAPTURED -> {
                         if (booking?.paymentStatus != PaymentStatus.PAID || record?.status != PaymentRecordStatus.CAPTURED) {
-                            mismatches += PaymentReconciliationMismatch(
-                                mismatchType = PaymentReconciliationMismatchType.PROVIDER_CAPTURE_NOT_APPLIED,
-                                summaryDate = event.receivedAtUtc.atOffset(ZoneOffset.UTC).toLocalDate(),
-                                bookingId = event.bookingId,
-                                providerEventId = event.providerEventId,
-                                bookingPaymentStatus = booking?.paymentStatus?.name,
-                                recordStatus = record?.status?.name,
-                                providerEventType = event.eventType.name,
-                                note = event.note
-                            )
+                            mismatches +=
+                                PaymentReconciliationMismatch(
+                                    mismatchType = PaymentReconciliationMismatchType.PROVIDER_CAPTURE_NOT_APPLIED,
+                                    summaryDate = event.receivedAtUtc.atOffset(ZoneOffset.UTC).toLocalDate(),
+                                    bookingId = event.bookingId,
+                                    providerEventId = event.providerEventId,
+                                    bookingPaymentStatus = booking?.paymentStatus?.name,
+                                    recordStatus = record?.status?.name,
+                                    providerEventType = event.eventType.name,
+                                    note = event.note,
+                                )
                         }
                     }
 
                     PaymentProviderEventType.REFUNDED -> {
                         if (booking?.paymentStatus != PaymentStatus.REFUNDED || record?.status != PaymentRecordStatus.REFUNDED) {
-                            mismatches += PaymentReconciliationMismatch(
-                                mismatchType = PaymentReconciliationMismatchType.PROVIDER_REFUND_NOT_APPLIED,
-                                summaryDate = event.receivedAtUtc.atOffset(ZoneOffset.UTC).toLocalDate(),
-                                bookingId = event.bookingId,
-                                providerEventId = event.providerEventId,
-                                bookingPaymentStatus = booking?.paymentStatus?.name,
-                                recordStatus = record?.status?.name,
-                                providerEventType = event.eventType.name,
-                                note = event.note
-                            )
+                            mismatches +=
+                                PaymentReconciliationMismatch(
+                                    mismatchType = PaymentReconciliationMismatchType.PROVIDER_REFUND_NOT_APPLIED,
+                                    summaryDate = event.receivedAtUtc.atOffset(ZoneOffset.UTC).toLocalDate(),
+                                    bookingId = event.bookingId,
+                                    providerEventId = event.providerEventId,
+                                    bookingPaymentStatus = booking?.paymentStatus?.name,
+                                    recordStatus = record?.status?.name,
+                                    providerEventType = event.eventType.name,
+                                    note = event.note,
+                                )
                         }
                     }
 
@@ -156,28 +171,33 @@ class ReconciliationService(
             .filter { !it.updatedAtUtc.isBefore(start) && it.updatedAtUtc.isBefore(end) }
             .forEach { record ->
                 val booking = bookings[record.bookingId] ?: return@forEach
-                val drift = when {
-                    booking.paymentStatus == PaymentStatus.PAID && record.status != PaymentRecordStatus.CAPTURED -> true
-                    booking.paymentStatus == PaymentStatus.REFUNDED && record.status != PaymentRecordStatus.REFUNDED -> true
-                    booking.paymentStatus == PaymentStatus.AUTHORIZED && record.status == PaymentRecordStatus.CAPTURED -> true
-                    else -> false
-                }
+                val drift =
+                    when {
+                        booking.paymentStatus == PaymentStatus.PAID && record.status != PaymentRecordStatus.CAPTURED -> true
+                        booking.paymentStatus == PaymentStatus.REFUNDED && record.status != PaymentRecordStatus.REFUNDED -> true
+                        booking.paymentStatus == PaymentStatus.AUTHORIZED && record.status == PaymentRecordStatus.CAPTURED -> true
+                        else -> false
+                    }
                 if (drift) {
-                    mismatches += PaymentReconciliationMismatch(
-                        mismatchType = PaymentReconciliationMismatchType.INTERNAL_STATUS_DRIFT,
-                        summaryDate = record.updatedAtUtc.atOffset(ZoneOffset.UTC).toLocalDate(),
-                        bookingId = record.bookingId,
-                        bookingPaymentStatus = booking.paymentStatus.name,
-                        recordStatus = record.status.name,
-                        note = "booking and payment ledger diverged"
-                    )
+                    mismatches +=
+                        PaymentReconciliationMismatch(
+                            mismatchType = PaymentReconciliationMismatchType.INTERNAL_STATUS_DRIFT,
+                            summaryDate = record.updatedAtUtc.atOffset(ZoneOffset.UTC).toLocalDate(),
+                            bookingId = record.bookingId,
+                            bookingPaymentStatus = booking.paymentStatus.name,
+                            recordStatus = record.status.name,
+                            note = "booking and payment ledger diverged",
+                        )
                 }
             }
 
         return mismatches.sortedWith(compareBy<PaymentReconciliationMismatch> { it.summaryDate }.thenBy { it.bookingId ?: Long.MAX_VALUE })
     }
 
-    fun exportMismatchesCsv(startDate: LocalDate, endDate: LocalDate): String {
+    fun exportMismatchesCsv(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): String {
         val rows = listMismatches(startDate, endDate)
         return buildString {
             append("summaryDate,mismatchType,bookingId,providerEventId,bookingPaymentStatus,recordStatus,providerEventType,note\n")
@@ -199,7 +219,7 @@ class ReconciliationService(
         val summary = refreshDailySummary(summaryDate)
         return FinanceReconciliationJobResult(
             refreshedDate = summary.summaryDate,
-            refreshedAtUtc = summary.refreshedAtUtc
+            refreshedAtUtc = summary.refreshedAtUtc,
         )
     }
 

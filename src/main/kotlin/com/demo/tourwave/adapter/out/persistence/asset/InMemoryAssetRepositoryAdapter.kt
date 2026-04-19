@@ -23,8 +23,7 @@ class InMemoryAssetRepositoryAdapter : AssetRepository {
 
     override fun findById(assetId: Long): Asset? = assets[assetId]
 
-    override fun findAllByIds(assetIds: List<Long>): List<Asset> =
-        assetIds.mapNotNull(assets::get)
+    override fun findAllByIds(assetIds: List<Long>): List<Asset> = assetIds.mapNotNull(assets::get)
 
     override fun clear() {
         assets.clear()

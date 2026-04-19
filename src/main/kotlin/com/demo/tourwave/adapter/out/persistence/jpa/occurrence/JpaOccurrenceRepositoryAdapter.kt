@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaOccurrenceRepositoryAdapter(
-    private val occurrenceJpaRepository: OccurrenceJpaRepository
+    private val occurrenceJpaRepository: OccurrenceJpaRepository,
 ) : OccurrenceRepository {
     override fun nextId(): Long = occurrenceJpaRepository.findMaxId() + 1
 
@@ -20,20 +20,17 @@ class JpaOccurrenceRepositoryAdapter(
                     id = occurrenceId,
                     organizationId = 1L,
                     capacity = 10,
-                    status = OccurrenceStatus.SCHEDULED
-                )
+                    status = OccurrenceStatus.SCHEDULED,
+                ),
             )
         }.toDomain()
     }
 
-    override fun findById(occurrenceId: Long): Occurrence? =
-        occurrenceJpaRepository.findById(occurrenceId).orElse(null)?.toDomain()
+    override fun findById(occurrenceId: Long): Occurrence? = occurrenceJpaRepository.findById(occurrenceId).orElse(null)?.toDomain()
 
-    override fun findByTourId(tourId: Long): List<Occurrence> =
-        occurrenceJpaRepository.findByTourIdOrderByStartsAtUtcAscIdAsc(tourId).map { it.toDomain() }
+    override fun findByTourId(tourId: Long): List<Occurrence> = occurrenceJpaRepository.findByTourIdOrderByStartsAtUtcAscIdAsc(tourId).map { it.toDomain() }
 
-    override fun findAll(): List<Occurrence> =
-        occurrenceJpaRepository.findAll().map { it.toDomain() }.sortedBy { it.id }
+    override fun findAll(): List<Occurrence> = occurrenceJpaRepository.findAll().map { it.toDomain() }.sortedBy { it.id }
 
     override fun lock(occurrenceId: Long): Occurrence {
         if (!occurrenceJpaRepository.existsById(occurrenceId)) {
@@ -67,7 +64,7 @@ private fun Occurrence.toEntity(): OccurrenceJpaEntity =
         meetingPoint = meetingPoint,
         status = status,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun OccurrenceJpaEntity.toDomain(): Occurrence =
@@ -86,5 +83,5 @@ private fun OccurrenceJpaEntity.toDomain(): Occurrence =
         meetingPoint = meetingPoint,
         status = status,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

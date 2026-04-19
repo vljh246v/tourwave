@@ -9,7 +9,7 @@ data class CreateReviewCommand(
     val idempotencyKey: String,
     val rating: Int,
     val comment: String? = null,
-    val requestId: String? = null
+    val requestId: String? = null,
 )
 
 data class ReviewCreated(
@@ -19,11 +19,10 @@ data class ReviewCreated(
     val type: ReviewType,
     val rating: Int,
     val comment: String? = null,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class CreateReviewResult(
     val status: Int,
-    val review: ReviewCreated
+    val review: ReviewCreated,
 )
-

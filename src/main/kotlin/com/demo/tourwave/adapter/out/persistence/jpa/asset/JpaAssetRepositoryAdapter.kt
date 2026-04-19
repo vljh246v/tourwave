@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaAssetRepositoryAdapter(
-    private val assetJpaRepository: AssetJpaRepository
+    private val assetJpaRepository: AssetJpaRepository,
 ) : AssetRepository {
     override fun save(asset: Asset): Asset = assetJpaRepository.save(asset.toEntity()).toDomain()
 
@@ -35,7 +35,7 @@ private fun Asset.toEntity(): AssetJpaEntity =
         sizeBytes = sizeBytes,
         checksumSha256 = checksumSha256,
         createdAt = createdAt,
-        completedAt = completedAt
+        completedAt = completedAt,
     )
 
 private fun AssetJpaEntity.toDomain(): Asset =
@@ -52,5 +52,5 @@ private fun AssetJpaEntity.toDomain(): Asset =
         sizeBytes = sizeBytes,
         checksumSha256 = checksumSha256,
         createdAt = createdAt,
-        completedAt = completedAt
+        completedAt = completedAt,
     )

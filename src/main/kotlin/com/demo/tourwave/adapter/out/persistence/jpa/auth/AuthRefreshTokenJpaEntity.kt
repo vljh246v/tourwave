@@ -14,8 +14,8 @@ import java.time.Instant
     name = "auth_refresh_tokens",
     indexes = [
         Index(name = "idx_auth_refresh_tokens_user", columnList = "user_id"),
-        Index(name = "uk_auth_refresh_tokens_hash", columnList = "token_hash", unique = true)
-    ]
+        Index(name = "uk_auth_refresh_tokens_hash", columnList = "token_hash", unique = true),
+    ],
 )
 data class AuthRefreshTokenJpaEntity(
     @Id
@@ -30,5 +30,5 @@ data class AuthRefreshTokenJpaEntity(
     @Column(name = "issued_at_utc", nullable = false)
     val issuedAtUtc: Instant,
     @Column(name = "revoked_at_utc")
-    val revokedAtUtc: Instant? = null
+    val revokedAtUtc: Instant? = null,
 )

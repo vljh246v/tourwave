@@ -13,7 +13,7 @@ data class CreateOccurrenceCommand(
     val unitPrice: Int,
     val currency: String,
     val locationText: String? = null,
-    val meetingPoint: String? = null
+    val meetingPoint: String? = null,
 )
 
 data class UpdateOccurrenceCommand(
@@ -25,7 +25,7 @@ data class UpdateOccurrenceCommand(
     val endsAtUtc: Instant,
     val timezone: String,
     val locationText: String? = null,
-    val meetingPoint: String? = null
+    val meetingPoint: String? = null,
 )
 
 data class RescheduleOccurrenceCommand(
@@ -35,25 +35,25 @@ data class RescheduleOccurrenceCommand(
     val endsAtUtc: Instant,
     val timezone: String,
     val locationText: String? = null,
-    val meetingPoint: String? = null
+    val meetingPoint: String? = null,
 )
 
 data class PublicTourListQuery(
     val cursor: String? = null,
     val limit: Int? = null,
     val q: String? = null,
-    val organizationId: Long? = null
+    val organizationId: Long? = null,
 )
 
 data class TourOccurrenceListQuery(
     val tourId: Long,
     val dateFrom: Instant? = null,
-    val dateTo: Instant? = null
+    val dateTo: Instant? = null,
 )
 
 data class AvailabilityQuery(
     val occurrenceId: Long,
-    val partySize: Int
+    val partySize: Int,
 )
 
 data class OccurrenceSearchQuery(
@@ -65,7 +65,7 @@ data class OccurrenceSearchQuery(
     val locationText: String? = null,
     val partySize: Int? = null,
     val onlyAvailable: Boolean = false,
-    val sort: String? = null
+    val sort: String? = null,
 )
 
 data class PublicTourView(
@@ -76,7 +76,7 @@ data class PublicTourView(
     val description: String?,
     val highlights: List<String>,
     val attachmentAssetIds: List<Long>,
-    val publishedAt: Instant?
+    val publishedAt: Instant?,
 )
 
 data class PublicOccurrenceView(
@@ -93,7 +93,7 @@ data class PublicOccurrenceView(
     val locationText: String?,
     val meetingPoint: String?,
     val status: String,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class AvailabilityView(
@@ -103,7 +103,7 @@ data class AvailabilityView(
     val heldCount: Int,
     val available: Int,
     val canConfirm: Boolean,
-    val willWaitlist: Boolean
+    val willWaitlist: Boolean,
 )
 
 data class QuoteView(
@@ -114,21 +114,21 @@ data class QuoteView(
     val canConfirm: Boolean,
     val willWaitlist: Boolean,
     val refundPolicySummary: String,
-    val fullRefundDeadlineUtc: Instant?
+    val fullRefundDeadlineUtc: Instant?,
 )
 
 data class RatingSummaryView(
     val avgRating: Double,
-    val reviewCount: Int
+    val reviewCount: Int,
 )
 
 data class OccurrenceSearchItemView(
     val occurrence: PublicOccurrenceView,
     val tour: PublicTourView,
-    val ratingSummary: RatingSummaryView?
+    val ratingSummary: RatingSummaryView?,
 )
 
 data class OccurrenceSearchResult(
     val items: List<OccurrenceSearchItemView>,
-    val nextCursor: String?
+    val nextCursor: String?,
 )

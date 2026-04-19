@@ -8,8 +8,8 @@ enum class BookingStatus {
     REJECTED,
     CANCELED,
     EXPIRED,
-    COMPLETED;
+    COMPLETED,
+    ;
 
     fun isTerminal(): Boolean = this in setOf(REJECTED, CANCELED, EXPIRED, COMPLETED)
 }
-

@@ -6,13 +6,13 @@ import com.demo.tourwave.domain.participant.BookingParticipant
 import java.time.Clock
 
 data class InvitationExpirationJobResult(
-    val expiredParticipantIds: List<Long>
+    val expiredParticipantIds: List<Long>,
 )
 
 class InvitedParticipantExpirationService(
     private val participantInvitationLifecycleService: ParticipantInvitationLifecycleService,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun expireInvitations(): InvitationExpirationJobResult {
         val expired = participantInvitationLifecycleService.expirePendingInvitations()
@@ -25,8 +25,8 @@ class InvitedParticipantExpirationService(
                     resourceId = requireNotNull(participant.id),
                     occurredAtUtc = clock.instant(),
                     reasonCode = "INVITATION_TIMEOUT",
-                    afterJson = participantSnapshot(participant)
-                )
+                    afterJson = participantSnapshot(participant),
+                ),
             )
         }
         return InvitationExpirationJobResult(expiredParticipantIds = expired.mapNotNull { it.id })
@@ -39,7 +39,7 @@ class InvitedParticipantExpirationService(
             "status" to participant.status.name,
             "attendanceStatus" to participant.attendanceStatus.name,
             "invitedAt" to participant.invitedAt?.toString(),
-            "respondedAt" to participant.respondedAt?.toString()
+            "respondedAt" to participant.respondedAt?.toString(),
         )
     }
 }

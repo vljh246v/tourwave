@@ -6,7 +6,7 @@ enum class UserStatus {
     ACTIVE,
     DEACTIVATED,
     SUSPENDED,
-    DELETED
+    DELETED,
 }
 
 data class User(
@@ -18,14 +18,14 @@ data class User(
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = createdAt,
     val emailVerifiedAt: Instant? = null,
-    val deletedAt: Instant? = null
+    val deletedAt: Instant? = null,
 ) {
     companion object {
         fun create(
             displayName: String,
             email: String,
             passwordHash: String,
-            now: Instant = Instant.now()
+            now: Instant = Instant.now(),
         ): User {
             return User(
                 id = null,
@@ -34,16 +34,17 @@ data class User(
                 passwordHash = passwordHash,
                 status = UserStatus.ACTIVE,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
 
-        private val ALLOWED_TRANSITIONS: Map<UserStatus, Set<UserStatus>> = mapOf(
-            UserStatus.ACTIVE to setOf(UserStatus.DEACTIVATED, UserStatus.SUSPENDED, UserStatus.DELETED),
-            UserStatus.DEACTIVATED to setOf(UserStatus.ACTIVE, UserStatus.DELETED),
-            UserStatus.SUSPENDED to setOf(UserStatus.ACTIVE, UserStatus.DELETED),
-            UserStatus.DELETED to emptySet()
-        )
+        private val ALLOWED_TRANSITIONS: Map<UserStatus, Set<UserStatus>> =
+            mapOf(
+                UserStatus.ACTIVE to setOf(UserStatus.DEACTIVATED, UserStatus.SUSPENDED, UserStatus.DELETED),
+                UserStatus.DEACTIVATED to setOf(UserStatus.ACTIVE, UserStatus.DELETED),
+                UserStatus.SUSPENDED to setOf(UserStatus.ACTIVE, UserStatus.DELETED),
+                UserStatus.DELETED to emptySet(),
+            )
     }
 
     fun persisted(userId: Long): User {
@@ -52,11 +53,11 @@ data class User(
 
     fun updateProfile(
         displayName: String,
-        now: Instant
+        now: Instant,
     ): User {
         return copy(
             displayName = displayName,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -66,14 +67,17 @@ data class User(
         }
         return copy(
             emailVerifiedAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun updatePassword(passwordHash: String, now: Instant): User {
+    fun updatePassword(
+        passwordHash: String,
+        now: Instant,
+    ): User {
         return copy(
             passwordHash = passwordHash,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -83,11 +87,14 @@ data class User(
         }
         return copy(
             status = UserStatus.DEACTIVATED,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun transition(toStatus: UserStatus, now: Instant): User {
+    fun transition(
+        toStatus: UserStatus,
+        now: Instant,
+    ): User {
         val allowed = ALLOWED_TRANSITIONS[status] ?: emptySet()
         require(toStatus in allowed) {
             "$status 상태에서 $toStatus 으로 전이할 수 없습니다"
@@ -106,10 +113,10 @@ data class User(
         return copy(
             status = UserStatus.DELETED,
             displayName = "Deleted User #$userId",
-            email = "deleted_${userId}@deleted.local",
+            email = "deleted_$userId@deleted.local",
             passwordHash = "[DELETED]",
             deletedAt = now,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 

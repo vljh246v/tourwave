@@ -25,23 +25,26 @@ class InvitedParticipantExpirationServiceTest {
     private val auditEventAdapter = InMemoryAuditEventAdapter()
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
 
-    private val lifecycleService = ParticipantInvitationLifecycleService(
-        bookingRepository = bookingRepository,
-        occurrenceRepository = occurrenceRepository,
-        bookingParticipantRepository = bookingParticipantRepository,
-        timeWindowPolicyService = TimeWindowPolicyService(
-            invitationWindowMinutes = 360,
-            invitationExpiryHours = 48,
-            refundFullWindowHours = 48
-        ),
-        clock = clock
-    )
+    private val lifecycleService =
+        ParticipantInvitationLifecycleService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingParticipantRepository = bookingParticipantRepository,
+            timeWindowPolicyService =
+                TimeWindowPolicyService(
+                    invitationWindowMinutes = 360,
+                    invitationExpiryHours = 48,
+                    refundFullWindowHours = 48,
+                ),
+            clock = clock,
+        )
 
-    private val service = InvitedParticipantExpirationService(
-        participantInvitationLifecycleService = lifecycleService,
-        auditEventPort = auditEventAdapter,
-        clock = clock
-    )
+    private val service =
+        InvitedParticipantExpirationService(
+            participantInvitationLifecycleService = lifecycleService,
+            auditEventPort = auditEventAdapter,
+            clock = clock,
+        )
 
     @Test
     fun `expire invitations marks pending invite as expired and appends job audit`() {
@@ -50,29 +53,31 @@ class InvitedParticipantExpirationServiceTest {
                 id = 5001L,
                 organizationId = 31L,
                 capacity = 10,
-                startsAtUtc = Instant.parse("2026-03-20T12:00:00Z")
-            )
+                startsAtUtc = Instant.parse("2026-03-20T12:00:00Z"),
+            ),
         )
-        val booking = bookingRepository.save(
-            Booking(
-                occurrenceId = 5001L,
-                organizationId = 31L,
-                leaderUserId = 101L,
-                partySize = 2,
-                status = BookingStatus.CONFIRMED,
-                paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-10T00:00:00Z")
+        val booking =
+            bookingRepository.save(
+                Booking(
+                    occurrenceId = 5001L,
+                    organizationId = 31L,
+                    leaderUserId = 101L,
+                    partySize = 2,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                    createdAt = Instant.parse("2026-03-10T00:00:00Z"),
+                ),
             )
-        )
-        val participant = bookingParticipantRepository.save(
-            BookingParticipant(
-                bookingId = requireNotNull(booking.id),
-                userId = 202L,
-                status = BookingParticipantStatus.INVITED,
-                invitedAt = Instant.parse("2026-03-14T11:00:00Z"),
-                createdAt = Instant.parse("2026-03-14T11:00:00Z")
+        val participant =
+            bookingParticipantRepository.save(
+                BookingParticipant(
+                    bookingId = requireNotNull(booking.id),
+                    userId = 202L,
+                    status = BookingParticipantStatus.INVITED,
+                    invitedAt = Instant.parse("2026-03-14T11:00:00Z"),
+                    createdAt = Instant.parse("2026-03-14T11:00:00Z"),
+                ),
             )
-        )
 
         val result = service.expireInvitations()
 

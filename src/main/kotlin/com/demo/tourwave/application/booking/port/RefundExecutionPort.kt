@@ -6,12 +6,14 @@ data class RefundExecutionRequest(
     val bookingId: Long,
     val actorUserId: Long,
     val refundRequestId: String,
-    val reasonCode: RefundReasonCode
+    val reasonCode: RefundReasonCode,
 )
 
 sealed interface RefundExecutionResult {
     data class Success(val externalReference: String) : RefundExecutionResult
+
     data class RetryableFailure(val errorCode: String) : RefundExecutionResult
+
     data class ReviewRequired(val errorCode: String) : RefundExecutionResult
 }
 

@@ -3,7 +3,6 @@ package com.demo.tourwave.application.organization
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
-import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory

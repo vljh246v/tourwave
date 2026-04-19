@@ -12,20 +12,22 @@ import java.time.ZoneOffset
 
 class JwtTokenServiceTest {
     private val clock = Clock.fixed(Instant.parse("2026-03-17T00:00:00Z"), ZoneOffset.UTC)
-    private val service = JwtTokenService(
-        secret = "jwt-test-secret",
-        accessTokenTtlSeconds = 3600,
-        clock = clock,
-        objectMapper = ObjectMapper()
-    )
+    private val service =
+        JwtTokenService(
+            secret = "jwt-test-secret",
+            accessTokenTtlSeconds = 3600,
+            clock = clock,
+            objectMapper = ObjectMapper(),
+        )
 
     @Test
     fun `issue and parse token round trips claims`() {
-        val token = service.issueAccessToken(
-            userId = 101L,
-            roles = setOf(ActorRole.USER, ActorRole.ORG_ADMIN),
-            orgId = 44L
-        )
+        val token =
+            service.issueAccessToken(
+                userId = 101L,
+                roles = setOf(ActorRole.USER, ActorRole.ORG_ADMIN),
+                orgId = 44L,
+            )
 
         val claims = service.parse(token)
 
@@ -40,9 +42,10 @@ class JwtTokenServiceTest {
         val token = service.issueAccessToken(101L, setOf(ActorRole.USER), null)
         val tampered = token.replace("a", "b")
 
-        val exception = assertThrows<com.demo.tourwave.domain.common.DomainException> {
-            service.parse(tampered)
-        }
+        val exception =
+            assertThrows<com.demo.tourwave.domain.common.DomainException> {
+                service.parse(tampered)
+            }
 
         assertEquals(401, exception.status)
         assertTrue(exception.message.contains("invalid"))

@@ -28,10 +28,12 @@ class InMemoryPaymentProviderEventRepositoryAdapter : PaymentProviderEventReposi
         return eventsById[id]
     }
 
-    override fun findAll(): List<PaymentProviderEvent> =
-        eventsById.values.sortedByDescending { it.processedAtUtc ?: it.receivedAtUtc }
+    override fun findAll(): List<PaymentProviderEvent> = eventsById.values.sortedByDescending { it.processedAtUtc ?: it.receivedAtUtc }
 
-    override fun findReceivedBetween(startInclusive: Instant, endExclusive: Instant): List<PaymentProviderEvent> {
+    override fun findReceivedBetween(
+        startInclusive: Instant,
+        endExclusive: Instant,
+    ): List<PaymentProviderEvent> {
         return eventsById.values
             .filter { !it.receivedAtUtc.isBefore(startInclusive) && it.receivedAtUtc.isBefore(endExclusive) }
             .sortedBy { it.receivedAtUtc }

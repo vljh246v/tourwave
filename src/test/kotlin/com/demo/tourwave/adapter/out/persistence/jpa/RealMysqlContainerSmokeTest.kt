@@ -34,12 +34,13 @@ class RealMysqlContainerSmokeTest : MysqlTestContainerSupport() {
         val user = userRepository.save(User.create(displayName = "Lock Owner", email = "lock@example.com", passwordHash = "hashed"))
         assertEquals("lock@example.com", user.email)
 
-        val acquired = workerJobLockRepository.tryAcquire(
-            lockName = "offer-expiration",
-            ownerId = "container-worker",
-            lockedAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
-            leaseExpiresAtUtc = Instant.parse("2026-03-18T00:02:00Z")
-        )
+        val acquired =
+            workerJobLockRepository.tryAcquire(
+                lockName = "offer-expiration",
+                ownerId = "container-worker",
+                lockedAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
+                leaseExpiresAtUtc = Instant.parse("2026-03-18T00:02:00Z"),
+            )
 
         assertTrue(acquired)
         assertEquals(1, workerJobLockRepository.findAll().size)

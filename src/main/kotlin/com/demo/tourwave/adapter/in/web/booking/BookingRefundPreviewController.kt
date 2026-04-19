@@ -13,26 +13,28 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class BookingRefundPreviewController(
     private val bookingRefundPreviewService: BookingRefundPreviewService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @GetMapping("/bookings/{bookingId}/refund-preview")
     fun getRefundPreview(
         @PathVariable bookingId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Actor-Org-Role", required = false) actorOrgRole: String?,
-        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?
+        @RequestHeader("X-Actor-Org-Id", required = false) actorOrgId: Long?,
     ): ResponseEntity<BookingRefundPreviewWebResponse> {
-        val actor = authzGuardPort.requireActorContext(
-            actorUserId = actorUserId,
-            actorOrgRole = actorOrgRole,
-            actorOrgId = actorOrgId
-        )
-        val result = bookingRefundPreviewService.getPreview(
-            GetBookingRefundPreviewQuery(
-                bookingId = bookingId,
-                actor = actor
+        val actor =
+            authzGuardPort.requireActorContext(
+                actorUserId = actorUserId,
+                actorOrgRole = actorOrgRole,
+                actorOrgId = actorOrgId,
             )
-        )
+        val result =
+            bookingRefundPreviewService.getPreview(
+                GetBookingRefundPreviewQuery(
+                    bookingId = bookingId,
+                    actor = actor,
+                ),
+            )
         return ResponseEntity.ok(result.toWebResponse())
     }
 
@@ -46,7 +48,7 @@ class BookingRefundPreviewController(
             refundReasonCode = refundReasonCode,
             refundable = refundable,
             occurrenceStartsAtUtc = occurrenceStartsAtUtc,
-            evaluatedAtUtc = evaluatedAtUtc
+            evaluatedAtUtc = evaluatedAtUtc,
         )
     }
 }

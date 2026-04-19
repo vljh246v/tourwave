@@ -17,7 +17,7 @@ data class Organization(
     val timezone: String,
     val status: OrganizationStatus = OrganizationStatus.ACTIVE,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 ) {
     fun updateProfile(
         name: String,
@@ -29,7 +29,7 @@ data class Organization(
         businessName: String?,
         businessRegistrationNumber: String?,
         timezone: String,
-        now: Instant
+        now: Instant,
     ): Organization {
         return copy(
             name = name,
@@ -41,14 +41,17 @@ data class Organization(
             businessName = businessName,
             businessRegistrationNumber = businessRegistrationNumber,
             timezone = timezone,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
-    fun updateAttachments(assetIds: List<Long>, now: Instant): Organization {
+    fun updateAttachments(
+        assetIds: List<Long>,
+        now: Instant,
+    ): Organization {
         return copy(
             attachmentAssetIds = assetIds,
-            updatedAt = now
+            updatedAt = now,
         )
     }
 
@@ -64,7 +67,7 @@ data class Organization(
             businessName: String?,
             businessRegistrationNumber: String?,
             timezone: String,
-            now: Instant
+            now: Instant,
         ): Organization {
             return Organization(
                 slug = slug,
@@ -78,7 +81,7 @@ data class Organization(
                 businessRegistrationNumber = businessRegistrationNumber,
                 timezone = timezone,
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
             )
         }
     }

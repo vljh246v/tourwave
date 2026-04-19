@@ -41,9 +41,7 @@ LOG_DIR="./logs"
 
 BUILD_CMD="./gradlew build -x test"
 TEST_CMD="./gradlew test"
-# detekt/ktlint 미설정 — 컴파일 검증으로 대체
-# TODO: build.gradle.kts에 detekt 또는 ktlint 플러그인 추가 후 교체
-LINT_CMD="./gradlew compileTestKotlin --console=plain"
+LINT_CMD="./gradlew ktlintCheck --quiet"
 
 # =============================================================================
 # 보안 스캔

@@ -10,31 +10,34 @@ internal fun requireValidTourTitle(title: String): String {
         throw DomainException(
             errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
             status = 422,
-            message = "title is required"
+            message = "title is required",
         )
     }
     if (normalized.length > 255) {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "title exceeds max length"
+            message = "title exceeds max length",
         )
     }
     return normalized
 }
 
-internal fun normalizeOptionalTourSummary(summary: String?): String? =
-    normalizeOptionalText(summary, 2000, "summary")
+internal fun normalizeOptionalTourSummary(summary: String?): String? = normalizeOptionalText(summary, 2000, "summary")
 
-internal fun normalizeOptionalTourDescription(description: String?): String? =
-    normalizeOptionalText(description, 12000, "description")
+internal fun normalizeOptionalTourDescription(description: String?): String? = normalizeOptionalText(description, 12000, "description")
 
-internal fun normalizeStringList(values: List<String>, fieldName: String, maxItems: Int = 20, maxLength: Int = 80): List<String> {
+internal fun normalizeStringList(
+    values: List<String>,
+    fieldName: String,
+    maxItems: Int = 20,
+    maxLength: Int = 80,
+): List<String> {
     if (values.size > maxItems) {
         throw DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 422,
-            message = "$fieldName exceeds maximum item count"
+            message = "$fieldName exceeds maximum item count",
         )
     }
     return values.map { value ->
@@ -43,14 +46,14 @@ internal fun normalizeStringList(values: List<String>, fieldName: String, maxIte
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
-                message = "$fieldName cannot contain blank items"
+                message = "$fieldName cannot contain blank items",
             )
         }
         if (normalized.length > maxLength) {
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
-                message = "$fieldName item exceeds max length"
+                message = "$fieldName item exceeds max length",
             )
         }
         normalized

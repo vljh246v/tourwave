@@ -1,5 +1,8 @@
 package com.demo.tourwave.bootstrap
 
+import com.demo.tourwave.application.auth.UserActionTokenService
+import com.demo.tourwave.application.customer.NotificationDeliveryService
+import com.demo.tourwave.application.customer.NotificationTemplateFactory
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.OrganizationCommandService
 import com.demo.tourwave.application.organization.OrganizationInvitationDeliveryService
@@ -7,9 +10,6 @@ import com.demo.tourwave.application.organization.OrganizationMembershipService
 import com.demo.tourwave.application.organization.OrganizationQueryService
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
-import com.demo.tourwave.application.auth.UserActionTokenService
-import com.demo.tourwave.application.customer.NotificationDeliveryService
-import com.demo.tourwave.application.customer.NotificationTemplateFactory
 import com.demo.tourwave.application.user.port.UserRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -22,11 +22,12 @@ class OrganizationConfig {
     @Bean
     fun organizationAccessGuard(
         organizationRepository: OrganizationRepository,
-        membershipRepository: OrganizationMembershipRepository
-    ): OrganizationAccessGuard = OrganizationAccessGuard(
-        organizationRepository = organizationRepository,
-        membershipRepository = membershipRepository
-    )
+        membershipRepository: OrganizationMembershipRepository,
+    ): OrganizationAccessGuard =
+        OrganizationAccessGuard(
+            organizationRepository = organizationRepository,
+            membershipRepository = membershipRepository,
+        )
 
     @Bean
     fun organizationCommandService(
@@ -34,14 +35,15 @@ class OrganizationConfig {
         membershipRepository: OrganizationMembershipRepository,
         userRepository: UserRepository,
         organizationAccessGuard: OrganizationAccessGuard,
-        clock: Clock
-    ): OrganizationCommandService = OrganizationCommandService(
-        organizationRepository = organizationRepository,
-        membershipRepository = membershipRepository,
-        userRepository = userRepository,
-        organizationAccessGuard = organizationAccessGuard,
-        clock = clock
-    )
+        clock: Clock,
+    ): OrganizationCommandService =
+        OrganizationCommandService(
+            organizationRepository = organizationRepository,
+            membershipRepository = membershipRepository,
+            userRepository = userRepository,
+            organizationAccessGuard = organizationAccessGuard,
+            clock = clock,
+        )
 
     @Bean
     fun organizationMembershipService(
@@ -49,14 +51,15 @@ class OrganizationConfig {
         userRepository: UserRepository,
         organizationAccessGuard: OrganizationAccessGuard,
         organizationInvitationDeliveryService: OrganizationInvitationDeliveryService,
-        clock: Clock
-    ): OrganizationMembershipService = OrganizationMembershipService(
-        membershipRepository = membershipRepository,
-        userRepository = userRepository,
-        organizationAccessGuard = organizationAccessGuard,
-        organizationInvitationDeliveryService = organizationInvitationDeliveryService,
-        clock = clock
-    )
+        clock: Clock,
+    ): OrganizationMembershipService =
+        OrganizationMembershipService(
+            membershipRepository = membershipRepository,
+            userRepository = userRepository,
+            organizationAccessGuard = organizationAccessGuard,
+            organizationInvitationDeliveryService = organizationInvitationDeliveryService,
+            clock = clock,
+        )
 
     @Bean
     fun organizationInvitationDeliveryService(
@@ -67,26 +70,28 @@ class OrganizationConfig {
         notificationTemplateFactory: NotificationTemplateFactory,
         @Value("\${tourwave.app.base-url:http://localhost:3000}") appBaseUrl: String,
         @Value("\${tourwave.organization.invitation-token-ttl-seconds:604800}") invitationTokenTtlSeconds: Long,
-        clock: Clock
-    ): OrganizationInvitationDeliveryService = OrganizationInvitationDeliveryService(
-        userRepository = userRepository,
-        organizationRepository = organizationRepository,
-        userActionTokenService = userActionTokenService,
-        notificationDeliveryService = notificationDeliveryService,
-        notificationTemplateFactory = notificationTemplateFactory,
-        appBaseUrl = appBaseUrl,
-        invitationTokenTtl = Duration.ofSeconds(invitationTokenTtlSeconds),
-        clock = clock
-    )
+        clock: Clock,
+    ): OrganizationInvitationDeliveryService =
+        OrganizationInvitationDeliveryService(
+            userRepository = userRepository,
+            organizationRepository = organizationRepository,
+            userActionTokenService = userActionTokenService,
+            notificationDeliveryService = notificationDeliveryService,
+            notificationTemplateFactory = notificationTemplateFactory,
+            appBaseUrl = appBaseUrl,
+            invitationTokenTtl = Duration.ofSeconds(invitationTokenTtlSeconds),
+            clock = clock,
+        )
 
     @Bean
     fun organizationQueryService(
         organizationRepository: OrganizationRepository,
         membershipRepository: OrganizationMembershipRepository,
-        organizationAccessGuard: OrganizationAccessGuard
-    ): OrganizationQueryService = OrganizationQueryService(
-        organizationRepository = organizationRepository,
-        membershipRepository = membershipRepository,
-        organizationAccessGuard = organizationAccessGuard
-    )
+        organizationAccessGuard: OrganizationAccessGuard,
+    ): OrganizationQueryService =
+        OrganizationQueryService(
+            organizationRepository = organizationRepository,
+            membershipRepository = membershipRepository,
+            organizationAccessGuard = organizationAccessGuard,
+        )
 }

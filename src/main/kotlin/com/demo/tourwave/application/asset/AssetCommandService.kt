@@ -17,26 +17,26 @@ data class IssueAssetUploadCommand(
     val actorUserId: Long,
     val organizationId: Long? = null,
     val fileName: String,
-    val contentType: String
+    val contentType: String,
 )
 
 data class CompleteAssetUploadCommand(
     val actorUserId: Long,
     val assetId: Long,
     val sizeBytes: Long?,
-    val checksumSha256: String?
+    val checksumSha256: String?,
 )
 
 data class AttachOrganizationAssetsCommand(
     val actorUserId: Long,
     val organizationId: Long,
-    val assetIds: List<Long>
+    val assetIds: List<Long>,
 )
 
 data class AttachTourAssetsCommand(
     val actorUserId: Long,
     val tourId: Long,
-    val assetIds: List<Long>
+    val assetIds: List<Long>,
 )
 
 class AssetCommandService(
@@ -46,19 +46,20 @@ class AssetCommandService(
     private val tourRepository: TourRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
     private val userRepository: UserRepository,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun issueUpload(command: IssueAssetUploadCommand): Asset {
         requireActor(command.actorUserId)
         command.organizationId?.let { organizationAccessGuard.requireMembership(command.actorUserId, it) }
         val normalizedFileName = requireFileName(command.fileName)
         val normalizedContentType = requireContentType(command.contentType)
-        val upload = assetStoragePort.issueUpload(
-            ownerUserId = command.actorUserId,
-            assetIdHint = null,
-            fileName = normalizedFileName,
-            contentType = normalizedContentType
-        )
+        val upload =
+            assetStoragePort.issueUpload(
+                ownerUserId = command.actorUserId,
+                assetIdHint = null,
+                fileName = normalizedFileName,
+                contentType = normalizedContentType,
+            )
         return assetRepository.save(
             Asset.create(
                 ownerUserId = command.actorUserId,
@@ -67,8 +68,8 @@ class AssetCommandService(
                 contentType = normalizedContentType,
                 storageKey = upload.storageKey,
                 uploadUrl = upload.uploadUrl,
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
@@ -78,14 +79,15 @@ class AssetCommandService(
             throw forbidden("asset ${command.assetId} is not owned by actor")
         }
         val normalizedChecksum = normalizeChecksum(command.checksumSha256)
-        val storedMetadata = assetStoragePort.verifyUpload(
-            AssetUploadVerificationRequest(
-                storageKey = asset.storageKey,
-                expectedContentType = asset.contentType,
-                reportedSizeBytes = command.sizeBytes,
-                reportedChecksumSha256 = normalizedChecksum
+        val storedMetadata =
+            assetStoragePort.verifyUpload(
+                AssetUploadVerificationRequest(
+                    storageKey = asset.storageKey,
+                    expectedContentType = asset.contentType,
+                    reportedSizeBytes = command.sizeBytes,
+                    reportedChecksumSha256 = normalizedChecksum,
+                ),
             )
-        )
         if (storedMetadata.contentType != asset.contentType) {
             throw validation("uploaded asset content type does not match requested content type")
         }
@@ -100,21 +102,22 @@ class AssetCommandService(
                 publicUrl = storedMetadata.publicUrl,
                 sizeBytes = storedMetadata.sizeBytes,
                 checksumSha256 = storedMetadata.checksumSha256 ?: normalizedChecksum,
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
     fun attachOrganizationAssets(command: AttachOrganizationAssetsCommand): List<Long> {
         val organization = organizationRepository.findById(command.organizationId) ?: throw notFound("organization ${command.organizationId} not found")
         organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
-        val assets = resolveAttachableAssets(
-            actorUserId = command.actorUserId,
-            organizationId = command.organizationId,
-            assetIds = command.assetIds
-        )
+        val assets =
+            resolveAttachableAssets(
+                actorUserId = command.actorUserId,
+                organizationId = command.organizationId,
+                assetIds = command.assetIds,
+            )
         organizationRepository.save(
-            organization.updateAttachments(assets.map { requireNotNull(it.id) }, clock.instant())
+            organization.updateAttachments(assets.map { requireNotNull(it.id) }, clock.instant()),
         )
         return assets.map { requireNotNull(it.id) }
     }
@@ -122,18 +125,23 @@ class AssetCommandService(
     fun attachTourAssets(command: AttachTourAssetsCommand): List<Long> {
         val tour = tourRepository.findById(command.tourId) ?: throw notFound("tour ${command.tourId} not found")
         organizationAccessGuard.requireOperator(command.actorUserId, tour.organizationId)
-        val assets = resolveAttachableAssets(
-            actorUserId = command.actorUserId,
-            organizationId = tour.organizationId,
-            assetIds = command.assetIds
-        )
+        val assets =
+            resolveAttachableAssets(
+                actorUserId = command.actorUserId,
+                organizationId = tour.organizationId,
+                assetIds = command.assetIds,
+            )
         tourRepository.save(
-            tour.updateAttachments(assets.map { requireNotNull(it.id) }, clock.instant())
+            tour.updateAttachments(assets.map { requireNotNull(it.id) }, clock.instant()),
         )
         return assets.map { requireNotNull(it.id) }
     }
 
-    private fun resolveAttachableAssets(actorUserId: Long, organizationId: Long, assetIds: List<Long>): List<Asset> {
+    private fun resolveAttachableAssets(
+        actorUserId: Long,
+        organizationId: Long,
+        assetIds: List<Long>,
+    ): List<Asset> {
         val normalizedIds = normalizeAssetIds(assetIds)
         if (normalizedIds.isEmpty()) return emptyList()
         val assets = assetRepository.findAllByIds(normalizedIds)
@@ -155,12 +163,11 @@ class AssetCommandService(
         userRepository.findById(actorUserId) ?: throw DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = "authenticated user does not exist"
+            message = "authenticated user does not exist",
         )
     }
 
-    private fun requireAsset(assetId: Long): Asset =
-        assetRepository.findById(assetId) ?: throw notFound("asset $assetId not found")
+    private fun requireAsset(assetId: Long): Asset = assetRepository.findById(assetId) ?: throw notFound("asset $assetId not found")
 
     private fun requireFileName(fileName: String): String {
         val normalized = fileName.trim()
@@ -194,21 +201,24 @@ class AssetCommandService(
         return normalized
     }
 
-    private fun validation(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 422,
-        message = message
-    )
+    private fun validation(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 422,
+            message = message,
+        )
 
-    private fun forbidden(message: String) = DomainException(
-        errorCode = ErrorCode.FORBIDDEN,
-        status = 403,
-        message = message
-    )
+    private fun forbidden(message: String) =
+        DomainException(
+            errorCode = ErrorCode.FORBIDDEN,
+            status = 403,
+            message = message,
+        )
 
-    private fun notFound(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = message
-    )
+    private fun notFound(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = message,
+        )
 }

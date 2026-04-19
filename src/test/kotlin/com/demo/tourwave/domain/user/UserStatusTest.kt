@@ -7,18 +7,18 @@ import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 
 class UserStatusTest {
-
     private val now = Instant.parse("2026-04-18T10:00:00Z")
 
-    private fun activeUser(id: Long = 1L) = User(
-        id = id,
-        displayName = "Test User",
-        email = "test@example.com",
-        passwordHash = "hash",
-        status = UserStatus.ACTIVE,
-        createdAt = now,
-        updatedAt = now
-    )
+    private fun activeUser(id: Long = 1L) =
+        User(
+            id = id,
+            displayName = "Test User",
+            email = "test@example.com",
+            passwordHash = "hash",
+            status = UserStatus.ACTIVE,
+            createdAt = now,
+            updatedAt = now,
+        )
 
     // ── ACTIVE 전이 ──────────────────────────────────────────────────────────
 

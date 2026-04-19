@@ -10,7 +10,7 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaBookingRepositoryAdapter(
-    private val bookingJpaRepository: BookingJpaRepository
+    private val bookingJpaRepository: BookingJpaRepository,
 ) : BookingRepository {
     override fun save(booking: Booking): Booking = bookingJpaRepository.save(booking.toEntity()).toDomain()
 
@@ -21,17 +21,17 @@ class JpaBookingRepositoryAdapter(
     override fun findByLeaderUserId(userId: Long): List<Booking> =
         bookingJpaRepository.findByLeaderUserIdOrderByCreatedAtDescIdDesc(userId).map { it.toDomain() }
 
-    override fun findByOccurrenceId(occurrenceId: Long): List<Booking> =
-        bookingJpaRepository.findByOccurrenceId(occurrenceId).map { it.toDomain() }
+    override fun findByOccurrenceId(occurrenceId: Long): List<Booking> = bookingJpaRepository.findByOccurrenceId(occurrenceId).map { it.toDomain() }
 
-    override fun findByOccurrenceAndStatuses(occurrenceId: Long, statuses: Set<BookingStatus>): List<Booking> =
-        bookingJpaRepository.findByOccurrenceIdAndStatusIn(occurrenceId, statuses).map { it.toDomain() }
+    override fun findByOccurrenceAndStatuses(
+        occurrenceId: Long,
+        statuses: Set<BookingStatus>,
+    ): List<Booking> = bookingJpaRepository.findByOccurrenceIdAndStatusIn(occurrenceId, statuses).map { it.toDomain() }
 
     override fun findWaitlistedByOccurrenceOrdered(occurrenceId: Long): List<Booking> =
         bookingJpaRepository.findWaitlistedOrdered(occurrenceId).map { it.toDomain() }
 
-    override fun findExpiredOffers(now: Instant): List<Booking> =
-        bookingJpaRepository.findExpiredOffers(now).map { it.toDomain() }
+    override fun findExpiredOffers(now: Instant): List<Booking> = bookingJpaRepository.findExpiredOffers(now).map { it.toDomain() }
 
     override fun clear() {
         bookingJpaRepository.deleteAllInBatch()
@@ -50,7 +50,7 @@ private fun Booking.toEntity(): BookingJpaEntity =
         offerExpiresAtUtc = offerExpiresAtUtc,
         waitlistSkipCount = waitlistSkipCount,
         lastWaitlistActionAtUtc = lastWaitlistActionAtUtc,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 private fun BookingJpaEntity.toDomain(): Booking =
@@ -65,5 +65,5 @@ private fun BookingJpaEntity.toDomain(): Booking =
         offerExpiresAtUtc = offerExpiresAtUtc,
         waitlistSkipCount = waitlistSkipCount,
         lastWaitlistActionAtUtc = lastWaitlistActionAtUtc,
-        createdAt = createdAt
+        createdAt = createdAt,
     )

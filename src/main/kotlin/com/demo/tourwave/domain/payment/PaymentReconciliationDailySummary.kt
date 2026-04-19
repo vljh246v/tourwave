@@ -18,5 +18,5 @@ data class PaymentReconciliationDailySummary(
     val captureMismatchCount: Int,
     val refundMismatchCount: Int,
     val internalStatusMismatchCount: Int,
-    val refreshedAtUtc: Instant
+    val refreshedAtUtc: Instant,
 )

@@ -27,8 +27,7 @@ class InMemoryTourRepositoryAdapter : TourRepository {
         return tours.values.filter { it.organizationId == organizationId }.sortedBy { it.id }
     }
 
-    override fun findAllPublished(): List<Tour> =
-        tours.values.filter { it.status == TourStatus.PUBLISHED }.sortedBy { it.id }
+    override fun findAllPublished(): List<Tour> = tours.values.filter { it.status == TourStatus.PUBLISHED }.sortedBy { it.id }
 
     override fun clear() {
         sequence.set(0L)

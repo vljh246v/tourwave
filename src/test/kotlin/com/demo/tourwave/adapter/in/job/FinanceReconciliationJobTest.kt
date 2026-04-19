@@ -23,10 +23,11 @@ class FinanceReconciliationJobTest {
 
     @Test
     fun `job delegates to reconciliation service through coordinator`() {
-        val expected = FinanceReconciliationJobResult(
-            refreshedDate = LocalDate.parse("2026-03-17"),
-            refreshedAtUtc = Instant.parse("2026-03-18T00:00:00Z")
-        )
+        val expected =
+            FinanceReconciliationJobResult(
+                refreshedDate = LocalDate.parse("2026-03-17"),
+                refreshedAtUtc = Instant.parse("2026-03-18T00:00:00Z"),
+            )
         whenever(scheduledJobCoordinator.run(eq("finance-reconciliation"), any(), any<() -> FinanceReconciliationJobResult>()))
             .thenAnswer { invocation -> invocation.getArgument<() -> FinanceReconciliationJobResult>(2).invoke() }
         whenever(reconciliationService.refreshYesterday()).thenReturn(expected)

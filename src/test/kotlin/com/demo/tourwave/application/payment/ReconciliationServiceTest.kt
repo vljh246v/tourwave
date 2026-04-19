@@ -26,13 +26,14 @@ class ReconciliationServiceTest {
     private val paymentProviderEventRepository = InMemoryPaymentProviderEventRepositoryAdapter()
     private val summaryRepository = InMemoryPaymentReconciliationSummaryRepositoryAdapter()
     private val clock = Clock.fixed(Instant.parse("2026-03-18T12:00:00Z"), ZoneOffset.UTC)
-    private val service = ReconciliationService(
-        bookingRepository = bookingRepository,
-        paymentRecordRepository = paymentRecordRepository,
-        paymentProviderEventRepository = paymentProviderEventRepository,
-        paymentReconciliationSummaryRepository = summaryRepository,
-        clock = clock
-    )
+    private val service =
+        ReconciliationService(
+            bookingRepository = bookingRepository,
+            paymentRecordRepository = paymentRecordRepository,
+            paymentProviderEventRepository = paymentProviderEventRepository,
+            paymentReconciliationSummaryRepository = summaryRepository,
+            clock = clock,
+        )
 
     @Test
     fun `daily summary aggregates booking creation and payment record statuses`() {
@@ -44,8 +45,8 @@ class ReconciliationServiceTest {
                 partySize = 2,
                 status = BookingStatus.CONFIRMED,
                 paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-17T02:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-17T02:00:00Z"),
+            ),
         )
         bookingRepository.save(
             Booking(
@@ -55,24 +56,24 @@ class ReconciliationServiceTest {
                 partySize = 1,
                 status = BookingStatus.REQUESTED,
                 paymentStatus = PaymentStatus.AUTHORIZED,
-                createdAt = Instant.parse("2026-03-17T05:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-17T05:00:00Z"),
+            ),
         )
         paymentRecordRepository.save(
             PaymentRecord(
                 bookingId = 1L,
                 status = PaymentRecordStatus.CAPTURED,
                 createdAtUtc = Instant.parse("2026-03-17T02:00:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-17T03:00:00Z")
-            )
+                updatedAtUtc = Instant.parse("2026-03-17T03:00:00Z"),
+            ),
         )
         paymentRecordRepository.save(
             PaymentRecord(
                 bookingId = 2L,
                 status = PaymentRecordStatus.REFUND_FAILED_RETRYABLE,
                 createdAtUtc = Instant.parse("2026-03-17T05:00:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-17T06:00:00Z")
-            )
+                updatedAtUtc = Instant.parse("2026-03-17T06:00:00Z"),
+            ),
         )
         paymentProviderEventRepository.save(
             PaymentProviderEvent(
@@ -86,8 +87,8 @@ class ReconciliationServiceTest {
                 payloadSha256 = "hash-1",
                 status = PaymentProviderEventStatus.PROCESSED,
                 receivedAtUtc = Instant.parse("2026-03-17T03:00:00Z"),
-                processedAtUtc = Instant.parse("2026-03-17T03:00:01Z")
-            )
+                processedAtUtc = Instant.parse("2026-03-17T03:00:01Z"),
+            ),
         )
         paymentProviderEventRepository.save(
             PaymentProviderEvent(
@@ -101,8 +102,8 @@ class ReconciliationServiceTest {
                 payloadSha256 = "hash-2",
                 status = PaymentProviderEventStatus.PROCESSED,
                 receivedAtUtc = Instant.parse("2026-03-17T06:30:00Z"),
-                processedAtUtc = Instant.parse("2026-03-17T06:30:01Z")
-            )
+                processedAtUtc = Instant.parse("2026-03-17T06:30:01Z"),
+            ),
         )
 
         val summary = service.refreshDailySummary(LocalDate.parse("2026-03-17"))

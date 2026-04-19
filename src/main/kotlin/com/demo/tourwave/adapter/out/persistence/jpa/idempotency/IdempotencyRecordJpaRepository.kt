@@ -8,7 +8,7 @@ interface IdempotencyRecordJpaRepository : JpaRepository<IdempotencyRecordJpaEnt
         actorUserId: Long,
         method: String,
         pathTemplate: String,
-        idempotencyKey: String
+        idempotencyKey: String,
     ): IdempotencyRecordJpaEntity?
 
     fun deleteByExpiresAtUtcBefore(expiresAtUtc: Instant): Long

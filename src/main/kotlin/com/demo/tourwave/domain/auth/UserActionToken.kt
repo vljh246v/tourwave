@@ -5,7 +5,7 @@ import java.time.Instant
 enum class UserActionTokenPurpose {
     EMAIL_VERIFICATION,
     PASSWORD_RESET,
-    ORG_INVITATION
+    ORG_INVITATION,
 }
 
 data class UserActionToken(
@@ -15,7 +15,7 @@ data class UserActionToken(
     val purpose: UserActionTokenPurpose,
     val expiresAtUtc: Instant,
     val createdAtUtc: Instant,
-    val consumedAtUtc: Instant? = null
+    val consumedAtUtc: Instant? = null,
 ) {
     fun isActive(now: Instant): Boolean {
         return consumedAtUtc == null && expiresAtUtc.isAfter(now)

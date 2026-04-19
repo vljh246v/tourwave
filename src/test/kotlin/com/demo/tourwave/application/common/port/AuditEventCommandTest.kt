@@ -15,7 +15,6 @@ import java.time.Instant
  *   phantom 도메인 엔티티를 새로 생성하는 대신 실제 클래스를 테스트한다.
  */
 class AuditEventCommandTest {
-
     // ------------------------------------------------------------------
     // 1. AuditActorType 열거형 — 전수 확인
     // ------------------------------------------------------------------
@@ -113,18 +112,19 @@ class AuditEventCommandTest {
         val after = mapOf<String, Any?>("status" to "CONFIRMED")
         val details = mapOf<String, Any?>("reason" to "operator approval")
 
-        val cmd = AuditEventCommand(
-            actor = "OPERATOR:7",
-            action = "BOOKING_APPROVED",
-            resourceType = "Booking",
-            resourceId = 42L,
-            occurredAtUtc = now,
-            requestId = "req-abc",
-            details = details,
-            reasonCode = "APPROVED_BY_OPERATOR",
-            beforeJson = before,
-            afterJson = after
-        )
+        val cmd =
+            AuditEventCommand(
+                actor = "OPERATOR:7",
+                action = "BOOKING_APPROVED",
+                resourceType = "Booking",
+                resourceId = 42L,
+                occurredAtUtc = now,
+                requestId = "req-abc",
+                details = details,
+                reasonCode = "APPROVED_BY_OPERATOR",
+                beforeJson = before,
+                afterJson = after,
+            )
 
         assertEquals("OPERATOR:7", cmd.actor)
         assertEquals("BOOKING_APPROVED", cmd.action)
@@ -146,29 +146,33 @@ class AuditEventCommandTest {
 
     @Test
     fun `domain audit actions from domain-rules can be expressed as action strings`() {
-        val actions = listOf(
-            "BOOKING_CREATED",
-            "BOOKING_APPROVED",
-            "BOOKING_REJECTED",
-            "BOOKING_CANCELED",
-            "OFFER_CREATED",
-            "OFFER_ACCEPTED",
-            "OFFER_DECLINED",
-            "OFFER_EXPIRED",
-            "PARTY_SIZE_CHANGED",
-            "OCCURRENCE_CANCELED",
-            "OCCURRENCE_FINISHED",
-            "INQUIRY_CREATED",
-            "INQUIRY_CLOSED",
-            "PAYMENT_CAPTURED",
-            "PAYMENT_REFUNDED",
-            "IDEMPOTENCY_PURGED"
-        )
+        val actions =
+            listOf(
+                "BOOKING_CREATED",
+                "BOOKING_APPROVED",
+                "BOOKING_REJECTED",
+                "BOOKING_CANCELED",
+                "OFFER_CREATED",
+                "OFFER_ACCEPTED",
+                "OFFER_DECLINED",
+                "OFFER_EXPIRED",
+                "PARTY_SIZE_CHANGED",
+                "OCCURRENCE_CANCELED",
+                "OCCURRENCE_FINISHED",
+                "INQUIRY_CREATED",
+                "INQUIRY_CLOSED",
+                "PAYMENT_CAPTURED",
+                "PAYMENT_REFUNDED",
+                "IDEMPOTENCY_PURGED",
+            )
 
         actions.forEach { action ->
             val cmd = buildCommand(actor = "SYSTEM", action = action)
-            assertEquals(action, cmd.action,
-                "Expected action '$action' to be preserved in AuditEventCommand")
+            assertEquals(
+                action,
+                cmd.action,
+                "Expected action '$action' to be preserved in AuditEventCommand",
+            )
         }
     }
 
@@ -180,8 +184,10 @@ class AuditEventCommandTest {
     fun `occurredAtUtc epoch millis is positive when set to a future date`() {
         val ts = Instant.parse("2026-04-19T00:00:00Z")
         val cmd = buildCommand(occurredAtUtc = ts)
-        assertTrue(cmd.occurredAtUtc.toEpochMilli() > 0,
-            "occurredAtUtc epoch millis should be positive")
+        assertTrue(
+            cmd.occurredAtUtc.toEpochMilli() > 0,
+            "occurredAtUtc epoch millis should be positive",
+        )
     }
 
     // ------------------------------------------------------------------
@@ -213,12 +219,13 @@ class AuditEventCommandTest {
         action: String = "BOOKING_CREATED",
         resourceType: String = "Booking",
         resourceId: Long = 1L,
-        occurredAtUtc: Instant = Instant.parse("2026-04-19T00:00:00Z")
-    ): AuditEventCommand = AuditEventCommand(
-        actor = actor,
-        action = action,
-        resourceType = resourceType,
-        resourceId = resourceId,
-        occurredAtUtc = occurredAtUtc
-    )
+        occurredAtUtc: Instant = Instant.parse("2026-04-19T00:00:00Z"),
+    ): AuditEventCommand =
+        AuditEventCommand(
+            actor = actor,
+            action = action,
+            resourceType = resourceType,
+            resourceId = resourceId,
+            occurredAtUtc = occurredAtUtc,
+        )
 }

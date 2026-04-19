@@ -13,7 +13,7 @@ data class CreateOrganizationWebRequest(
     val websiteUrl: String? = null,
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
-    val timezone: String
+    val timezone: String,
 )
 
 data class UpdateOrganizationWebRequest(
@@ -25,20 +25,20 @@ data class UpdateOrganizationWebRequest(
     val websiteUrl: String? = null,
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
-    val timezone: String
+    val timezone: String,
 )
 
 data class InviteOrganizationMemberWebRequest(
     val userId: Long,
-    val role: String
+    val role: String,
 )
 
 data class AcceptOrganizationInvitationWebRequest(
-    val token: String? = null
+    val token: String? = null,
 )
 
 data class UpdateOrganizationMemberRoleWebRequest(
-    val role: String
+    val role: String,
 )
 
 data class OrganizationOperatorResponse(
@@ -54,7 +54,7 @@ data class OrganizationOperatorResponse(
     val businessRegistrationNumber: String?,
     val attachmentAssetIds: List<Long>,
     val timezone: String,
-    val status: String
+    val status: String,
 )
 
 data class OrganizationPublicResponse(
@@ -66,14 +66,14 @@ data class OrganizationPublicResponse(
     val contactPhone: String?,
     val websiteUrl: String?,
     val attachmentAssetIds: List<Long>,
-    val timezone: String
+    val timezone: String,
 )
 
 data class OrganizationMembershipResponse(
     val organizationId: Long,
     val userId: Long,
     val role: String,
-    val status: String
+    val status: String,
 )
 
 fun Organization.toOperatorResponse(): OrganizationOperatorResponse =
@@ -90,7 +90,7 @@ fun Organization.toOperatorResponse(): OrganizationOperatorResponse =
         businessRegistrationNumber = businessRegistrationNumber,
         attachmentAssetIds = attachmentAssetIds,
         timezone = timezone,
-        status = status.name
+        status = status.name,
     )
 
 fun Organization.toPublicResponse(): OrganizationPublicResponse =
@@ -103,7 +103,7 @@ fun Organization.toPublicResponse(): OrganizationPublicResponse =
         contactPhone = contactPhone,
         websiteUrl = websiteUrl,
         attachmentAssetIds = attachmentAssetIds,
-        timezone = timezone
+        timezone = timezone,
     )
 
 fun OrganizationMembership.toResponse(): OrganizationMembershipResponse =
@@ -111,5 +111,5 @@ fun OrganizationMembership.toResponse(): OrganizationMembershipResponse =
         organizationId = organizationId,
         userId = userId,
         role = role.name,
-        status = status.name
+        status = status.name,
     )
