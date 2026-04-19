@@ -6,12 +6,10 @@ import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.user.User
-import java.time.Clock
 
 class MeService(
     private val userRepository: UserRepository,
-    private val organizationQueryService: OrganizationQueryService,
-    private val clock: Clock
+    private val organizationQueryService: OrganizationQueryService
 ) {
     fun getCurrentUser(userId: Long): User {
         return userRepository.findById(userId) ?: throw DomainException(
@@ -24,12 +22,5 @@ class MeService(
     fun getCurrentUserMemberships(userId: Long): List<OrganizationMembership> {
         getCurrentUser(userId)
         return organizationQueryService.getMembershipsForUser(userId)
-    }
-
-    fun updateCurrentUser(userId: Long, displayName: String): User {
-        val normalizedDisplayName = com.demo.tourwave.application.auth.requireValidDisplayName(displayName)
-        val user = getCurrentUser(userId)
-        val updated = user.updateProfile(displayName = normalizedDisplayName, now = clock.instant())
-        return userRepository.save(updated)
     }
 }
