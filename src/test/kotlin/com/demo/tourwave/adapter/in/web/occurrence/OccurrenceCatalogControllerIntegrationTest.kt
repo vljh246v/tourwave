@@ -173,6 +173,8 @@ class OccurrenceCatalogControllerIntegrationTest {
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
         ).andExpect(status().isOk)
 
+        val bookingCreatedAt = baseDay.minus(30, ChronoUnit.DAYS)
+        val reviewCreatedAt = baseDay.minus(7, ChronoUnit.DAYS)
         bookingRepository.save(
             Booking(
                 occurrenceId = occurrence.id,
@@ -181,7 +183,7 @@ class OccurrenceCatalogControllerIntegrationTest {
                 partySize = 4,
                 status = BookingStatus.CONFIRMED,
                 paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-20T00:00:00Z")
+                createdAt = bookingCreatedAt
             )
         )
         reviewRepository.save(
@@ -191,7 +193,7 @@ class OccurrenceCatalogControllerIntegrationTest {
                 type = ReviewType.TOUR,
                 rating = 5,
                 comment = "great",
-                createdAt = Instant.parse("2026-04-12T00:00:00Z")
+                createdAt = reviewCreatedAt
             )
         )
 
