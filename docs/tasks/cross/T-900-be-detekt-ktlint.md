@@ -10,7 +10,7 @@
 - Depends on: 없음
 - Blocks: M1 전체 (lint 인프라 필수)
 - GitHub Issue: #4
-- Status: Backlog
+- Status: Done
 
 ## 파일 소유권
 WRITE:
