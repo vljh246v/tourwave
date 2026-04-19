@@ -91,8 +91,10 @@ class CommunicationReportingIntegrationTest {
 
     @Test
     fun `announcement and report endpoints enforce authz and expose csv export`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
-        val member = userRepository.save(User.create(displayName = "Member", email = "member@test.com", passwordHash = "hash", now = Instant.now()))
+        val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+
+        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = now))
+        val member = userRepository.save(User.create(displayName = "Member", email = "member@test.com", passwordHash = "hash", now = now))
         val organization = organizationRepository.save(
             Organization.create(
                 slug = "comm-report",
@@ -105,7 +107,7 @@ class CommunicationReportingIntegrationTest {
                 businessName = null,
                 businessRegistrationNumber = null,
                 timezone = "Asia/Seoul",
-                now = Instant.parse("2026-03-18T00:00:00Z")
+                now = now
             )
         )
         organizationMembershipRepository.save(
@@ -113,7 +115,7 @@ class CommunicationReportingIntegrationTest {
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(owner.id),
                 role = OrganizationRole.OWNER,
-                now = Instant.parse("2026-03-18T00:00:00Z")
+                now = now
             )
         )
         organizationMembershipRepository.save(
@@ -121,12 +123,12 @@ class CommunicationReportingIntegrationTest {
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(member.id),
                 role = OrganizationRole.MEMBER,
-                now = Instant.parse("2026-03-18T00:00:00Z")
+                now = now
             )
         )
 
-        val announcementStart = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS)
-        val announcementEnd = Instant.now().plus(3, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS)
+        val announcementStart = now.minus(1, ChronoUnit.DAYS)
+        val announcementEnd = now.plus(3, ChronoUnit.DAYS)
 
         val createResponse = mockMvc.perform(
             post("/organizations/${organization.id}/announcements")
@@ -175,12 +177,16 @@ class CommunicationReportingIntegrationTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items").isEmpty)
 
+        val tourCreatedAt = now.minus(2, ChronoUnit.DAYS)
+        val occurrenceStartsAt = now.plus(2, ChronoUnit.DAYS)
+        val bookingCreatedAt = now.minus(1, ChronoUnit.DAYS)
+
         val tour = tourRepository.save(
             Tour.create(
                 organizationId = requireNotNull(organization.id),
                 title = "Evening Walk",
                 summary = "Summary",
-                now = Instant.parse("2026-03-18T00:00:00Z")
+                now = tourCreatedAt
             )
         )
         occurrenceRepository.save(
@@ -189,10 +195,10 @@ class CommunicationReportingIntegrationTest {
                 organizationId = requireNotNull(organization.id),
                 tourId = requireNotNull(tour.id),
                 capacity = 8,
-                startsAtUtc = Instant.parse("2026-03-20T09:00:00Z"),
+                startsAtUtc = occurrenceStartsAt,
                 status = com.demo.tourwave.domain.occurrence.OccurrenceStatus.SCHEDULED,
-                createdAt = Instant.parse("2026-03-18T00:00:00Z"),
-                updatedAt = Instant.parse("2026-03-18T00:00:00Z")
+                createdAt = tourCreatedAt,
+                updatedAt = tourCreatedAt
             )
         )
         val booking = bookingRepository.save(
@@ -203,14 +209,14 @@ class CommunicationReportingIntegrationTest {
                 partySize = 2,
                 status = BookingStatus.CONFIRMED,
                 paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-18T10:00:00Z")
+                createdAt = bookingCreatedAt
             )
         )
         bookingParticipantRepository.save(
             BookingParticipant.leader(
                 bookingId = requireNotNull(booking.id),
                 userId = requireNotNull(owner.id),
-                createdAt = Instant.parse("2026-03-18T10:00:00Z")
+                createdAt = bookingCreatedAt
             ).recordAttendance(AttendanceStatus.ATTENDED)
         )
         bookingParticipantRepository.save(
@@ -219,15 +225,15 @@ class CommunicationReportingIntegrationTest {
                 userId = requireNotNull(member.id),
                 status = BookingParticipantStatus.ACCEPTED,
                 attendanceStatus = AttendanceStatus.NO_SHOW,
-                createdAt = Instant.parse("2026-03-18T10:00:00Z")
+                createdAt = bookingCreatedAt
             )
         )
         paymentRecordRepository.save(
             PaymentRecord(
                 bookingId = requireNotNull(booking.id),
                 status = PaymentRecordStatus.REFUND_PENDING,
-                createdAtUtc = Instant.parse("2026-03-18T10:00:00Z"),
-                updatedAtUtc = Instant.parse("2026-03-18T10:05:00Z")
+                createdAtUtc = bookingCreatedAt,
+                updatedAtUtc = bookingCreatedAt.plus(5, ChronoUnit.MINUTES)
             )
         )
 
