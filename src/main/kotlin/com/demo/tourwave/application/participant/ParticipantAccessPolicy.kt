@@ -9,21 +9,25 @@ import com.demo.tourwave.domain.participant.BookingParticipantStatus
 
 enum class ParticipantAccessType {
     BOOKING_PARTICIPANT,
-    ORG_OPERATOR
+    ORG_OPERATOR,
 }
 
 class ParticipantAccessPolicy(
     private val bookingRepository: BookingRepository,
-    private val bookingParticipantRepository: BookingParticipantRepository
+    private val bookingParticipantRepository: BookingParticipantRepository,
 ) {
-    fun authorizeBookingParticipants(bookingId: Long, actor: ActorAuthContext): ParticipantAccessType {
-        val booking = bookingRepository.findById(bookingId)
-            ?: throw DomainException(
-                errorCode = ErrorCode.VALIDATION_ERROR,
-                status = 404,
-                message = "Booking not found",
-                details = mapOf("bookingId" to bookingId)
-            )
+    fun authorizeBookingParticipants(
+        bookingId: Long,
+        actor: ActorAuthContext,
+    ): ParticipantAccessType {
+        val booking =
+            bookingRepository.findById(bookingId)
+                ?: throw DomainException(
+                    errorCode = ErrorCode.VALIDATION_ERROR,
+                    status = 404,
+                    message = "Booking not found",
+                    details = mapOf("bookingId" to bookingId),
+                )
 
         val participant = bookingParticipantRepository.findByBookingIdAndUserId(bookingId, actor.actorUserId)
         if (participant != null && (participant.status == BookingParticipantStatus.LEADER || participant.status == BookingParticipantStatus.ACCEPTED)) {
@@ -31,24 +35,26 @@ class ParticipantAccessPolicy(
         }
 
         if (actor.isOrgOperator()) {
-            val actorOrgId = actor.actorOrgId
-                ?: throw DomainException(
-                    errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
-                    status = 422,
-                    message = "X-Actor-Org-Id is required for org operator access",
-                    details = mapOf("field" to "X-Actor-Org-Id")
-                )
+            val actorOrgId =
+                actor.actorOrgId
+                    ?: throw DomainException(
+                        errorCode = ErrorCode.REQUIRED_FIELD_MISSING,
+                        status = 422,
+                        message = "X-Actor-Org-Id is required for org operator access",
+                        details = mapOf("field" to "X-Actor-Org-Id"),
+                    )
 
             if (actorOrgId != booking.organizationId) {
                 throw DomainException(
                     errorCode = ErrorCode.FORBIDDEN,
                     status = 403,
                     message = "operator organization does not match booking scope",
-                    details = mapOf(
-                        "bookingId" to bookingId,
-                        "bookingOrganizationId" to booking.organizationId,
-                        "actorOrganizationId" to actorOrgId
-                    )
+                    details =
+                        mapOf(
+                            "bookingId" to bookingId,
+                            "bookingOrganizationId" to booking.organizationId,
+                            "actorOrganizationId" to actorOrgId,
+                        ),
                 )
             }
 
@@ -59,7 +65,7 @@ class ParticipantAccessPolicy(
             errorCode = ErrorCode.FORBIDDEN,
             status = 403,
             message = "Forbidden participant access",
-            details = mapOf("bookingId" to bookingId, "actorUserId" to actor.actorUserId)
+            details = mapOf("bookingId" to bookingId, "actorUserId" to actor.actorUserId),
         )
     }
 }

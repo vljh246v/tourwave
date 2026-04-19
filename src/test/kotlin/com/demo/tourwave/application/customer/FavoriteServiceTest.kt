@@ -15,12 +15,13 @@ class FavoriteServiceTest {
     private val favoriteRepository = InMemoryFavoriteRepositoryAdapter()
     private val tourRepository = FakeTourRepository()
     private val userRepository = FakeUserRepository()
-    private val service = FavoriteService(
-        favoriteRepository = favoriteRepository,
-        tourRepository = tourRepository,
-        userRepository = userRepository,
-        clock = Clock.fixed(Instant.parse("2026-03-18T00:00:00Z"), ZoneOffset.UTC)
-    )
+    private val service =
+        FavoriteService(
+            favoriteRepository = favoriteRepository,
+            tourRepository = tourRepository,
+            userRepository = userRepository,
+            clock = Clock.fixed(Instant.parse("2026-03-18T00:00:00Z"), ZoneOffset.UTC),
+        )
 
     @Test
     fun `favorite list and unfavorite work against published tours`() {
@@ -30,8 +31,8 @@ class FavoriteServiceTest {
                 organizationId = 1L,
                 title = "Favorite Tour",
                 summary = "Summary",
-                now = Instant.parse("2026-03-18T00:00:00Z")
-            ).copy(id = 10L, status = TourStatus.PUBLISHED, attachmentAssetIds = listOf(90L))
+                now = Instant.parse("2026-03-18T00:00:00Z"),
+            ).copy(id = 10L, status = TourStatus.PUBLISHED, attachmentAssetIds = listOf(90L)),
         )
 
         service.favorite(1L, 10L)

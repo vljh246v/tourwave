@@ -8,14 +8,13 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
-import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import java.time.Instant
 
 enum class IdempotencyPersistenceState {
     IN_PROGRESS,
-    COMPLETED
+    COMPLETED,
 }
 
 @Entity
@@ -24,10 +23,10 @@ enum class IdempotencyPersistenceState {
     uniqueConstraints = [
         UniqueConstraint(
             name = "uk_idempotency_scope",
-            columnNames = ["actor_user_id", "method", "path_template", "idempotency_key"]
-        )
+            columnNames = ["actor_user_id", "method", "path_template", "idempotency_key"],
+        ),
     ],
-    indexes = [Index(name = "idx_idempotency_expires_at", columnList = "expires_at_utc")]
+    indexes = [Index(name = "idx_idempotency_expires_at", columnList = "expires_at_utc")],
 )
 data class IdempotencyRecordJpaEntity(
     @Id
@@ -57,5 +56,5 @@ data class IdempotencyRecordJpaEntity(
     @Column(name = "completed_at_utc")
     val completedAtUtc: Instant? = null,
     @Column(name = "expires_at_utc", nullable = false)
-    val expiresAtUtc: Instant
+    val expiresAtUtc: Instant,
 )

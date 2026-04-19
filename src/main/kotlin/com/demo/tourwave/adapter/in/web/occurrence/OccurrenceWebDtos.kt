@@ -1,12 +1,12 @@
 package com.demo.tourwave.adapter.`in`.web.occurrence
 
+import com.demo.tourwave.adapter.`in`.web.tour.PublicTourResponse
 import com.demo.tourwave.application.occurrence.AvailabilityView
 import com.demo.tourwave.application.occurrence.OccurrenceSearchItemView
 import com.demo.tourwave.application.occurrence.OccurrenceSearchResult
 import com.demo.tourwave.application.occurrence.PublicOccurrenceView
 import com.demo.tourwave.application.occurrence.PublicTourView
 import com.demo.tourwave.application.occurrence.QuoteView
-import com.demo.tourwave.adapter.`in`.web.tour.PublicTourResponse
 import com.demo.tourwave.domain.occurrence.Occurrence
 import java.time.Instant
 
@@ -19,7 +19,7 @@ data class CreateOccurrenceWebRequest(
     val unitPrice: Int,
     val currency: String,
     val locationText: String? = null,
-    val meetingPoint: String? = null
+    val meetingPoint: String? = null,
 )
 
 data class UpdateOccurrenceWebRequest(
@@ -29,7 +29,7 @@ data class UpdateOccurrenceWebRequest(
     val endsAtUtc: Instant,
     val timezone: String,
     val locationText: String? = null,
-    val meetingPoint: String? = null
+    val meetingPoint: String? = null,
 )
 
 data class RescheduleOccurrenceWebRequest(
@@ -37,7 +37,7 @@ data class RescheduleOccurrenceWebRequest(
     val endsAtUtc: Instant,
     val timezone: String,
     val locationText: String? = null,
-    val meetingPoint: String? = null
+    val meetingPoint: String? = null,
 )
 
 data class OccurrenceResponse(
@@ -54,7 +54,7 @@ data class OccurrenceResponse(
     val locationText: String?,
     val meetingPoint: String?,
     val status: String,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class AvailabilityResponse(
@@ -64,7 +64,7 @@ data class AvailabilityResponse(
     val heldCount: Int,
     val available: Int,
     val canConfirm: Boolean,
-    val willWaitlist: Boolean
+    val willWaitlist: Boolean,
 )
 
 data class QuoteResponse(
@@ -75,23 +75,23 @@ data class QuoteResponse(
     val canConfirm: Boolean,
     val willWaitlist: Boolean,
     val refundPolicySummary: String,
-    val fullRefundDeadlineUtc: Instant?
+    val fullRefundDeadlineUtc: Instant?,
 )
 
 data class RatingSummaryResponse(
     val avgRating: Double,
-    val reviewCount: Int
+    val reviewCount: Int,
 )
 
 data class OccurrenceSearchItemResponse(
     val occurrence: OccurrenceResponse,
     val tour: PublicTourResponse,
-    val ratingSummary: RatingSummaryResponse?
+    val ratingSummary: RatingSummaryResponse?,
 )
 
 data class OccurrenceSearchResponse(
     val items: List<OccurrenceSearchItemResponse>,
-    val nextCursor: String?
+    val nextCursor: String?,
 )
 
 fun PublicTourView.toResponse(): PublicTourResponse =
@@ -103,7 +103,7 @@ fun PublicTourView.toResponse(): PublicTourResponse =
         description = description,
         highlights = highlights,
         attachmentAssetIds = attachmentAssetIds,
-        publishedAt = publishedAt
+        publishedAt = publishedAt,
     )
 
 fun Occurrence.toPublicView(): PublicOccurrenceView =
@@ -121,7 +121,7 @@ fun Occurrence.toPublicView(): PublicOccurrenceView =
         locationText = locationText,
         meetingPoint = meetingPoint,
         status = status.name,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 fun PublicOccurrenceView.toResponse(): OccurrenceResponse =
@@ -139,7 +139,7 @@ fun PublicOccurrenceView.toResponse(): OccurrenceResponse =
         locationText = locationText,
         meetingPoint = meetingPoint,
         status = status,
-        createdAt = createdAt
+        createdAt = createdAt,
     )
 
 fun AvailabilityView.toResponse(): AvailabilityResponse =
@@ -150,7 +150,7 @@ fun AvailabilityView.toResponse(): AvailabilityResponse =
         heldCount = heldCount,
         available = available,
         canConfirm = canConfirm,
-        willWaitlist = willWaitlist
+        willWaitlist = willWaitlist,
     )
 
 fun QuoteView.toResponse(): QuoteResponse =
@@ -162,23 +162,24 @@ fun QuoteView.toResponse(): QuoteResponse =
         canConfirm = canConfirm,
         willWaitlist = willWaitlist,
         refundPolicySummary = refundPolicySummary,
-        fullRefundDeadlineUtc = fullRefundDeadlineUtc
+        fullRefundDeadlineUtc = fullRefundDeadlineUtc,
     )
 
 fun OccurrenceSearchItemView.toResponse(): OccurrenceSearchItemResponse =
     OccurrenceSearchItemResponse(
         occurrence = occurrence.toResponse(),
         tour = tour.toResponse(),
-        ratingSummary = ratingSummary?.let {
-            RatingSummaryResponse(
-                avgRating = it.avgRating,
-                reviewCount = it.reviewCount
-            )
-        }
+        ratingSummary =
+            ratingSummary?.let {
+                RatingSummaryResponse(
+                    avgRating = it.avgRating,
+                    reviewCount = it.reviewCount,
+                )
+            },
     )
 
 fun OccurrenceSearchResult.toResponse(): OccurrenceSearchResponse =
     OccurrenceSearchResponse(
         items = items.map { it.toResponse() },
-        nextCursor = nextCursor
+        nextCursor = nextCursor,
     )

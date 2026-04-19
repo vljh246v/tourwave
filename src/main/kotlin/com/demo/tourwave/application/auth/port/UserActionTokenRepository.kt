@@ -6,7 +6,14 @@ import java.time.Instant
 
 interface UserActionTokenRepository {
     fun save(token: UserActionToken): UserActionToken
+
     fun findByTokenHash(tokenHash: String): UserActionToken?
-    fun findActiveByUserIdAndPurpose(userId: Long, purpose: UserActionTokenPurpose, now: Instant): List<UserActionToken>
+
+    fun findActiveByUserIdAndPurpose(
+        userId: Long,
+        purpose: UserActionTokenPurpose,
+        now: Instant,
+    ): List<UserActionToken>
+
     fun clear()
 }

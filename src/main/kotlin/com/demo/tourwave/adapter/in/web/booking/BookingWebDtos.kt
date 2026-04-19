@@ -1,21 +1,21 @@
 package com.demo.tourwave.adapter.`in`.web.booking
 
+import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
-import com.demo.tourwave.domain.booking.AttendanceStatus
-import com.demo.tourwave.domain.occurrence.OccurrenceStatus
-import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import com.demo.tourwave.domain.booking.RefundDecisionType
 import com.demo.tourwave.domain.booking.RefundReasonCode
+import com.demo.tourwave.domain.occurrence.OccurrenceStatus
+import com.demo.tourwave.domain.participant.BookingParticipantStatus
 import java.time.Instant
 
 data class BookingCreateWebRequest(
     val partySize: Int,
-    val noteToOperator: String? = null
+    val noteToOperator: String? = null,
 )
 
 data class BookingPartySizeUpdateWebRequest(
-    val partySize: Int
+    val partySize: Int,
 )
 
 data class BookingCreateWebResponse(
@@ -28,7 +28,7 @@ data class BookingCreateWebResponse(
     val paymentStatus: PaymentStatus,
     val currency: String? = null,
     val amountPaid: Int? = null,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class BookingOccurrenceWebResponse(
@@ -38,7 +38,7 @@ data class BookingOccurrenceWebResponse(
     val instructorProfileId: Long?,
     val capacity: Int,
     val startsAtUtc: Instant?,
-    val status: OccurrenceStatus
+    val status: OccurrenceStatus,
 )
 
 data class BookingDetailParticipantWebResponse(
@@ -48,7 +48,7 @@ data class BookingDetailParticipantWebResponse(
     val status: BookingParticipantStatus,
     val attendanceStatus: AttendanceStatus,
     val invitedAt: Instant?,
-    val respondedAt: Instant?
+    val respondedAt: Instant?,
 )
 
 data class BookingDetailWebResponse(
@@ -62,7 +62,7 @@ data class BookingDetailWebResponse(
     val createdAt: Instant,
     val offerExpiresAtUtc: Instant?,
     val occurrence: BookingOccurrenceWebResponse,
-    val participants: List<BookingDetailParticipantWebResponse>
+    val participants: List<BookingDetailParticipantWebResponse>,
 )
 
 data class BookingRefundPreviewWebResponse(
@@ -74,5 +74,5 @@ data class BookingRefundPreviewWebResponse(
     val refundReasonCode: RefundReasonCode?,
     val refundable: Boolean,
     val occurrenceStartsAtUtc: Instant?,
-    val evaluatedAtUtc: Instant
+    val evaluatedAtUtc: Instant,
 )

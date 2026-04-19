@@ -27,21 +27,23 @@ class BookingRefundPreviewServiceTest {
     private val occurrenceRepository = mock(OccurrenceRepository::class.java)
     private val participantRepository = mock(BookingParticipantRepository::class.java)
     private val paymentProviderAdapter = com.demo.tourwave.adapter.out.payment.InMemoryRefundExecutionAdapter()
-    private val paymentLedgerService = PaymentLedgerService(
-        paymentRecordRepository = com.demo.tourwave.adapter.out.persistence.payment.InMemoryPaymentRecordRepositoryAdapter(),
-        paymentProviderPort = paymentProviderAdapter,
-        refundExecutionPort = paymentProviderAdapter,
-        clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
-    )
+    private val paymentLedgerService =
+        PaymentLedgerService(
+            paymentRecordRepository = com.demo.tourwave.adapter.out.persistence.payment.InMemoryPaymentRecordRepositoryAdapter(),
+            paymentProviderPort = paymentProviderAdapter,
+            refundExecutionPort = paymentProviderAdapter,
+            clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC),
+        )
     private val participantAccessPolicy = ParticipantAccessPolicy(bookingRepository, participantRepository)
     private val clock = Clock.fixed(Instant.parse("2026-03-16T12:00:00Z"), ZoneOffset.UTC)
-    private val service = BookingRefundPreviewService(
-        bookingRepository = bookingRepository,
-        occurrenceRepository = occurrenceRepository,
-        participantAccessPolicy = participantAccessPolicy,
-        paymentLedgerService = paymentLedgerService,
-        clock = clock
-    )
+    private val service =
+        BookingRefundPreviewService(
+            bookingRepository = bookingRepository,
+            occurrenceRepository = occurrenceRepository,
+            participantAccessPolicy = participantAccessPolicy,
+            paymentLedgerService = paymentLedgerService,
+            clock = clock,
+        )
 
     @Test
     fun `leader can preview full refund before deadline`() {
@@ -52,19 +54,20 @@ class BookingRefundPreviewServiceTest {
                 id = 701L,
                 organizationId = 31L,
                 capacity = 10,
-                startsAtUtc = Instant.parse("2026-03-20T12:00:00Z")
-            )
+                startsAtUtc = Instant.parse("2026-03-20T12:00:00Z"),
+            ),
         )
         whenever(participantRepository.findByBookingIdAndUserId(11L, 501L)).thenReturn(
-            BookingParticipant.leader(bookingId = 11L, userId = 501L, createdAt = booking.createdAt).copy(id = 1L)
+            BookingParticipant.leader(bookingId = 11L, userId = 501L, createdAt = booking.createdAt).copy(id = 1L),
         )
 
-        val result = service.getPreview(
-            GetBookingRefundPreviewQuery(
-                bookingId = 11L,
-                actor = ActorAuthContext(actorUserId = 501L)
+        val result =
+            service.getPreview(
+                GetBookingRefundPreviewQuery(
+                    bookingId = 11L,
+                    actor = ActorAuthContext(actorUserId = 501L),
+                ),
             )
-        )
 
         assertEquals(RefundDecisionType.FULL_REFUND, result.refundDecisionType)
         assertEquals(RefundReasonCode.LEADER_CANCEL_BEFORE_48_HOURS, result.refundReasonCode)
@@ -82,18 +85,19 @@ class BookingRefundPreviewServiceTest {
                 status = com.demo.tourwave.domain.participant.BookingParticipantStatus.ACCEPTED,
                 invitedAt = booking.createdAt,
                 respondedAt = booking.createdAt,
-                createdAt = booking.createdAt
-            )
+                createdAt = booking.createdAt,
+            ),
         )
 
-        val exception = assertThrows<DomainException> {
-            service.getPreview(
-                GetBookingRefundPreviewQuery(
-                    bookingId = 11L,
-                    actor = ActorAuthContext(actorUserId = 777L)
+        val exception =
+            assertThrows<DomainException> {
+                service.getPreview(
+                    GetBookingRefundPreviewQuery(
+                        bookingId = 11L,
+                        actor = ActorAuthContext(actorUserId = 777L),
+                    ),
                 )
-            )
-        }
+            }
 
         assertEquals(403, exception.status)
     }
@@ -107,7 +111,7 @@ class BookingRefundPreviewServiceTest {
             partySize = 2,
             status = BookingStatus.CONFIRMED,
             paymentStatus = PaymentStatus.PAID,
-            createdAt = Instant.parse("2026-03-10T00:00:00Z")
+            createdAt = Instant.parse("2026-03-10T00:00:00Z"),
         )
     }
 }

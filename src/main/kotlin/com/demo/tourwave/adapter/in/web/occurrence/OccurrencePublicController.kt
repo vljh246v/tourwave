@@ -12,40 +12,42 @@ import java.time.Instant
 
 @RestController
 class OccurrencePublicController(
-    private val catalogQueryService: CatalogQueryService
+    private val catalogQueryService: CatalogQueryService,
 ) {
     @GetMapping("/occurrences/{occurrenceId}")
-    fun getOccurrence(@PathVariable occurrenceId: Long): ResponseEntity<OccurrenceResponse> {
+    fun getOccurrence(
+        @PathVariable occurrenceId: Long,
+    ): ResponseEntity<OccurrenceResponse> {
         return ResponseEntity.ok(catalogQueryService.getPublicOccurrence(occurrenceId).toResponse())
     }
 
     @GetMapping("/occurrences/{occurrenceId}/availability")
     fun getAvailability(
         @PathVariable occurrenceId: Long,
-        @RequestParam partySize: Int
+        @RequestParam partySize: Int,
     ): ResponseEntity<AvailabilityResponse> {
         return ResponseEntity.ok(
             catalogQueryService.getAvailability(
                 AvailabilityQuery(
                     occurrenceId = occurrenceId,
-                    partySize = partySize
-                )
-            ).toResponse()
+                    partySize = partySize,
+                ),
+            ).toResponse(),
         )
     }
 
     @GetMapping("/occurrences/{occurrenceId}/quote")
     fun getQuote(
         @PathVariable occurrenceId: Long,
-        @RequestParam partySize: Int
+        @RequestParam partySize: Int,
     ): ResponseEntity<QuoteResponse> {
         return ResponseEntity.ok(
             catalogQueryService.getQuote(
                 AvailabilityQuery(
                     occurrenceId = occurrenceId,
-                    partySize = partySize
-                )
-            ).toResponse()
+                    partySize = partySize,
+                ),
+            ).toResponse(),
         )
     }
 
@@ -59,7 +61,7 @@ class OccurrencePublicController(
         @RequestParam(required = false) locationText: String?,
         @RequestParam(required = false) partySize: Int?,
         @RequestParam(required = false, defaultValue = "false") onlyAvailable: Boolean,
-        @RequestParam(required = false) sort: String?
+        @RequestParam(required = false) sort: String?,
     ): ResponseEntity<OccurrenceSearchResponse> {
         return ResponseEntity.ok(
             catalogQueryService.search(
@@ -72,9 +74,9 @@ class OccurrencePublicController(
                     locationText = locationText,
                     partySize = partySize,
                     onlyAvailable = onlyAvailable,
-                    sort = sort
-                )
-            ).toResponse()
+                    sort = sort,
+                ),
+            ).toResponse(),
         )
     }
 }

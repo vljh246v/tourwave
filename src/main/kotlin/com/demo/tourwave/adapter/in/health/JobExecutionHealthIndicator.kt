@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 @Component("workerJobs")
 class JobExecutionHealthIndicator(
-    private val jobExecutionMonitor: JobExecutionMonitor
+    private val jobExecutionMonitor: JobExecutionMonitor,
 ) : HealthIndicator {
     override fun health(): Health {
         val snapshots = jobExecutionMonitor.getSnapshots()
@@ -23,18 +23,21 @@ class JobExecutionHealthIndicator(
         return health
             .withDetail("registeredJobs", snapshots.size)
             .withDetail("failedJobs", failures.map { it.jobName })
-            .withDetail("jobs", snapshots.map { snapshot ->
-                mapOf(
-                    "jobName" to snapshot.jobName,
-                    "status" to snapshot.status.name,
-                    "lastStartedAtUtc" to snapshot.lastStartedAtUtc?.toString(),
-                    "lastFinishedAtUtc" to snapshot.lastFinishedAtUtc?.toString(),
-                    "runCount" to snapshot.runCount,
-                    "successCount" to snapshot.successCount,
-                    "failureCount" to snapshot.failureCount,
-                    "skippedCount" to snapshot.skippedCount
-                )
-            })
+            .withDetail(
+                "jobs",
+                snapshots.map { snapshot ->
+                    mapOf(
+                        "jobName" to snapshot.jobName,
+                        "status" to snapshot.status.name,
+                        "lastStartedAtUtc" to snapshot.lastStartedAtUtc?.toString(),
+                        "lastFinishedAtUtc" to snapshot.lastFinishedAtUtc?.toString(),
+                        "runCount" to snapshot.runCount,
+                        "successCount" to snapshot.successCount,
+                        "failureCount" to snapshot.failureCount,
+                        "skippedCount" to snapshot.skippedCount,
+                    )
+                },
+            )
             .build()
     }
 }

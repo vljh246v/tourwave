@@ -8,19 +8,26 @@ import java.util.concurrent.ConcurrentHashMap
 class JobExecutionMonitor {
     private val snapshots = ConcurrentHashMap<String, JobExecutionSnapshot>()
 
-    fun recordStarted(jobName: String, startedAtUtc: Instant) {
+    fun recordStarted(
+        jobName: String,
+        startedAtUtc: Instant,
+    ) {
         snapshots.compute(jobName) { _, current ->
             val base = current ?: JobExecutionSnapshot(jobName = jobName, status = JobExecutionStatus.RUNNING)
             base.copy(
                 status = JobExecutionStatus.RUNNING,
                 lastStartedAtUtc = startedAtUtc,
                 runCount = base.runCount + 1,
-                lastErrorMessage = null
+                lastErrorMessage = null,
             )
         }
     }
 
-    fun recordSuccess(jobName: String, finishedAtUtc: Instant, durationMs: Long) {
+    fun recordSuccess(
+        jobName: String,
+        finishedAtUtc: Instant,
+        durationMs: Long,
+    ) {
         snapshots.compute(jobName) { _, current ->
             val base = requireNotNull(current) { "Job must be started before success is recorded" }
             base.copy(
@@ -28,12 +35,17 @@ class JobExecutionMonitor {
                 lastFinishedAtUtc = finishedAtUtc,
                 lastDurationMs = durationMs,
                 successCount = base.successCount + 1,
-                lastErrorMessage = null
+                lastErrorMessage = null,
             )
         }
     }
 
-    fun recordFailure(jobName: String, finishedAtUtc: Instant, durationMs: Long, errorMessage: String?) {
+    fun recordFailure(
+        jobName: String,
+        finishedAtUtc: Instant,
+        durationMs: Long,
+        errorMessage: String?,
+    ) {
         snapshots.compute(jobName) { _, current ->
             val base = requireNotNull(current) { "Job must be started before failure is recorded" }
             base.copy(
@@ -41,18 +53,21 @@ class JobExecutionMonitor {
                 lastFinishedAtUtc = finishedAtUtc,
                 lastDurationMs = durationMs,
                 failureCount = base.failureCount + 1,
-                lastErrorMessage = errorMessage
+                lastErrorMessage = errorMessage,
             )
         }
     }
 
-    fun recordSkipped(jobName: String, skippedAtUtc: Instant) {
+    fun recordSkipped(
+        jobName: String,
+        skippedAtUtc: Instant,
+    ) {
         snapshots.compute(jobName) { _, current ->
             val base = current ?: JobExecutionSnapshot(jobName = jobName, status = JobExecutionStatus.SKIPPED)
             base.copy(
                 status = JobExecutionStatus.SKIPPED,
                 lastFinishedAtUtc = skippedAtUtc,
-                skippedCount = base.skippedCount + 1
+                skippedCount = base.skippedCount + 1,
             )
         }
     }

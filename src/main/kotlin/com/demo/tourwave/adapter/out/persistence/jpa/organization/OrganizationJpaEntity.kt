@@ -15,7 +15,7 @@ import java.time.Instant
 @Entity
 @Table(
     name = "organizations",
-    indexes = [Index(name = "uk_organizations_slug", columnList = "slug", unique = true)]
+    indexes = [Index(name = "uk_organizations_slug", columnList = "slug", unique = true)],
 )
 data class OrganizationJpaEntity(
     @Id
@@ -49,5 +49,5 @@ data class OrganizationJpaEntity(
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

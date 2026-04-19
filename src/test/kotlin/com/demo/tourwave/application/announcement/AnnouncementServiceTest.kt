@@ -22,11 +22,12 @@ class AnnouncementServiceTest {
     private val organizationRepository = InMemoryOrganizationRepositoryAdapter()
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val fixedClock = Clock.fixed(Instant.parse("2026-03-19T09:00:00Z"), ZoneOffset.UTC)
-    private val service = AnnouncementService(
-        announcementRepository = announcementRepository,
-        organizationAccessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository),
-        clock = fixedClock
-    )
+    private val service =
+        AnnouncementService(
+            announcementRepository = announcementRepository,
+            organizationAccessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository),
+            clock = fixedClock,
+        )
 
     @BeforeEach
     fun setUp() {
@@ -45,16 +46,16 @@ class AnnouncementServiceTest {
                 businessName = null,
                 businessRegistrationNumber = null,
                 timezone = "Asia/Seoul",
-                now = fixedClock.instant()
-            )
+                now = fixedClock.instant(),
+            ),
         )
         membershipRepository.save(
             OrganizationMembership.active(
                 organizationId = 1L,
                 userId = 11L,
                 role = OrganizationRole.OWNER,
-                now = fixedClock.instant()
-            )
+                now = fixedClock.instant(),
+            ),
         )
     }
 
@@ -68,8 +69,8 @@ class AnnouncementServiceTest {
                 body = "Body",
                 visibility = AnnouncementVisibility.PUBLIC,
                 publishStartsAtUtc = fixedClock.instant().minusSeconds(60),
-                publishEndsAtUtc = fixedClock.instant().plusSeconds(60)
-            )
+                publishEndsAtUtc = fixedClock.instant().plusSeconds(60),
+            ),
         )
         service.create(
             CreateAnnouncementCommand(
@@ -79,8 +80,8 @@ class AnnouncementServiceTest {
                 body = "Body",
                 visibility = AnnouncementVisibility.DRAFT,
                 publishStartsAtUtc = null,
-                publishEndsAtUtc = null
-            )
+                publishEndsAtUtc = null,
+            ),
         )
         service.create(
             CreateAnnouncementCommand(
@@ -90,8 +91,8 @@ class AnnouncementServiceTest {
                 body = "Body",
                 visibility = AnnouncementVisibility.PUBLIC,
                 publishStartsAtUtc = fixedClock.instant().plusSeconds(3600),
-                publishEndsAtUtc = null
-            )
+                publishEndsAtUtc = null,
+            ),
         )
 
         val page = service.listPublicAnnouncements(organizationId = 1L, cursor = null, limit = 20)
@@ -102,19 +103,20 @@ class AnnouncementServiceTest {
 
     @Test
     fun `announcement create requires operator membership`() {
-        val exception = assertFailsWith<DomainException> {
-            service.create(
-                CreateAnnouncementCommand(
-                    actorUserId = 99L,
-                    organizationId = 1L,
-                    title = "Title",
-                    body = "Body",
-                    visibility = AnnouncementVisibility.PUBLIC,
-                    publishStartsAtUtc = null,
-                    publishEndsAtUtc = null
+        val exception =
+            assertFailsWith<DomainException> {
+                service.create(
+                    CreateAnnouncementCommand(
+                        actorUserId = 99L,
+                        organizationId = 1L,
+                        title = "Title",
+                        body = "Body",
+                        visibility = AnnouncementVisibility.PUBLIC,
+                        publishStartsAtUtc = null,
+                        publishEndsAtUtc = null,
+                    ),
                 )
-            )
-        }
+            }
 
         assertEquals(403, exception.status)
     }

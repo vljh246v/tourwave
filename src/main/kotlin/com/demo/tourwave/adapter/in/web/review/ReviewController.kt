@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 class ReviewController(
     private val reviewCommandService: ReviewCommandService,
     private val reviewQueryService: ReviewQueryService,
-    private val authzGuardPort: AuthzGuardPort
+    private val authzGuardPort: AuthzGuardPort,
 ) {
     @PostMapping("/occurrences/{occurrenceId}/reviews/tour")
     fun createTourReview(
@@ -30,19 +30,20 @@ class ReviewController(
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
-        @RequestBody request: ReviewCreateWebRequest
+        @RequestBody request: ReviewCreateWebRequest,
     ): ResponseEntity<ReviewWebResponse> {
         val actorAuthContext = authzGuardPort.requireActorContext(actorUserId = actorUserId)
-        val result = reviewCommandService.createTourReview(
-            CreateReviewCommand(
-                occurrenceId = occurrenceId,
-                actorUserId = actorAuthContext.actorUserId,
-                idempotencyKey = idempotencyKey,
-                rating = request.rating,
-                comment = request.comment,
-                requestId = requestId
+        val result =
+            reviewCommandService.createTourReview(
+                CreateReviewCommand(
+                    occurrenceId = occurrenceId,
+                    actorUserId = actorAuthContext.actorUserId,
+                    idempotencyKey = idempotencyKey,
+                    rating = request.rating,
+                    comment = request.comment,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).body(result.review.toWebResponse())
     }
 
@@ -52,45 +53,48 @@ class ReviewController(
         @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
         @RequestHeader("X-Request-Id", required = false) requestId: String?,
-        @RequestBody request: ReviewCreateWebRequest
+        @RequestBody request: ReviewCreateWebRequest,
     ): ResponseEntity<ReviewWebResponse> {
         val actorAuthContext = authzGuardPort.requireActorContext(actorUserId = actorUserId)
-        val result = reviewCommandService.createInstructorReview(
-            CreateReviewCommand(
-                occurrenceId = occurrenceId,
-                actorUserId = actorAuthContext.actorUserId,
-                idempotencyKey = idempotencyKey,
-                rating = request.rating,
-                comment = request.comment,
-                requestId = requestId
+        val result =
+            reviewCommandService.createInstructorReview(
+                CreateReviewCommand(
+                    occurrenceId = occurrenceId,
+                    actorUserId = actorAuthContext.actorUserId,
+                    idempotencyKey = idempotencyKey,
+                    rating = request.rating,
+                    comment = request.comment,
+                    requestId = requestId,
+                ),
             )
-        )
         return ResponseEntity.status(result.status).body(result.review.toWebResponse())
     }
 
     @GetMapping("/occurrences/{occurrenceId}/reviews/summary")
     fun getSummary(
-        @PathVariable occurrenceId: Long
+        @PathVariable occurrenceId: Long,
     ): ResponseEntity<OccurrenceReviewSummaryWebResponse> {
         val summary = reviewQueryService.getOccurrenceSummary(occurrenceId)
         return ResponseEntity.ok(summary.toWebResponse())
     }
 
     @GetMapping("/tours/{tourId}/reviews/summary")
-    fun getTourSummary(@PathVariable tourId: Long): ResponseEntity<TourReviewSummaryWebResponse> {
+    fun getTourSummary(
+        @PathVariable tourId: Long,
+    ): ResponseEntity<TourReviewSummaryWebResponse> {
         return ResponseEntity.ok(reviewQueryService.getTourSummary(tourId).toWebResponse())
     }
 
     @GetMapping("/instructors/{instructorProfileId}/reviews/summary")
     fun getInstructorSummary(
-        @PathVariable instructorProfileId: Long
+        @PathVariable instructorProfileId: Long,
     ): ResponseEntity<InstructorReviewSummaryWebResponse> {
         return ResponseEntity.ok(reviewQueryService.getInstructorSummary(instructorProfileId).toWebResponse())
     }
 
     @GetMapping("/organizations/{organizationId}/reviews/summary")
     fun getPublicOrganizationSummary(
-        @PathVariable organizationId: Long
+        @PathVariable organizationId: Long,
     ): ResponseEntity<OrganizationReviewSummaryWebResponse> {
         return ResponseEntity.ok(reviewQueryService.getPublicOrganizationSummary(organizationId).toWebResponse())
     }
@@ -98,11 +102,11 @@ class ReviewController(
     @GetMapping("/operator/organizations/{organizationId}/reviews/summary")
     fun getOperatorOrganizationSummary(
         @PathVariable organizationId: Long,
-        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?
+        @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
     ): ResponseEntity<OrganizationReviewSummaryWebResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
-            reviewQueryService.getOperatorOrganizationSummary(requiredActorUserId, organizationId).toWebResponse()
+            reviewQueryService.getOperatorOrganizationSummary(requiredActorUserId, organizationId).toWebResponse(),
         )
     }
 
@@ -114,7 +118,7 @@ class ReviewController(
             type = type,
             rating = rating,
             comment = comment,
-            createdAt = createdAt
+            createdAt = createdAt,
         )
     }
 
@@ -122,14 +126,14 @@ class ReviewController(
         return OccurrenceReviewSummaryWebResponse(
             occurrenceId = occurrenceId,
             tour = tour.toWebResponse(),
-            instructor = instructor.toWebResponse()
+            instructor = instructor.toWebResponse(),
         )
     }
 
     private fun ReviewSummaryItem.toWebResponse(): ReviewSummaryItemWebResponse {
         return ReviewSummaryItemWebResponse(
             count = count,
-            averageRating = averageRating
+            averageRating = averageRating,
         )
     }
 
@@ -137,7 +141,7 @@ class ReviewController(
         return TourReviewSummaryWebResponse(
             tourId = tourId,
             summary = summary.toWebResponse(),
-            aggregationMode = aggregationMode.name
+            aggregationMode = aggregationMode.name,
         )
     }
 
@@ -145,7 +149,7 @@ class ReviewController(
         return InstructorReviewSummaryWebResponse(
             instructorProfileId = instructorProfileId,
             summary = summary.toWebResponse(),
-            aggregationMode = aggregationMode.name
+            aggregationMode = aggregationMode.name,
         )
     }
 
@@ -155,7 +159,7 @@ class ReviewController(
             scope = scope,
             tour = tour.toWebResponse(),
             instructor = instructor.toWebResponse(),
-            aggregationMode = aggregationMode.name
+            aggregationMode = aggregationMode.name,
         )
     }
 }

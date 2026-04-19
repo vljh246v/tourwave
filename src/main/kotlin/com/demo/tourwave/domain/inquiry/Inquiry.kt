@@ -10,7 +10,7 @@ data class Inquiry(
     val createdByUserId: Long,
     val subject: String? = null,
     val status: InquiryStatus = InquiryStatus.OPEN,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 ) {
     fun close(): Inquiry {
         if (status == InquiryStatus.CLOSED) return this

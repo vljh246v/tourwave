@@ -9,5 +9,7 @@ import org.springframework.data.repository.query.Param
 interface WorkerJobLockJpaRepository : JpaRepository<WorkerJobLockJpaEntity, String> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select lock from WorkerJobLockJpaEntity lock where lock.lockName = :lockName")
-    fun findLockedByLockName(@Param("lockName") lockName: String): WorkerJobLockJpaEntity?
+    fun findLockedByLockName(
+        @Param("lockName") lockName: String,
+    ): WorkerJobLockJpaEntity?
 }

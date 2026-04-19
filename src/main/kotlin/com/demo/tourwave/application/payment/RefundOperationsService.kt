@@ -17,7 +17,7 @@ data class RefundRemediationCommand(
     val actorUserId: Long,
     val action: RefundRemediationAction = RefundRemediationAction.RETRY,
     val reasonCode: String? = null,
-    val note: String? = null
+    val note: String? = null,
 )
 
 data class RefundOpsQueueItem(
@@ -35,7 +35,7 @@ data class RefundOpsQueueItem(
     val lastRemediationAction: RefundRemediationAction?,
     val lastRemediatedByUserId: Long?,
     val lastRemediatedAtUtc: Instant?,
-    val updatedAtUtc: Instant
+    val updatedAtUtc: Instant,
 )
 
 class RefundOperationsService(
@@ -45,15 +45,15 @@ class RefundOperationsService(
     private val auditEventPort: AuditEventPort,
     private val maxRetryAttempts: Int,
     private val retryCooldown: Duration,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun listRefundOpsQueue(): List<RefundOpsQueueItem> {
         return paymentRecordRepository.findByStatuses(
             setOf(
                 PaymentRecordStatus.REFUND_PENDING,
                 PaymentRecordStatus.REFUND_FAILED_RETRYABLE,
-                PaymentRecordStatus.REFUND_REVIEW_REQUIRED
-            )
+                PaymentRecordStatus.REFUND_REVIEW_REQUIRED,
+            ),
         ).map { record ->
             val booking = bookingRepository.findById(record.bookingId)
             RefundOpsQueueItem(
@@ -71,14 +71,18 @@ class RefundOperationsService(
                 lastRemediationAction = record.lastRemediationAction,
                 lastRemediatedByUserId = record.lastRemediatedByUserId,
                 lastRemediatedAtUtc = record.lastRemediatedAtUtc,
-                updatedAtUtc = record.updatedAtUtc
+                updatedAtUtc = record.updatedAtUtc,
             )
         }.sortedByDescending { it.updatedAtUtc }
     }
 
-    fun remediateBookingRefund(bookingId: Long, command: RefundRemediationCommand): RefundOpsQueueItem {
-        val before = paymentRecordRepository.findByBookingId(bookingId)
-            ?: throw IllegalArgumentException("Payment record not found for booking $bookingId")
+    fun remediateBookingRefund(
+        bookingId: Long,
+        command: RefundRemediationCommand,
+    ): RefundOpsQueueItem {
+        val before =
+            paymentRecordRepository.findByBookingId(bookingId)
+                ?: throw IllegalArgumentException("Payment record not found for booking $bookingId")
 
         when (command.action) {
             RefundRemediationAction.RETRY -> refundRetryService.retryBookingRefund(bookingId)
@@ -90,21 +94,22 @@ class RefundOperationsService(
                         lastRemediationAction = RefundRemediationAction.MARK_REVIEW_REQUIRED,
                         lastRemediatedByUserId = command.actorUserId,
                         lastRemediatedAtUtc = clock.instant(),
-                        updatedAtUtc = clock.instant()
-                    )
+                        updatedAtUtc = clock.instant(),
+                    ),
                 )
             }
         }
-        val updated = paymentRecordRepository.findByBookingId(bookingId)
-            ?: throw IllegalArgumentException("Payment record not found after remediation: $bookingId")
+        val updated =
+            paymentRecordRepository.findByBookingId(bookingId)
+                ?: throw IllegalArgumentException("Payment record not found after remediation: $bookingId")
         if (command.action == RefundRemediationAction.RETRY) {
             paymentRecordRepository.save(
                 updated.copy(
                     lastRemediationAction = RefundRemediationAction.RETRY,
                     lastRemediatedByUserId = command.actorUserId,
                     lastRemediatedAtUtc = clock.instant(),
-                    updatedAtUtc = updated.updatedAtUtc
-                )
+                    updatedAtUtc = updated.updatedAtUtc,
+                ),
             )
         }
         auditEventPort.append(
@@ -115,28 +120,32 @@ class RefundOperationsService(
                 resourceId = requireNotNull(updated.id ?: before.id),
                 occurredAtUtc = clock.instant(),
                 reasonCode = command.reasonCode,
-                details = mapOf(
-                    "bookingId" to bookingId,
-                    "note" to command.note,
-                    "action" to command.action.name
-                ),
-                beforeJson = mapOf(
-                    "status" to before.status.name,
-                    "retryCount" to before.refundRetryCount,
-                    "nextRetryAtUtc" to before.nextRetryAtUtc?.toString()
-                ),
-                afterJson = mapOf(
-                    "status" to updated.status.name,
-                    "retryCount" to updated.refundRetryCount,
-                    "nextRetryAtUtc" to updated.nextRetryAtUtc?.toString()
-                )
-            )
+                details =
+                    mapOf(
+                        "bookingId" to bookingId,
+                        "note" to command.note,
+                        "action" to command.action.name,
+                    ),
+                beforeJson =
+                    mapOf(
+                        "status" to before.status.name,
+                        "retryCount" to before.refundRetryCount,
+                        "nextRetryAtUtc" to before.nextRetryAtUtc?.toString(),
+                    ),
+                afterJson =
+                    mapOf(
+                        "status" to updated.status.name,
+                        "retryCount" to updated.refundRetryCount,
+                        "nextRetryAtUtc" to updated.nextRetryAtUtc?.toString(),
+                    ),
+            ),
         )
         return listRefundOpsQueue().firstOrNull { it.bookingId == bookingId }
             ?: run {
                 val booking = bookingRepository.findById(bookingId)
-                val record = paymentRecordRepository.findByBookingId(bookingId)
-                    ?: throw IllegalArgumentException("Payment record not found after remediation: $bookingId")
+                val record =
+                    paymentRecordRepository.findByBookingId(bookingId)
+                        ?: throw IllegalArgumentException("Payment record not found after remediation: $bookingId")
                 RefundOpsQueueItem(
                     bookingId = bookingId,
                     bookingStatus = booking?.status,
@@ -152,7 +161,7 @@ class RefundOperationsService(
                     lastRemediationAction = record.lastRemediationAction,
                     lastRemediatedByUserId = record.lastRemediatedByUserId,
                     lastRemediatedAtUtc = record.lastRemediatedAtUtc,
-                    updatedAtUtc = record.updatedAtUtc
+                    updatedAtUtc = record.updatedAtUtc,
                 )
             }
     }

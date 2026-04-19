@@ -20,26 +20,28 @@ class InstructorConfig {
         organizationRepository: OrganizationRepository,
         organizationAccessGuard: OrganizationAccessGuard,
         userRepository: UserRepository,
-        clock: Clock
-    ): InstructorRegistrationService = InstructorRegistrationService(
-        registrationRepository = registrationRepository,
-        instructorProfileRepository = instructorProfileRepository,
-        organizationRepository = organizationRepository,
-        organizationAccessGuard = organizationAccessGuard,
-        userRepository = userRepository,
-        clock = clock
-    )
+        clock: Clock,
+    ): InstructorRegistrationService =
+        InstructorRegistrationService(
+            registrationRepository = registrationRepository,
+            instructorProfileRepository = instructorProfileRepository,
+            organizationRepository = organizationRepository,
+            organizationAccessGuard = organizationAccessGuard,
+            userRepository = userRepository,
+            clock = clock,
+        )
 
     @Bean
     fun instructorProfileService(
         instructorProfileRepository: InstructorProfileRepository,
         instructorRegistrationRepository: InstructorRegistrationRepository,
         userRepository: UserRepository,
-        clock: Clock
-    ): InstructorProfileService = InstructorProfileService(
-        instructorProfileRepository = instructorProfileRepository,
-        instructorRegistrationRepository = instructorRegistrationRepository,
-        userRepository = userRepository,
-        clock = clock
-    )
+        clock: Clock,
+    ): InstructorProfileService =
+        InstructorProfileService(
+            instructorProfileRepository = instructorProfileRepository,
+            instructorRegistrationRepository = instructorRegistrationRepository,
+            userRepository = userRepository,
+            clock = clock,
+        )
 }

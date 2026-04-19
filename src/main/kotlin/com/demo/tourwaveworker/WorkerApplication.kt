@@ -13,8 +13,8 @@ import org.springframework.scheduling.annotation.EnableScheduling
     exclude = [
         DataSourceAutoConfiguration::class,
         HibernateJpaAutoConfiguration::class,
-        FlywayAutoConfiguration::class
-    ]
+        FlywayAutoConfiguration::class,
+    ],
 )
 class WorkerApplication
 

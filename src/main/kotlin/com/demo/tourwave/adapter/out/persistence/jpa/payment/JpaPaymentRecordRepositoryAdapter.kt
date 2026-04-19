@@ -10,24 +10,24 @@ import java.time.Instant
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaPaymentRecordRepositoryAdapter(
-    private val paymentRecordJpaRepository: PaymentRecordJpaRepository
+    private val paymentRecordJpaRepository: PaymentRecordJpaRepository,
 ) : PaymentRecordRepository {
-    override fun save(record: PaymentRecord): PaymentRecord =
-        paymentRecordJpaRepository.save(record.toEntity()).toDomain()
+    override fun save(record: PaymentRecord): PaymentRecord = paymentRecordJpaRepository.save(record.toEntity()).toDomain()
 
-    override fun findByBookingId(bookingId: Long): PaymentRecord? =
-        paymentRecordJpaRepository.findByBookingId(bookingId)?.toDomain()
+    override fun findByBookingId(bookingId: Long): PaymentRecord? = paymentRecordJpaRepository.findByBookingId(bookingId)?.toDomain()
 
     override fun findByStatuses(statuses: Set<PaymentRecordStatus>): List<PaymentRecord> =
         paymentRecordJpaRepository.findByStatusInOrderByUpdatedAtUtcAsc(statuses).map { it.toDomain() }
 
-    override fun findUpdatedBetween(startInclusive: Instant, endExclusive: Instant): List<PaymentRecord> =
+    override fun findUpdatedBetween(
+        startInclusive: Instant,
+        endExclusive: Instant,
+    ): List<PaymentRecord> =
         paymentRecordJpaRepository
             .findByUpdatedAtUtcGreaterThanEqualAndUpdatedAtUtcLessThanOrderByUpdatedAtUtcAsc(startInclusive, endExclusive)
             .map { it.toDomain() }
 
-    override fun findAll(): List<PaymentRecord> =
-        paymentRecordJpaRepository.findAll().map { it.toDomain() }
+    override fun findAll(): List<PaymentRecord> = paymentRecordJpaRepository.findAll().map { it.toDomain() }
 
     override fun clear() {
         paymentRecordJpaRepository.deleteAllInBatch()
@@ -55,7 +55,7 @@ private fun PaymentRecord.toEntity(): PaymentRecordJpaEntity =
         lastRemediatedAtUtc = lastRemediatedAtUtc,
         lastWebhookEventId = lastWebhookEventId,
         createdAtUtc = createdAtUtc,
-        updatedAtUtc = updatedAtUtc
+        updatedAtUtc = updatedAtUtc,
     )
 
 private fun PaymentRecordJpaEntity.toDomain(): PaymentRecord =
@@ -79,5 +79,5 @@ private fun PaymentRecordJpaEntity.toDomain(): PaymentRecord =
         lastRemediatedAtUtc = lastRemediatedAtUtc,
         lastWebhookEventId = lastWebhookEventId,
         createdAtUtc = createdAtUtc,
-        updatedAtUtc = updatedAtUtc
+        updatedAtUtc = updatedAtUtc,
     )

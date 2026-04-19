@@ -42,13 +42,16 @@ class TourControllerIntegrationTest {
 
     @Test
     fun `tour APIs support operator authoring publish and public content query`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
+        val owner =
+            userRepository.save(
+                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()),
+            )
 
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"slug":"jeju-team","name":"Jeju Team","timezone":"Asia/Seoul"}""")
+                .content("""{"slug":"jeju-team","name":"Jeju Team","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
         val organizationId = requireNotNull(organizationRepository.findBySlug("jeju-team")?.id)
 
@@ -56,7 +59,7 @@ class TourControllerIntegrationTest {
             post("/organizations/$organizationId/tours")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"title":"Jeju Coast Walk","summary":"Ocean route"}""")
+                .content("""{"title":"Jeju Coast Walk","summary":"Ocean route"}"""),
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.status").value("DRAFT"))
@@ -75,22 +78,22 @@ class TourControllerIntegrationTest {
                       "exclusions":["transport"],
                       "preparations":["walking shoes"],
                       "policies":["24h cancellation"]
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.highlights[0]").value("sunrise"))
 
         mockMvc.perform(
             post("/tours/$tourId/publish")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PUBLISHED"))
 
         mockMvc.perform(
             get("/organizations/$organizationId/tours")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].title").value("Jeju Coast Walk"))

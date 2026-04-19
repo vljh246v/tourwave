@@ -15,7 +15,7 @@ class OrganizationCommandService(
     private val membershipRepository: OrganizationMembershipRepository,
     private val userRepository: UserRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun createOrganization(command: CreateOrganizationCommand): Organization {
         val actor = userRepository.findById(command.actorUserId) ?: throw unauthorized()
@@ -24,40 +24,47 @@ class OrganizationCommandService(
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 409,
-                message = "organization slug already exists"
+                message = "organization slug already exists",
             )
         }
 
         val now = clock.instant()
-        val organization = organizationRepository.save(
-            Organization.create(
-                slug = normalizedSlug,
-                name = requireValidOrganizationName(command.name),
-                description = normalizeOptionalText(command.description, 4000, "description"),
-                publicDescription = normalizeOptionalText(command.publicDescription, 4000, "public description"),
-                contactEmail = normalizeOptionalEmail(command.contactEmail),
-                contactPhone = normalizeOptionalPhone(command.contactPhone),
-                websiteUrl = normalizeOptionalUrl(command.websiteUrl),
-                businessName = normalizeOptionalText(command.businessName, 255, "business name"),
-                businessRegistrationNumber = normalizeOptionalText(command.businessRegistrationNumber, 128, "business registration number"),
-                timezone = requireValidTimezone(command.timezone),
-                now = now
+        val organization =
+            organizationRepository.save(
+                Organization.create(
+                    slug = normalizedSlug,
+                    name = requireValidOrganizationName(command.name),
+                    description = normalizeOptionalText(command.description, 4000, "description"),
+                    publicDescription = normalizeOptionalText(command.publicDescription, 4000, "public description"),
+                    contactEmail = normalizeOptionalEmail(command.contactEmail),
+                    contactPhone = normalizeOptionalPhone(command.contactPhone),
+                    websiteUrl = normalizeOptionalUrl(command.websiteUrl),
+                    businessName = normalizeOptionalText(command.businessName, 255, "business name"),
+                    businessRegistrationNumber =
+                        normalizeOptionalText(
+                            command.businessRegistrationNumber,
+                            128,
+                            "business registration number",
+                        ),
+                    timezone = requireValidTimezone(command.timezone),
+                    now = now,
+                ),
             )
-        )
         membershipRepository.save(
             OrganizationMembership.active(
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(actor.id),
                 role = OrganizationRole.OWNER,
-                now = now
-            )
+                now = now,
+            ),
         )
         return organization
     }
 
     fun updateOrganizationProfile(command: UpdateOrganizationProfileCommand): Organization {
-        val organization = organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
-            .let { organizationRepository.findById(command.organizationId)!! }
+        val organization =
+            organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
+                .let { organizationRepository.findById(command.organizationId)!! }
 
         return organizationRepository.save(
             organization.updateProfile(
@@ -70,8 +77,8 @@ class OrganizationCommandService(
                 businessName = normalizeOptionalText(command.businessName, 255, "business name"),
                 businessRegistrationNumber = normalizeOptionalText(command.businessRegistrationNumber, 128, "business registration number"),
                 timezone = requireValidTimezone(command.timezone),
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
@@ -79,7 +86,7 @@ class OrganizationCommandService(
         return DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = "authenticated user does not exist"
+            message = "authenticated user does not exist",
         )
     }
 }

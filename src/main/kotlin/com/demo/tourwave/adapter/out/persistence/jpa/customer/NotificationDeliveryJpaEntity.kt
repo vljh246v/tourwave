@@ -18,8 +18,8 @@ import java.time.Instant
     name = "notification_deliveries",
     indexes = [
         Index(name = "idx_notification_deliveries_resource", columnList = "resource_type,resource_id"),
-        Index(name = "idx_notification_deliveries_status_created", columnList = "status,created_at")
-    ]
+        Index(name = "idx_notification_deliveries_status_created", columnList = "status,created_at"),
+    ],
 )
 data class NotificationDeliveryJpaEntity(
     @Id
@@ -54,5 +54,5 @@ data class NotificationDeliveryJpaEntity(
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

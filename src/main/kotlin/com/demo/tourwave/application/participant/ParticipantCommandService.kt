@@ -8,9 +8,9 @@ import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.common.port.IdempotencyDecision
 import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.participant.port.BookingParticipantRepository
+import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
-import com.demo.tourwave.domain.booking.AttendanceStatus
 import com.demo.tourwave.domain.participant.BookingParticipant
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
@@ -25,34 +25,37 @@ class ParticipantCommandService(
     private val timeWindowPolicyService: TimeWindowPolicyService,
     private val idempotencyStore: IdempotencyStore,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun createInvitation(command: CreateParticipantInvitationCommand): CreateParticipantInvitationResult {
         val pathTemplate = "/bookings/{bookingId}/participants/invitations"
         val requestHash = hash("${command.bookingId}|${command.inviteeUserId}")
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
-            is IdempotencyDecision.Replay -> CreateParticipantInvitationResult(
-                status = decision.status,
-                invitation = decision.body as ParticipantInvitationCreated
-            )
+            is IdempotencyDecision.Replay ->
+                CreateParticipantInvitationResult(
+                    status = decision.status,
+                    invitation = decision.body as ParticipantInvitationCreated,
+                )
 
             IdempotencyDecision.Reserved -> {
-                val booking = bookingRepository.findById(command.bookingId)
-                    ?: throw DomainException(
-                        errorCode = ErrorCode.VALIDATION_ERROR,
-                        status = 422,
-                        message = "Booking not found",
-                        details = mapOf("bookingId" to command.bookingId)
-                    )
+                val booking =
+                    bookingRepository.findById(command.bookingId)
+                        ?: throw DomainException(
+                            errorCode = ErrorCode.VALIDATION_ERROR,
+                            status = 422,
+                            message = "Booking not found",
+                            details = mapOf("bookingId" to command.bookingId),
+                        )
                 occurrenceRepository.lock(booking.occurrenceId)
 
                 if (booking.leaderUserId != command.actorUserId) {
@@ -60,7 +63,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "Only booking leader can invite participants",
-                        details = mapOf("bookingId" to command.bookingId, "actorUserId" to command.actorUserId)
+                        details = mapOf("bookingId" to command.bookingId, "actorUserId" to command.actorUserId),
                     )
                 }
 
@@ -69,7 +72,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
                         status = 409,
                         message = "Cannot invite participants for terminal booking",
-                        details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                        details = mapOf("bookingId" to booking.id, "status" to booking.status),
                     )
                 }
 
@@ -80,7 +83,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Invitation window is closed",
-                        details = mapOf("bookingId" to booking.id, "occurrenceId" to booking.occurrenceId)
+                        details = mapOf("bookingId" to booking.id, "occurrenceId" to booking.occurrenceId),
                     )
                 }
                 if (participants.any { it.userId == command.inviteeUserId }) {
@@ -88,7 +91,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "Participant already exists for this booking",
-                        details = mapOf("bookingId" to command.bookingId, "userId" to command.inviteeUserId)
+                        details = mapOf("bookingId" to command.bookingId, "userId" to command.inviteeUserId),
                     )
                 }
 
@@ -98,31 +101,34 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "Booking already has maximum participants for current party size",
-                        details = mapOf(
-                            "bookingId" to command.bookingId,
-                            "partySize" to booking.partySize,
-                            "activeParticipantCount" to activeParticipants
-                        )
+                        details =
+                            mapOf(
+                                "bookingId" to command.bookingId,
+                                "partySize" to booking.partySize,
+                                "activeParticipantCount" to activeParticipants,
+                            ),
                     )
                 }
 
-                val created = bookingParticipantRepository.save(
-                    BookingParticipant(
-                        bookingId = command.bookingId,
-                        userId = command.inviteeUserId,
-                        status = com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED,
-                        invitedAt = clock.instant(),
-                        createdAt = clock.instant()
+                val created =
+                    bookingParticipantRepository.save(
+                        BookingParticipant(
+                            bookingId = command.bookingId,
+                            userId = command.inviteeUserId,
+                            status = com.demo.tourwave.domain.participant.BookingParticipantStatus.INVITED,
+                            invitedAt = clock.instant(),
+                            createdAt = clock.instant(),
+                        ),
                     )
-                )
 
-                val response = ParticipantInvitationCreated(
-                    id = requireNotNull(created.id),
-                    bookingId = created.bookingId,
-                    userId = created.userId,
-                    status = created.status,
-                    invitedAt = requireNotNull(created.invitedAt)
-                )
+                val response =
+                    ParticipantInvitationCreated(
+                        id = requireNotNull(created.id),
+                        bookingId = created.bookingId,
+                        userId = created.userId,
+                        status = created.status,
+                        invitedAt = requireNotNull(created.invitedAt),
+                    )
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -130,7 +136,7 @@ class ParticipantCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 201,
-                    body = response
+                    body = response,
                 )
 
                 auditEventPort.append(
@@ -142,8 +148,8 @@ class ParticipantCommandService(
                         occurredAtUtc = clock.instant(),
                         requestId = command.requestId,
                         reasonCode = "PARTICIPANT_INVITATION_CREATED",
-                        afterJson = participantSnapshot(created)
-                    )
+                        afterJson = participantSnapshot(created),
+                    ),
                 )
 
                 CreateParticipantInvitationResult(status = 201, invitation = response)
@@ -156,27 +162,30 @@ class ParticipantCommandService(
         val requestHash = hash("${command.bookingId}|${command.participantId}|${command.responseType}")
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
-            is IdempotencyDecision.Replay -> RespondParticipantInvitationResult(
-                status = decision.status,
-                invitation = decision.body as ParticipantInvitationResponded
-            )
+            is IdempotencyDecision.Replay ->
+                RespondParticipantInvitationResult(
+                    status = decision.status,
+                    invitation = decision.body as ParticipantInvitationResponded,
+                )
 
             IdempotencyDecision.Reserved -> {
-                val booking = bookingRepository.findById(command.bookingId)
-                    ?: throw DomainException(
-                        errorCode = ErrorCode.VALIDATION_ERROR,
-                        status = 422,
-                        message = "Booking not found",
-                        details = mapOf("bookingId" to command.bookingId)
-                    )
+                val booking =
+                    bookingRepository.findById(command.bookingId)
+                        ?: throw DomainException(
+                            errorCode = ErrorCode.VALIDATION_ERROR,
+                            status = 422,
+                            message = "Booking not found",
+                            details = mapOf("bookingId" to command.bookingId),
+                        )
                 occurrenceRepository.lock(booking.occurrenceId)
 
                 if (booking.status.isTerminal()) {
@@ -184,30 +193,32 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.BOOKING_TERMINAL_STATE,
                         status = 409,
                         message = "Cannot respond to invitation for terminal booking",
-                        details = mapOf("bookingId" to booking.id, "status" to booking.status)
+                        details = mapOf("bookingId" to booking.id, "status" to booking.status),
                     )
                 }
-                val refreshedParticipant = participantInvitationLifecycleService.refreshParticipant(
-                    bookingId = command.bookingId,
-                    participantId = command.participantId
-                )
+                val refreshedParticipant =
+                    participantInvitationLifecycleService.refreshParticipant(
+                        bookingId = command.bookingId,
+                        participantId = command.participantId,
+                    )
                 val occurrence = occurrenceRepository.getOrCreate(booking.occurrenceId)
                 if (timeWindowPolicyService.isInvitationWindowClosed(occurrence, clock.instant())) {
                     throw DomainException(
                         errorCode = ErrorCode.INVITATION_EXPIRED,
                         status = 409,
                         message = "Invitation response window is closed",
-                        details = mapOf("participantId" to command.participantId, "bookingId" to booking.id)
+                        details = mapOf("participantId" to command.participantId, "bookingId" to booking.id),
                     )
                 }
 
-                val participant = bookingParticipantRepository.findById(command.participantId)
-                    ?: throw DomainException(
-                        errorCode = ErrorCode.VALIDATION_ERROR,
-                        status = 422,
-                        message = "Participant invitation not found",
-                        details = mapOf("participantId" to command.participantId)
-                    )
+                val participant =
+                    bookingParticipantRepository.findById(command.participantId)
+                        ?: throw DomainException(
+                            errorCode = ErrorCode.VALIDATION_ERROR,
+                            status = 422,
+                            message = "Participant invitation not found",
+                            details = mapOf("participantId" to command.participantId),
+                        )
                 val effectiveParticipant = refreshedParticipant ?: participant
 
                 if (effectiveParticipant.bookingId != command.bookingId) {
@@ -215,7 +226,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
                         status = 422,
                         message = "Participant does not belong to booking",
-                        details = mapOf("bookingId" to command.bookingId, "participantId" to command.participantId)
+                        details = mapOf("bookingId" to command.bookingId, "participantId" to command.participantId),
                     )
                 }
 
@@ -224,7 +235,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "Only invited participant can respond",
-                        details = mapOf("participantId" to command.participantId, "actorUserId" to command.actorUserId)
+                        details = mapOf("participantId" to command.participantId, "actorUserId" to command.actorUserId),
                     )
                 }
 
@@ -233,7 +244,7 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.INVITATION_EXPIRED,
                         status = 409,
                         message = "Invitation is expired",
-                        details = mapOf("participantId" to command.participantId)
+                        details = mapOf("participantId" to command.participantId),
                     )
                 }
 
@@ -242,23 +253,25 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.INVALID_STATE_TRANSITION,
                         status = 409,
                         message = "Invitation is not pending",
-                        details = mapOf("participantId" to command.participantId, "status" to effectiveParticipant.status)
+                        details = mapOf("participantId" to command.participantId, "status" to effectiveParticipant.status),
                     )
                 }
 
-                val updated = when (command.responseType) {
-                    ParticipantInvitationResponseType.ACCEPT -> effectiveParticipant.accept(clock.instant())
-                    ParticipantInvitationResponseType.DECLINE -> effectiveParticipant.decline(clock.instant())
-                }
+                val updated =
+                    when (command.responseType) {
+                        ParticipantInvitationResponseType.ACCEPT -> effectiveParticipant.accept(clock.instant())
+                        ParticipantInvitationResponseType.DECLINE -> effectiveParticipant.decline(clock.instant())
+                    }
                 val saved = bookingParticipantRepository.save(updated)
 
-                val response = ParticipantInvitationResponded(
-                    id = requireNotNull(saved.id),
-                    bookingId = saved.bookingId,
-                    userId = saved.userId,
-                    status = saved.status,
-                    respondedAt = requireNotNull(saved.respondedAt)
-                )
+                val response =
+                    ParticipantInvitationResponded(
+                        id = requireNotNull(saved.id),
+                        bookingId = saved.bookingId,
+                        userId = saved.userId,
+                        status = saved.status,
+                        respondedAt = requireNotNull(saved.respondedAt),
+                    )
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -266,7 +279,7 @@ class ParticipantCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 200,
-                    body = response
+                    body = response,
                 )
 
                 auditEventPort.append(
@@ -279,8 +292,8 @@ class ParticipantCommandService(
                         requestId = command.requestId,
                         reasonCode = "PARTICIPANT_INVITATION_${command.responseType.name}",
                         beforeJson = participantSnapshot(effectiveParticipant),
-                        afterJson = participantSnapshot(saved)
-                    )
+                        afterJson = participantSnapshot(saved),
+                    ),
                 )
 
                 RespondParticipantInvitationResult(status = 200, invitation = response)
@@ -293,18 +306,20 @@ class ParticipantCommandService(
         val requestHash = hash("${command.bookingId}|${command.participantId}|${command.attendanceStatus}")
 
         return when (
-            val decision = idempotencyStore.reserveOrReplay(
-                actorUserId = command.actorUserId,
-                method = "POST",
-                pathTemplate = pathTemplate,
-                idempotencyKey = command.idempotencyKey,
-                requestHash = requestHash
-            )
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
         ) {
-            is IdempotencyDecision.Replay -> RecordParticipantAttendanceResult(
-                status = decision.status,
-                attendance = decision.body as ParticipantAttendanceRecorded
-            )
+            is IdempotencyDecision.Replay ->
+                RecordParticipantAttendanceResult(
+                    status = decision.status,
+                    attendance = decision.body as ParticipantAttendanceRecorded,
+                )
 
             IdempotencyDecision.Reserved -> {
                 bookingRepository.findById(command.bookingId)
@@ -312,23 +327,24 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "Booking not found",
-                        details = mapOf("bookingId" to command.bookingId)
+                        details = mapOf("bookingId" to command.bookingId),
                     )
 
-                val participant = bookingParticipantRepository.findById(command.participantId)
-                    ?: throw DomainException(
-                        errorCode = ErrorCode.VALIDATION_ERROR,
-                        status = 422,
-                        message = "Participant not found",
-                        details = mapOf("participantId" to command.participantId)
-                    )
+                val participant =
+                    bookingParticipantRepository.findById(command.participantId)
+                        ?: throw DomainException(
+                            errorCode = ErrorCode.VALIDATION_ERROR,
+                            status = 422,
+                            message = "Participant not found",
+                            details = mapOf("participantId" to command.participantId),
+                        )
 
                 if (participant.bookingId != command.bookingId) {
                     throw DomainException(
                         errorCode = ErrorCode.BOOKING_SCOPE_MISMATCH,
                         status = 422,
                         message = "Participant does not belong to booking",
-                        details = mapOf("bookingId" to command.bookingId, "participantId" to command.participantId)
+                        details = mapOf("bookingId" to command.bookingId, "participantId" to command.participantId),
                     )
                 }
 
@@ -337,20 +353,22 @@ class ParticipantCommandService(
                         errorCode = ErrorCode.VALIDATION_ERROR,
                         status = 422,
                         message = "attendanceStatus must be explicit",
-                        details = mapOf("attendanceStatus" to command.attendanceStatus)
+                        details = mapOf("attendanceStatus" to command.attendanceStatus),
                     )
                 }
 
-                val saved = bookingParticipantRepository.save(
-                    participant.recordAttendance(command.attendanceStatus)
-                )
+                val saved =
+                    bookingParticipantRepository.save(
+                        participant.recordAttendance(command.attendanceStatus),
+                    )
 
-                val response = ParticipantAttendanceRecorded(
-                    id = requireNotNull(saved.id),
-                    bookingId = saved.bookingId,
-                    userId = saved.userId,
-                    attendanceStatus = saved.attendanceStatus
-                )
+                val response =
+                    ParticipantAttendanceRecorded(
+                        id = requireNotNull(saved.id),
+                        bookingId = saved.bookingId,
+                        userId = saved.userId,
+                        attendanceStatus = saved.attendanceStatus,
+                    )
 
                 idempotencyStore.complete(
                     actorUserId = command.actorUserId,
@@ -358,7 +376,7 @@ class ParticipantCommandService(
                     pathTemplate = pathTemplate,
                     idempotencyKey = command.idempotencyKey,
                     status = 200,
-                    body = response
+                    body = response,
                 )
 
                 auditEventPort.append(
@@ -371,8 +389,8 @@ class ParticipantCommandService(
                         requestId = command.requestId,
                         reasonCode = "PARTICIPANT_ATTENDANCE_RECORDED",
                         beforeJson = participantSnapshot(participant),
-                        afterJson = participantSnapshot(saved)
-                    )
+                        afterJson = participantSnapshot(saved),
+                    ),
                 )
 
                 RecordParticipantAttendanceResult(status = 200, attendance = response)
@@ -392,7 +410,7 @@ class ParticipantCommandService(
             "status" to participant.status.name,
             "attendanceStatus" to participant.attendanceStatus.name,
             "invitedAt" to participant.invitedAt?.toString(),
-            "respondedAt" to participant.respondedAt?.toString()
+            "respondedAt" to participant.respondedAt?.toString(),
         )
     }
 }

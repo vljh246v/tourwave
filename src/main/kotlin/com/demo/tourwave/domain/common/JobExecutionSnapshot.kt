@@ -6,7 +6,7 @@ enum class JobExecutionStatus {
     RUNNING,
     SUCCESS,
     FAILURE,
-    SKIPPED
+    SKIPPED,
 }
 
 data class JobExecutionSnapshot(
@@ -19,5 +19,5 @@ data class JobExecutionSnapshot(
     val runCount: Long = 0,
     val successCount: Long = 0,
     val failureCount: Long = 0,
-    val skippedCount: Long = 0
+    val skippedCount: Long = 0,
 )

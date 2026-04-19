@@ -10,11 +10,11 @@ data class ApplyInstructorRegistrationWebRequest(
     val headline: String? = null,
     val bio: String? = null,
     val languages: List<String> = emptyList(),
-    val specialties: List<String> = emptyList()
+    val specialties: List<String> = emptyList(),
 )
 
 data class RejectInstructorRegistrationWebRequest(
-    val rejectionReason: String? = null
+    val rejectionReason: String? = null,
 )
 
 data class UpsertInstructorProfileWebRequest(
@@ -25,7 +25,7 @@ data class UpsertInstructorProfileWebRequest(
     val specialties: List<String> = emptyList(),
     val certifications: List<String> = emptyList(),
     val yearsOfExperience: Int? = null,
-    val internalNote: String? = null
+    val internalNote: String? = null,
 )
 
 data class InstructorRegistrationResponse(
@@ -40,7 +40,7 @@ data class InstructorRegistrationResponse(
     val status: String,
     val rejectionReason: String?,
     val reviewedByUserId: Long?,
-    val reviewedAt: Instant?
+    val reviewedAt: Instant?,
 )
 
 data class InstructorOperatorProfileResponse(
@@ -56,7 +56,7 @@ data class InstructorOperatorProfileResponse(
     val yearsOfExperience: Int?,
     val internalNote: String?,
     val status: String,
-    val approvedAt: Instant?
+    val approvedAt: Instant?,
 )
 
 data class InstructorPublicProfileResponse(
@@ -67,7 +67,7 @@ data class InstructorPublicProfileResponse(
     val bio: String?,
     val languages: List<String>,
     val specialties: List<String>,
-    val yearsOfExperience: Int?
+    val yearsOfExperience: Int?,
 )
 
 fun InstructorRegistration.toResponse(user: User): InstructorRegistrationResponse =
@@ -83,7 +83,7 @@ fun InstructorRegistration.toResponse(user: User): InstructorRegistrationRespons
         status = status.name,
         rejectionReason = rejectionReason,
         reviewedByUserId = reviewedByUserId,
-        reviewedAt = reviewedAt
+        reviewedAt = reviewedAt,
     )
 
 fun InstructorProfile.toOperatorResponse(user: User): InstructorOperatorProfileResponse =
@@ -100,7 +100,7 @@ fun InstructorProfile.toOperatorResponse(user: User): InstructorOperatorProfileR
         yearsOfExperience = yearsOfExperience,
         internalNote = internalNote,
         status = status.name,
-        approvedAt = approvedAt
+        approvedAt = approvedAt,
     )
 
 fun InstructorProfile.toPublicResponse(user: User): InstructorPublicProfileResponse =
@@ -112,5 +112,5 @@ fun InstructorProfile.toPublicResponse(user: User): InstructorPublicProfileRespo
         bio = bio,
         languages = languages,
         specialties = specialties,
-        yearsOfExperience = yearsOfExperience
+        yearsOfExperience = yearsOfExperience,
     )

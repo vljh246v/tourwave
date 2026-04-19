@@ -17,8 +17,8 @@ import java.time.Instant
     name = "notifications",
     indexes = [
         Index(name = "idx_notifications_user_created", columnList = "user_id,created_at"),
-        Index(name = "idx_notifications_user_read", columnList = "user_id,read_at")
-    ]
+        Index(name = "idx_notifications_user_read", columnList = "user_id,read_at"),
+    ],
 )
 data class NotificationJpaEntity(
     @Id
@@ -40,5 +40,5 @@ data class NotificationJpaEntity(
     @Column(name = "read_at")
     val readAt: Instant? = null,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

@@ -19,8 +19,8 @@ import java.time.Instant
     indexes = [
         Index(name = "idx_organization_members_org_status", columnList = "organization_id,status"),
         Index(name = "idx_organization_members_user_status", columnList = "user_id,status"),
-        Index(name = "uk_organization_members_org_user", columnList = "organization_id,user_id", unique = true)
-    ]
+        Index(name = "uk_organization_members_org_user", columnList = "organization_id,user_id", unique = true),
+    ],
 )
 data class OrganizationMembershipJpaEntity(
     @Id
@@ -39,5 +39,5 @@ data class OrganizationMembershipJpaEntity(
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

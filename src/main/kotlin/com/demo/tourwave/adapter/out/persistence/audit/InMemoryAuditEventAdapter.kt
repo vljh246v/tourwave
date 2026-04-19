@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @Component
 class InMemoryAuditEventAdapter(
-    private val subscribers: List<AuditEventSubscriber> = emptyList()
+    private val subscribers: List<AuditEventSubscriber> = emptyList(),
 ) : AuditEventPort {
     private val events = CopyOnWriteArrayList<AuditEventCommand>()
 

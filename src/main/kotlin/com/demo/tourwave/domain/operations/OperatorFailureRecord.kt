@@ -5,17 +5,17 @@ import java.time.Instant
 enum class OperatorFailureSourceType {
     REFUND,
     NOTIFICATION_DELIVERY,
-    PAYMENT_WEBHOOK
+    PAYMENT_WEBHOOK,
 }
 
 enum class OperatorFailureRecordStatus {
     OPEN,
-    RESOLVED
+    RESOLVED,
 }
 
 enum class OperatorFailureAction {
     RETRY,
-    RESOLVE
+    RESOLVE,
 }
 
 data class OperatorFailureRecord(
@@ -29,5 +29,5 @@ data class OperatorFailureRecord(
     val lastActionAtUtc: Instant,
     val retryCount: Int = 0,
     val createdAtUtc: Instant = lastActionAtUtc,
-    val updatedAtUtc: Instant = lastActionAtUtc
+    val updatedAtUtc: Instant = lastActionAtUtc,
 )

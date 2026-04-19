@@ -12,23 +12,32 @@ import java.util.concurrent.ConcurrentHashMap
 class InMemoryWorkerJobLockRepositoryAdapter : WorkerJobLockRepository {
     private val locks = ConcurrentHashMap<String, WorkerJobLock>()
 
-    override fun tryAcquire(lockName: String, ownerId: String, lockedAtUtc: Instant, leaseExpiresAtUtc: Instant): Boolean {
+    override fun tryAcquire(
+        lockName: String,
+        ownerId: String,
+        lockedAtUtc: Instant,
+        leaseExpiresAtUtc: Instant,
+    ): Boolean {
         synchronized(locks) {
             val current = locks[lockName]
             if (current == null || !current.leaseExpiresAtUtc.isAfter(lockedAtUtc) || current.ownerId == ownerId) {
-                locks[lockName] = WorkerJobLock(
-                    lockName = lockName,
-                    ownerId = ownerId,
-                    lockedAtUtc = lockedAtUtc,
-                    leaseExpiresAtUtc = leaseExpiresAtUtc
-                )
+                locks[lockName] =
+                    WorkerJobLock(
+                        lockName = lockName,
+                        ownerId = ownerId,
+                        lockedAtUtc = lockedAtUtc,
+                        leaseExpiresAtUtc = leaseExpiresAtUtc,
+                    )
                 return true
             }
             return false
         }
     }
 
-    override fun release(lockName: String, ownerId: String) {
+    override fun release(
+        lockName: String,
+        ownerId: String,
+    ) {
         synchronized(locks) {
             val current = locks[lockName] ?: return
             if (current.ownerId == ownerId) {

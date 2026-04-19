@@ -16,22 +16,23 @@ import java.time.Instant
 import java.time.ZoneId
 
 class UserServiceTest {
-
     private val fakeUserPort = FakeUserPort()
     private val capturedEvents = mutableListOf<AuditEventCommand>()
-    private val fakeAuditEventPort = object : AuditEventPort {
-        override fun append(event: AuditEventCommand) {
-            capturedEvents.add(event)
+    private val fakeAuditEventPort =
+        object : AuditEventPort {
+            override fun append(event: AuditEventCommand) {
+                capturedEvents.add(event)
+            }
         }
-    }
     private val fixedInstant = Instant.parse("2026-04-19T00:00:00Z")
     private val clock = Clock.fixed(fixedInstant, ZoneId.of("UTC"))
 
-    private val userService = UserService(
-        userPort = fakeUserPort,
-        auditEventPort = fakeAuditEventPort,
-        clock = clock
-    )
+    private val userService =
+        UserService(
+            userPort = fakeUserPort,
+            auditEventPort = fakeAuditEventPort,
+            clock = clock,
+        )
 
     @BeforeEach
     fun setUp() {
@@ -41,15 +42,15 @@ class UserServiceTest {
 
     private fun savedUser(
         displayName: String = "Test User",
-        email: String = "test@example.com"
+        email: String = "test@example.com",
     ): User {
         return fakeUserPort.save(
             User.create(
                 displayName = displayName,
                 email = email,
                 passwordHash = "hash",
-                now = fixedInstant
-            )
+                now = fixedInstant,
+            ),
         )
     }
 
@@ -63,9 +64,10 @@ class UserServiceTest {
 
     @Test
     fun `getCurrentUser throws 401 when user not found`() {
-        val ex = assertThrows<DomainException> {
-            userService.getCurrentUser(9999L)
-        }
+        val ex =
+            assertThrows<DomainException> {
+                userService.getCurrentUser(9999L)
+            }
         assertEquals(401, ex.status)
     }
 
@@ -93,9 +95,10 @@ class UserServiceTest {
     @Test
     fun `updateProfile throws 422 when displayName is blank`() {
         val user = savedUser()
-        val ex = assertThrows<DomainException> {
-            userService.updateProfile(requireNotNull(user.id), "   ")
-        }
+        val ex =
+            assertThrows<DomainException> {
+                userService.updateProfile(requireNotNull(user.id), "   ")
+            }
         assertEquals(422, ex.status)
     }
 
@@ -103,9 +106,10 @@ class UserServiceTest {
     fun `updateProfile throws 422 when displayName exceeds 100 chars`() {
         val user = savedUser()
         val longName = "A".repeat(101)
-        val ex = assertThrows<DomainException> {
-            userService.updateProfile(requireNotNull(user.id), longName)
-        }
+        val ex =
+            assertThrows<DomainException> {
+                userService.updateProfile(requireNotNull(user.id), longName)
+            }
         assertEquals(422, ex.status)
     }
 

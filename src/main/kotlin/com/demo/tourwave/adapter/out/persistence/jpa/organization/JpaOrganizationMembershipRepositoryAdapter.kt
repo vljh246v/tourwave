@@ -8,13 +8,16 @@ import org.springframework.stereotype.Repository
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaOrganizationMembershipRepositoryAdapter(
-    private val membershipJpaRepository: OrganizationMembershipJpaRepository
+    private val membershipJpaRepository: OrganizationMembershipJpaRepository,
 ) : OrganizationMembershipRepository {
     override fun save(membership: OrganizationMembership): OrganizationMembership {
         return membershipJpaRepository.save(membership.toEntity()).toDomain()
     }
 
-    override fun findByOrganizationIdAndUserId(organizationId: Long, userId: Long): OrganizationMembership? {
+    override fun findByOrganizationIdAndUserId(
+        organizationId: Long,
+        userId: Long,
+    ): OrganizationMembership? {
         return membershipJpaRepository.findByOrganizationIdAndUserId(organizationId, userId)?.toDomain()
     }
 
@@ -39,7 +42,7 @@ private fun OrganizationMembership.toEntity(): OrganizationMembershipJpaEntity =
         role = role,
         status = status,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )
 
 private fun OrganizationMembershipJpaEntity.toDomain(): OrganizationMembership =
@@ -50,5 +53,5 @@ private fun OrganizationMembershipJpaEntity.toDomain(): OrganizationMembership =
         role = role,
         status = status,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
     )

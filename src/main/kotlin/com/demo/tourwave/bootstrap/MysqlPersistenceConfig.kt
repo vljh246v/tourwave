@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.JpaVendorAdapter
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
-import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.EnableTransactionManagement
@@ -29,8 +29,7 @@ class MysqlPersistenceConfig {
     fun dataSourceProperties(): DataSourceProperties = DataSourceProperties()
 
     @Bean
-    fun dataSource(dataSourceProperties: DataSourceProperties): DataSource =
-        dataSourceProperties.initializeDataSourceBuilder().build()
+    fun dataSource(dataSourceProperties: DataSourceProperties): DataSource = dataSourceProperties.initializeDataSourceBuilder().build()
 
     @Bean(initMethod = "migrate")
     fun flyway(dataSource: DataSource): Flyway {
@@ -48,7 +47,7 @@ class MysqlPersistenceConfig {
     fun entityManagerFactory(
         dataSource: DataSource,
         jpaVendorAdapter: JpaVendorAdapter,
-        environment: Environment
+        environment: Environment,
     ): LocalContainerEntityManagerFactoryBean {
         return LocalContainerEntityManagerFactoryBean().apply {
             setDataSource(dataSource)
@@ -56,17 +55,19 @@ class MysqlPersistenceConfig {
             setPackagesToScan("com.demo.tourwave.adapter.out.persistence.jpa")
             setJpaPropertyMap(
                 mapOf(
-                    "hibernate.hbm2ddl.auto" to environment.getProperty(
-                        "tourwave.persistence.hbm2ddl-auto",
-                        "validate"
-                    ),
-                    "hibernate.dialect" to environment.getProperty(
-                        "tourwave.persistence.hibernate-dialect",
-                        "org.hibernate.dialect.MySQLDialect"
-                    ),
+                    "hibernate.hbm2ddl.auto" to
+                        environment.getProperty(
+                            "tourwave.persistence.hbm2ddl-auto",
+                            "validate",
+                        ),
+                    "hibernate.dialect" to
+                        environment.getProperty(
+                            "tourwave.persistence.hibernate-dialect",
+                            "org.hibernate.dialect.MySQLDialect",
+                        ),
                     "hibernate.jdbc.time_zone" to "UTC",
-                    "hibernate.format_sql" to environment.getProperty("spring.jpa.properties.hibernate.format_sql", "false")
-                )
+                    "hibernate.format_sql" to environment.getProperty("spring.jpa.properties.hibernate.format_sql", "false"),
+                ),
             )
         }
     }

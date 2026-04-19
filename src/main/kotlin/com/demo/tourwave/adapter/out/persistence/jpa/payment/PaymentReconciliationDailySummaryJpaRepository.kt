@@ -7,6 +7,6 @@ interface PaymentReconciliationDailySummaryJpaRepository :
     JpaRepository<PaymentReconciliationDailySummaryJpaEntity, LocalDate> {
     fun findBySummaryDateBetweenOrderBySummaryDateAsc(
         startInclusive: LocalDate,
-        endInclusive: LocalDate
+        endInclusive: LocalDate,
     ): List<PaymentReconciliationDailySummaryJpaEntity>
 }

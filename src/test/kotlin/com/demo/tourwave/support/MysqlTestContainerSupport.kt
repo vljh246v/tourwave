@@ -11,10 +11,11 @@ abstract class MysqlTestContainerSupport {
     companion object {
         @Container
         @JvmStatic
-        val mysql: MySQLContainer<*> = MySQLContainer("mysql:8.4.0")
-            .withDatabaseName("tourwave")
-            .withUsername("tourwave")
-            .withPassword("tourwave")
+        val mysql: MySQLContainer<*> =
+            MySQLContainer("mysql:8.4.0")
+                .withDatabaseName("tourwave")
+                .withUsername("tourwave")
+                .withPassword("tourwave")
 
         @JvmStatic
         @DynamicPropertySource

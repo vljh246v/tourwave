@@ -17,8 +17,8 @@ import java.time.Instant
     name = "announcements",
     indexes = [
         Index(name = "idx_announcements_org_created", columnList = "organization_id,created_at"),
-        Index(name = "idx_announcements_visibility_window", columnList = "visibility,publish_starts_at_utc,publish_ends_at_utc")
-    ]
+        Index(name = "idx_announcements_visibility_window", columnList = "visibility,publish_starts_at_utc,publish_ends_at_utc"),
+    ],
 )
 data class AnnouncementJpaEntity(
     @Id
@@ -40,5 +40,5 @@ data class AnnouncementJpaEntity(
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )

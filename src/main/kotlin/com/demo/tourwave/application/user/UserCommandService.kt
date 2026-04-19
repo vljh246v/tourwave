@@ -7,11 +7,14 @@ import java.time.Clock
 
 class UserCommandService(
     private val userRepository: UserRepository,
-    private val clock: Clock = Clock.systemUTC()
+    private val clock: Clock = Clock.systemUTC(),
 ) : UserCommandHandler {
     private val passwordEncoder = BCryptPasswordEncoder()
 
-    override fun registerUser(name: String, email: String): User {
+    override fun registerUser(
+        name: String,
+        email: String,
+    ): User {
         if (userRepository.findByEmail(email) != null) {
             throw IllegalArgumentException("User with email $email already exists")
         }
@@ -21,26 +24,32 @@ class UserCommandService(
                 displayName = name,
                 email = email,
                 passwordHash = passwordEncoder.encode("temporary-password"),
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
     }
 
-    override fun suspendUser(userId: Long, reason: String) {
-        val user = userRepository.findById(userId)
-            ?: throw NoSuchElementException("User $userId not found")
+    override fun suspendUser(
+        userId: Long,
+        reason: String,
+    ) {
+        val user =
+            userRepository.findById(userId)
+                ?: throw NoSuchElementException("User $userId not found")
         userRepository.save(user.suspend(clock.instant()))
     }
 
     override fun deleteUser(userId: Long) {
-        val user = userRepository.findById(userId)
-            ?: throw NoSuchElementException("User $userId not found")
+        val user =
+            userRepository.findById(userId)
+                ?: throw NoSuchElementException("User $userId not found")
         userRepository.save(user.delete(clock.instant()))
     }
 
     override fun restoreUser(userId: Long) {
-        val user = userRepository.findById(userId)
-            ?: throw NoSuchElementException("User $userId not found")
+        val user =
+            userRepository.findById(userId)
+                ?: throw NoSuchElementException("User $userId not found")
         userRepository.save(user.restore(clock.instant()))
     }
 }

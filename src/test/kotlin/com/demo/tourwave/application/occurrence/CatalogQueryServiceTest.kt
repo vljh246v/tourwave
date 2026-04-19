@@ -22,17 +22,19 @@ class CatalogQueryServiceTest {
     private val occurrenceRepository = InMemoryOccurrenceRepositoryAdapter()
     private val bookingRepository = InMemoryBookingRepositoryAdapter()
     private val reviewRepository = InMemoryReviewRepositoryAdapter()
-    private val catalogQueryService = CatalogQueryService(
-        tourRepository = tourRepository,
-        occurrenceRepository = occurrenceRepository,
-        bookingRepository = bookingRepository,
-        reviewRepository = reviewRepository,
-        timeWindowPolicyService = TimeWindowPolicyService(
-            invitationWindowMinutes = 360,
-            invitationExpiryHours = 48,
-            refundFullWindowHours = 48
+    private val catalogQueryService =
+        CatalogQueryService(
+            tourRepository = tourRepository,
+            occurrenceRepository = occurrenceRepository,
+            bookingRepository = bookingRepository,
+            reviewRepository = reviewRepository,
+            timeWindowPolicyService =
+                TimeWindowPolicyService(
+                    invitationWindowMinutes = 360,
+                    invitationExpiryHours = 48,
+                    refundFullWindowHours = 48,
+                ),
         )
-    )
 
     @BeforeEach
     fun setUp() {
@@ -44,29 +46,31 @@ class CatalogQueryServiceTest {
 
     @Test
     fun `catalog exposes published tours availability quote and search`() {
-        val publishedTour = tourRepository.save(
-            Tour.create(
+        val publishedTour =
+            tourRepository.save(
+                Tour.create(
+                    organizationId = 31L,
+                    title = "Seoul Night Walk",
+                    summary = "Downtown route",
+                    now = Instant.parse("2026-03-18T00:00:00Z"),
+                ).publish(Instant.parse("2026-03-18T01:00:00Z")),
+            )
+        val occurrence =
+            Occurrence(
+                id = occurrenceRepository.nextId(),
                 organizationId = 31L,
-                title = "Seoul Night Walk",
-                summary = "Downtown route",
-                now = Instant.parse("2026-03-18T00:00:00Z")
-            ).publish(Instant.parse("2026-03-18T01:00:00Z"))
-        )
-        val occurrence = Occurrence(
-            id = occurrenceRepository.nextId(),
-            organizationId = 31L,
-            tourId = requireNotNull(publishedTour.id),
-            capacity = 10,
-            startsAtUtc = Instant.parse("2026-04-10T10:00:00Z"),
-            endsAtUtc = Instant.parse("2026-04-10T12:00:00Z"),
-            timezone = "Asia/Seoul",
-            unitPrice = 50000,
-            currency = "KRW",
-            locationText = "Seoul Station",
-            meetingPoint = "Platform 1",
-            createdAt = Instant.parse("2026-03-18T00:00:00Z"),
-            updatedAt = Instant.parse("2026-03-18T00:00:00Z")
-        )
+                tourId = requireNotNull(publishedTour.id),
+                capacity = 10,
+                startsAtUtc = Instant.parse("2026-04-10T10:00:00Z"),
+                endsAtUtc = Instant.parse("2026-04-10T12:00:00Z"),
+                timezone = "Asia/Seoul",
+                unitPrice = 50000,
+                currency = "KRW",
+                locationText = "Seoul Station",
+                meetingPoint = "Platform 1",
+                createdAt = Instant.parse("2026-03-18T00:00:00Z"),
+                updatedAt = Instant.parse("2026-03-18T00:00:00Z"),
+            )
         occurrenceRepository.save(occurrence)
         bookingRepository.save(
             Booking(
@@ -76,8 +80,8 @@ class CatalogQueryServiceTest {
                 partySize = 3,
                 status = BookingStatus.CONFIRMED,
                 paymentStatus = PaymentStatus.PAID,
-                createdAt = Instant.parse("2026-03-20T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-20T00:00:00Z"),
+            ),
         )
         bookingRepository.save(
             Booking(
@@ -87,8 +91,8 @@ class CatalogQueryServiceTest {
                 partySize = 2,
                 status = BookingStatus.OFFERED,
                 paymentStatus = PaymentStatus.AUTHORIZED,
-                createdAt = Instant.parse("2026-03-20T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-03-20T00:00:00Z"),
+            ),
         )
         reviewRepository.save(
             Review(
@@ -97,21 +101,22 @@ class CatalogQueryServiceTest {
                 type = ReviewType.TOUR,
                 rating = 5,
                 comment = "great",
-                createdAt = Instant.parse("2026-04-11T00:00:00Z")
-            )
+                createdAt = Instant.parse("2026-04-11T00:00:00Z"),
+            ),
         )
 
         val tours = catalogQueryService.listPublicTours(PublicTourListQuery(limit = 10)).first
         val occurrences = catalogQueryService.listPublicOccurrences(TourOccurrenceListQuery(requireNotNull(publishedTour.id)))
         val availability = catalogQueryService.getAvailability(AvailabilityQuery(occurrence.id, 4))
         val quote = catalogQueryService.getQuote(AvailabilityQuery(occurrence.id, 4))
-        val search = catalogQueryService.search(
-            OccurrenceSearchQuery(
-                locationText = "station",
-                partySize = 4,
-                onlyAvailable = true
+        val search =
+            catalogQueryService.search(
+                OccurrenceSearchQuery(
+                    locationText = "station",
+                    partySize = 4,
+                    onlyAvailable = true,
+                ),
             )
-        )
 
         assertEquals(1, tours.size)
         assertEquals(1, occurrences.size)

@@ -21,7 +21,7 @@ data class OrganizationInvitationPayload(
     val inviteeEmail: String,
     val role: String,
     val acceptUrl: String,
-    val expiresAtUtc: java.time.Instant
+    val expiresAtUtc: java.time.Instant,
 )
 
 class OrganizationInvitationDeliveryService(
@@ -32,27 +32,30 @@ class OrganizationInvitationDeliveryService(
     private val notificationTemplateFactory: NotificationTemplateFactory,
     private val appBaseUrl: String,
     private val invitationTokenTtl: Duration,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun sendInvitation(membership: OrganizationMembership) {
         val invitee = userRepository.findById(membership.userId) ?: throw notFound("user ${membership.userId} not found")
-        val organization = organizationRepository.findById(membership.organizationId)
-            ?: throw notFound("organization ${membership.organizationId} not found")
-        val rawToken = userActionTokenService.issue(
-            userId = requireNotNull(invitee.id),
-            purpose = UserActionTokenPurpose.ORG_INVITATION,
-            ttl = invitationTokenTtl
-        )
+        val organization =
+            organizationRepository.findById(membership.organizationId)
+                ?: throw notFound("organization ${membership.organizationId} not found")
+        val rawToken =
+            userActionTokenService.issue(
+                userId = requireNotNull(invitee.id),
+                purpose = UserActionTokenPurpose.ORG_INVITATION,
+                ttl = invitationTokenTtl,
+            )
         val expiresAtUtc = clock.instant().plus(invitationTokenTtl)
-        val payload = OrganizationInvitationPayload(
-            organizationId = membership.organizationId,
-            organizationName = organization.name,
-            inviteeUserId = requireNotNull(invitee.id),
-            inviteeEmail = invitee.email,
-            role = membership.role.name,
-            acceptUrl = "${appBaseUrl.trimEnd('/')}/organizations/${membership.organizationId}/memberships/accept?token=$rawToken",
-            expiresAtUtc = expiresAtUtc
-        )
+        val payload =
+            OrganizationInvitationPayload(
+                organizationId = membership.organizationId,
+                organizationName = organization.name,
+                inviteeUserId = requireNotNull(invitee.id),
+                inviteeEmail = invitee.email,
+                role = membership.role.name,
+                acceptUrl = "${appBaseUrl.trimEnd('/')}/organizations/${membership.organizationId}/memberships/accept?token=$rawToken",
+                expiresAtUtc = expiresAtUtc,
+            )
         val template = notificationTemplateFactory.renderOrganizationInvitation(payload)
         notificationDeliveryService.deliver(
             DeliverNotificationCommand(
@@ -63,25 +66,29 @@ class OrganizationInvitationDeliveryService(
                 body = template.body,
                 resourceType = "ORGANIZATION_MEMBERSHIP",
                 resourceId = membership.organizationId,
-                idempotencyKey = "org-invite:${membership.organizationId}:${membership.userId}:${membership.role}:${membership.updatedAt}"
-            )
+                idempotencyKey = "org-invite:${membership.organizationId}:${membership.userId}:${membership.role}:${membership.updatedAt}",
+            ),
         )
     }
 
-    fun consumeInvitationToken(actorUserId: Long, rawToken: String) {
+    fun consumeInvitationToken(
+        actorUserId: Long,
+        rawToken: String,
+    ) {
         val token = userActionTokenService.consume(rawToken, UserActionTokenPurpose.ORG_INVITATION)
         if (token.userId != actorUserId) {
             throw DomainException(
                 errorCode = ErrorCode.FORBIDDEN,
                 status = 403,
-                message = "organization invitation token does not belong to actor"
+                message = "organization invitation token does not belong to actor",
             )
         }
     }
 
-    private fun notFound(message: String) = DomainException(
-        errorCode = ErrorCode.VALIDATION_ERROR,
-        status = 404,
-        message = message
-    )
+    private fun notFound(message: String) =
+        DomainException(
+            errorCode = ErrorCode.VALIDATION_ERROR,
+            status = 404,
+            message = message,
+        )
 }

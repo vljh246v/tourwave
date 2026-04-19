@@ -4,7 +4,7 @@ import java.time.Instant
 
 enum class AssetStatus {
     UPLOADING,
-    READY
+    READY,
 }
 
 data class Asset(
@@ -20,13 +20,13 @@ data class Asset(
     val sizeBytes: Long? = null,
     val checksumSha256: String? = null,
     val createdAt: Instant,
-    val completedAt: Instant? = null
+    val completedAt: Instant? = null,
 ) {
     fun complete(
         publicUrl: String,
         sizeBytes: Long?,
         checksumSha256: String?,
-        now: Instant
+        now: Instant,
     ): Asset {
         require(publicUrl.isNotBlank()) { "publicUrl must not be blank" }
         require(sizeBytes == null || sizeBytes >= 0) { "sizeBytes must be >= 0" }
@@ -35,7 +35,7 @@ data class Asset(
             publicUrl = publicUrl,
             sizeBytes = sizeBytes,
             checksumSha256 = checksumSha256,
-            completedAt = now
+            completedAt = now,
         )
     }
 
@@ -47,7 +47,7 @@ data class Asset(
             contentType: String,
             storageKey: String,
             uploadUrl: String,
-            now: Instant
+            now: Instant,
         ): Asset {
             return Asset(
                 ownerUserId = ownerUserId,
@@ -56,7 +56,7 @@ data class Asset(
                 contentType = contentType,
                 storageKey = storageKey,
                 uploadUrl = uploadUrl,
-                createdAt = now
+                createdAt = now,
             )
         }
     }

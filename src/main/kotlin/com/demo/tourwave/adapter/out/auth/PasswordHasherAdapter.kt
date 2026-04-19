@@ -10,7 +10,10 @@ class PasswordHasherAdapter : PasswordHasher {
 
     override fun hash(rawPassword: String): String = encoder.encode(rawPassword)
 
-    override fun matches(rawPassword: String, passwordHash: String): Boolean {
+    override fun matches(
+        rawPassword: String,
+        passwordHash: String,
+    ): Boolean {
         return encoder.matches(rawPassword, passwordHash)
     }
 }

@@ -1,18 +1,18 @@
 package com.demo.tourwave.agent
 
-import com.demo.tourwave.adapter.`in`.web.asset.AssetController
 import com.demo.tourwave.adapter.`in`.web.announcement.AnnouncementController
+import com.demo.tourwave.adapter.`in`.web.asset.AssetController
 import com.demo.tourwave.adapter.`in`.web.booking.BookingRefundPreviewController
 import com.demo.tourwave.adapter.`in`.web.booking.WaitlistOperatorController
 import com.demo.tourwave.adapter.`in`.web.customer.CustomerController
 import com.demo.tourwave.adapter.`in`.web.inquiry.InquiryQueryController
 import com.demo.tourwave.adapter.`in`.web.instructor.InstructorProfileController
 import com.demo.tourwave.adapter.`in`.web.instructor.InstructorRegistrationController
-import com.demo.tourwave.adapter.`in`.web.organization.OrganizationOperatorController
-import com.demo.tourwave.adapter.`in`.web.organization.OrganizationPublicController
-import com.demo.tourwave.adapter.`in`.web.operations.OperatorRemediationQueueController
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrenceOperatorController
 import com.demo.tourwave.adapter.`in`.web.occurrence.OccurrencePublicController
+import com.demo.tourwave.adapter.`in`.web.operations.OperatorRemediationQueueController
+import com.demo.tourwave.adapter.`in`.web.organization.OrganizationOperatorController
+import com.demo.tourwave.adapter.`in`.web.organization.OrganizationPublicController
 import com.demo.tourwave.adapter.`in`.web.participant.ParticipantRosterController
 import com.demo.tourwave.adapter.`in`.web.payment.PaymentOperatorController
 import com.demo.tourwave.adapter.`in`.web.payment.PaymentWebhookController
@@ -42,17 +42,37 @@ class DocumentationBaselineTest {
         assertPatchMapping(AnnouncementController::class.java, "updateAnnouncement", "/announcements/{announcementId}")
         assertDeleteMapping(AnnouncementController::class.java, "deleteAnnouncement", "/announcements/{announcementId}")
         assertGetMapping(OrganizationReportController::class.java, "getBookingReport", "/organizations/{organizationId}/reports/bookings")
-        assertGetMapping(OrganizationReportController::class.java, "getOccurrenceOpsReport", "/organizations/{organizationId}/reports/occurrences")
+        assertGetMapping(
+            OrganizationReportController::class.java,
+            "getOccurrenceOpsReport",
+            "/organizations/{organizationId}/reports/occurrences",
+        )
         assertGetMapping(OperatorRemediationQueueController::class.java, "listQueue", "/operator/operations/remediation-queue")
-        assertPostMapping(OperatorRemediationQueueController::class.java, "remediate", "/operator/operations/remediation-queue/{sourceType}/{sourceKey}")
+        assertPostMapping(
+            OperatorRemediationQueueController::class.java,
+            "remediate",
+            "/operator/operations/remediation-queue/{sourceType}/{sourceKey}",
+        )
         assertGetMapping(ReviewController::class.java, "getTourSummary", "/tours/{tourId}/reviews/summary")
         assertGetMapping(ReviewController::class.java, "getInstructorSummary", "/instructors/{instructorProfileId}/reviews/summary")
         assertGetMapping(ReviewController::class.java, "getPublicOrganizationSummary", "/organizations/{organizationId}/reviews/summary")
-        assertGetMapping(ReviewController::class.java, "getOperatorOrganizationSummary", "/operator/organizations/{organizationId}/reviews/summary")
+        assertGetMapping(
+            ReviewController::class.java,
+            "getOperatorOrganizationSummary",
+            "/operator/organizations/{organizationId}/reviews/summary",
+        )
         assertGetMapping(OrganizationPublicController::class.java, "getPublicOrganization", "/organizations/{organizationId}")
-        assertPostMapping(OrganizationPublicController::class.java, "acceptInvitation", "/organizations/{organizationId}/memberships/accept")
+        assertPostMapping(
+            OrganizationPublicController::class.java,
+            "acceptInvitation",
+            "/organizations/{organizationId}/memberships/accept",
+        )
         assertPostMapping(InstructorRegistrationController::class.java, "apply", "/instructor-registrations")
-        assertGetMapping(InstructorRegistrationController::class.java, "listByOrganization", "/organizations/{organizationId}/instructor-registrations")
+        assertGetMapping(
+            InstructorRegistrationController::class.java,
+            "listByOrganization",
+            "/organizations/{organizationId}/instructor-registrations",
+        )
         assertPostMapping(InstructorRegistrationController::class.java, "approve", "/instructor-registrations/{registrationId}/approve")
         assertGetMapping(InstructorProfileController::class.java, "getMyProfile", "/me/instructor-profile")
         assertPatchMapping(InstructorProfileController::class.java, "updateMyProfile", "/me/instructor-profile")
@@ -84,37 +104,65 @@ class DocumentationBaselineTest {
         assertPostMapping(CustomerController::class.java, "markAllNotificationsRead", "/me/notifications/read-all")
         assertPostMapping(PaymentWebhookController::class.java, "receiveProviderWebhook", "/payments/webhooks/provider")
         assertGetMapping(PaymentOperatorController::class.java, "listRefundOpsQueue", "/operator/payments/refunds/ops")
-        assertPostMapping(PaymentOperatorController::class.java, "retryBookingRefund", "/operator/payments/bookings/{bookingId}/refund-retry")
+        assertPostMapping(
+            PaymentOperatorController::class.java,
+            "retryBookingRefund",
+            "/operator/payments/bookings/{bookingId}/refund-retry",
+        )
         assertGetMapping(PaymentOperatorController::class.java, "listDailySummaries", "/operator/finance/reconciliation/daily")
-        assertPostMapping(PaymentOperatorController::class.java, "refreshDailySummary", "/operator/finance/reconciliation/daily/{summaryDate}/refresh")
+        assertPostMapping(
+            PaymentOperatorController::class.java,
+            "refreshDailySummary",
+            "/operator/finance/reconciliation/daily/{summaryDate}/refresh",
+        )
         assertGetMapping(PaymentOperatorController::class.java, "exportDailySummariesCsv", "/operator/finance/reconciliation/daily/export")
     }
 
-    private fun assertGetMapping(controller: Class<*>, methodName: String, expectedPath: String) {
+    private fun assertGetMapping(
+        controller: Class<*>,
+        methodName: String,
+        expectedPath: String,
+    ) {
         val annotation = controller.declaredMethods.single { it.name == methodName }.getAnnotation(GetMapping::class.java)
         requireNotNull(annotation) { "Expected @GetMapping on ${controller.simpleName}.$methodName" }
         assertEquals(expectedPath, annotation.paths().singlePath())
     }
 
-    private fun assertPostMapping(controller: Class<*>, methodName: String, expectedPath: String) {
+    private fun assertPostMapping(
+        controller: Class<*>,
+        methodName: String,
+        expectedPath: String,
+    ) {
         val annotation = controller.declaredMethods.single { it.name == methodName }.getAnnotation(PostMapping::class.java)
         requireNotNull(annotation) { "Expected @PostMapping on ${controller.simpleName}.$methodName" }
         assertEquals(expectedPath, annotation.paths().singlePath())
     }
 
-    private fun assertPatchMapping(controller: Class<*>, methodName: String, expectedPath: String) {
+    private fun assertPatchMapping(
+        controller: Class<*>,
+        methodName: String,
+        expectedPath: String,
+    ) {
         val annotation = controller.declaredMethods.single { it.name == methodName }.getAnnotation(PatchMapping::class.java)
         requireNotNull(annotation) { "Expected @PatchMapping on ${controller.simpleName}.$methodName" }
         assertEquals(expectedPath, annotation.paths().singlePath())
     }
 
-    private fun assertPutMapping(controller: Class<*>, methodName: String, expectedPath: String) {
+    private fun assertPutMapping(
+        controller: Class<*>,
+        methodName: String,
+        expectedPath: String,
+    ) {
         val annotation = controller.declaredMethods.single { it.name == methodName }.getAnnotation(PutMapping::class.java)
         requireNotNull(annotation) { "Expected @PutMapping on ${controller.simpleName}.$methodName" }
         assertEquals(expectedPath, annotation.paths().singlePath())
     }
 
-    private fun assertDeleteMapping(controller: Class<*>, methodName: String, expectedPath: String) {
+    private fun assertDeleteMapping(
+        controller: Class<*>,
+        methodName: String,
+        expectedPath: String,
+    ) {
         val annotation = controller.declaredMethods.single { it.name == methodName }.getAnnotation(DeleteMapping::class.java)
         requireNotNull(annotation) { "Expected @DeleteMapping on ${controller.simpleName}.$methodName" }
         val paths = if (annotation.path.isNotEmpty()) annotation.path else annotation.value
@@ -122,8 +170,11 @@ class DocumentationBaselineTest {
     }
 
     private fun GetMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
+
     private fun PostMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
+
     private fun PatchMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
+
     private fun PutMapping.paths(): Array<String> = if (path.isNotEmpty()) path else value
 
     private fun Array<String>.singlePath(): String {

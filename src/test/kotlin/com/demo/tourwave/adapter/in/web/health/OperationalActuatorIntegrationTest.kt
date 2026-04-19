@@ -25,7 +25,7 @@ class OperationalActuatorIntegrationTest {
     fun setUp() {
         scheduledJobCoordinator.run(
             jobName = "actuator-smoke",
-            onSkipped = { Unit }
+            onSkipped = { Unit },
         ) {
             Unit
         }

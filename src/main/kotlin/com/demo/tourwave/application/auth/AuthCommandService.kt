@@ -20,9 +20,13 @@ class AuthCommandService(
     private val authTokenLifecycleService: AuthTokenLifecycleService,
     private val userActionTokenService: UserActionTokenService,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
-    fun signup(displayName: String, email: String, password: String): AuthResult {
+    fun signup(
+        displayName: String,
+        email: String,
+        password: String,
+    ): AuthResult {
         val normalizedEmail = requireValidEmail(email)
         val normalizedDisplayName = requireValidDisplayName(displayName)
         val normalizedPassword = requireValidPassword(password)
@@ -30,32 +34,37 @@ class AuthCommandService(
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 409,
-                message = "user with email $normalizedEmail already exists"
+                message = "user with email $normalizedEmail already exists",
             )
         }
 
         val now = clock.instant()
-        val user = userRepository.save(
-            User.create(
-                displayName = normalizedDisplayName,
-                email = normalizedEmail,
-                passwordHash = passwordHasher.hash(normalizedPassword),
-                now = now
+        val user =
+            userRepository.save(
+                User.create(
+                    displayName = normalizedDisplayName,
+                    email = normalizedEmail,
+                    passwordHash = passwordHasher.hash(normalizedPassword),
+                    now = now,
+                ),
             )
-        )
         userActionTokenService.issue(
             userId = requireNotNull(user.id),
             purpose = UserActionTokenPurpose.EMAIL_VERIFICATION,
-            ttl = Duration.ofHours(24)
+            ttl = Duration.ofHours(24),
         )
         return issueTokens(user)
     }
 
-    fun login(email: String, password: String): AuthResult {
+    fun login(
+        email: String,
+        password: String,
+    ): AuthResult {
         val normalizedEmail = requireValidEmail(email)
         val normalizedPassword = requireValidPassword(password)
-        val user = userRepository.findByEmail(normalizedEmail)
-            ?: throw unauthorized("email or password is invalid")
+        val user =
+            userRepository.findByEmail(normalizedEmail)
+                ?: throw unauthorized("email or password is invalid")
         if (user.status != UserStatus.ACTIVE) {
             throw unauthorized("account is not active")
         }
@@ -67,8 +76,9 @@ class AuthCommandService(
 
     fun refresh(refreshToken: String): AuthResult {
         val persistedRefreshToken = authTokenLifecycleService.rotate(refreshToken)
-        val user = userRepository.findById(persistedRefreshToken.userId)
-            ?: throw unauthorized("user does not exist")
+        val user =
+            userRepository.findById(persistedRefreshToken.userId)
+                ?: throw unauthorized("user does not exist")
         if (user.status != UserStatus.ACTIVE) {
             throw unauthorized("account is not active")
         }
@@ -80,22 +90,24 @@ class AuthCommandService(
     }
 
     fun requestEmailVerification(userId: Long) {
-        val user = userRepository.findById(userId)
-            ?: throw unauthorized("authenticated user does not exist")
+        val user =
+            userRepository.findById(userId)
+                ?: throw unauthorized("authenticated user does not exist")
         if (user.status != UserStatus.ACTIVE || user.emailVerifiedAt != null) {
             return
         }
         userActionTokenService.issue(
             userId = userId,
             purpose = UserActionTokenPurpose.EMAIL_VERIFICATION,
-            ttl = Duration.ofHours(24)
+            ttl = Duration.ofHours(24),
         )
     }
 
     fun confirmEmailVerification(token: String) {
         val actionToken = userActionTokenService.consume(token, UserActionTokenPurpose.EMAIL_VERIFICATION)
-        val user = userRepository.findById(actionToken.userId)
-            ?: throw invalidTokenOwner()
+        val user =
+            userRepository.findById(actionToken.userId)
+                ?: throw invalidTokenOwner()
         val verified = user.verifyEmail(clock.instant())
         userRepository.save(verified)
         auditEventPort.append(
@@ -106,8 +118,8 @@ class AuthCommandService(
                 resourceId = actionToken.userId,
                 occurredAtUtc = clock.instant(),
                 reasonCode = if (user.emailVerifiedAt == null) "EMAIL_VERIFIED" else "EMAIL_ALREADY_VERIFIED",
-                afterJson = mapOf("emailVerifiedAt" to verified.emailVerifiedAt?.toString())
-            )
+                afterJson = mapOf("emailVerifiedAt" to verified.emailVerifiedAt?.toString()),
+            ),
         )
     }
 
@@ -120,23 +132,27 @@ class AuthCommandService(
         userActionTokenService.issue(
             userId = requireNotNull(user.id),
             purpose = UserActionTokenPurpose.PASSWORD_RESET,
-            ttl = Duration.ofHours(2)
+            ttl = Duration.ofHours(2),
         )
     }
 
-    fun confirmPasswordReset(token: String, newPassword: String) {
+    fun confirmPasswordReset(
+        token: String,
+        newPassword: String,
+    ) {
         val normalizedPassword = requireValidPassword(newPassword)
         val actionToken = userActionTokenService.consume(token, UserActionTokenPurpose.PASSWORD_RESET)
-        val user = userRepository.findById(actionToken.userId)
-            ?: throw invalidTokenOwner()
+        val user =
+            userRepository.findById(actionToken.userId)
+                ?: throw invalidTokenOwner()
         if (user.status != UserStatus.ACTIVE) {
             throw unauthorized("account is not active")
         }
         userRepository.save(
             user.updatePassword(
                 passwordHash = passwordHasher.hash(normalizedPassword),
-                now = clock.instant()
-            )
+                now = clock.instant(),
+            ),
         )
         authTokenLifecycleService.revokeAll(actionToken.userId)
         auditEventPort.append(
@@ -146,14 +162,15 @@ class AuthCommandService(
                 resourceType = "USER",
                 resourceId = actionToken.userId,
                 occurredAtUtc = clock.instant(),
-                reasonCode = "PASSWORD_RESET_CONFIRMED"
-            )
+                reasonCode = "PASSWORD_RESET_CONFIRMED",
+            ),
         )
     }
 
     fun deactivate(userId: Long) {
-        val user = userRepository.findById(userId)
-            ?: throw unauthorized("authenticated user does not exist")
+        val user =
+            userRepository.findById(userId)
+                ?: throw unauthorized("authenticated user does not exist")
         if (user.status == UserStatus.DEACTIVATED) {
             authTokenLifecycleService.revokeAll(userId)
             return
@@ -169,22 +186,23 @@ class AuthCommandService(
                 resourceId = userId,
                 occurredAtUtc = clock.instant(),
                 reasonCode = "SELF_SERVICE_DEACTIVATION",
-                afterJson = mapOf("status" to deactivated.status.name)
-            )
+                afterJson = mapOf("status" to deactivated.status.name),
+            ),
         )
     }
 
     private fun issueTokens(user: User): AuthResult {
-        val accessToken = jwtTokenService.issueAccessToken(
-            userId = requireNotNull(user.id),
-            roles = setOf(ActorRole.USER),
-            orgId = null
-        )
+        val accessToken =
+            jwtTokenService.issueAccessToken(
+                userId = requireNotNull(user.id),
+                roles = setOf(ActorRole.USER),
+                orgId = null,
+            )
         val refreshToken = authTokenLifecycleService.issueRefreshToken(requireNotNull(user.id))
         return AuthResult(
             accessToken = accessToken,
             refreshToken = refreshToken,
-            user = user
+            user = user,
         )
     }
 
@@ -192,7 +210,7 @@ class AuthCommandService(
         return DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = message
+            message = message,
         )
     }
 
@@ -200,7 +218,7 @@ class AuthCommandService(
         return DomainException(
             errorCode = ErrorCode.VALIDATION_ERROR,
             status = 400,
-            message = "action token owner is invalid"
+            message = "action token owner is invalid",
         )
     }
 }

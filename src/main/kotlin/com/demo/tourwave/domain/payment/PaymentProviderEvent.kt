@@ -8,7 +8,7 @@ enum class PaymentProviderEventType {
     CAPTURE_FAILED,
     AUTHORIZATION_CANCELED,
     REFUNDED,
-    REFUND_FAILED
+    REFUND_FAILED,
 }
 
 enum class PaymentProviderEventStatus {
@@ -18,7 +18,7 @@ enum class PaymentProviderEventStatus {
     REJECTED_SIGNATURE,
     MALFORMED_PAYLOAD,
     POISONED,
-    IGNORED
+    IGNORED,
 }
 
 data class PaymentProviderEvent(
@@ -34,5 +34,5 @@ data class PaymentProviderEvent(
     val status: PaymentProviderEventStatus,
     val note: String? = null,
     val receivedAtUtc: Instant,
-    val processedAtUtc: Instant? = null
+    val processedAtUtc: Instant? = null,
 )

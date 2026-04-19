@@ -9,13 +9,13 @@ import com.demo.tourwave.domain.user.User
 
 class MeService(
     private val userRepository: UserRepository,
-    private val organizationQueryService: OrganizationQueryService
+    private val organizationQueryService: OrganizationQueryService,
 ) {
     fun getCurrentUser(userId: Long): User {
         return userRepository.findById(userId) ?: throw DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = "authenticated user does not exist"
+            message = "authenticated user does not exist",
         )
     }
 

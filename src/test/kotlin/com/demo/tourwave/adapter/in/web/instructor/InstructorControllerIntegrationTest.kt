@@ -52,14 +52,20 @@ class InstructorControllerIntegrationTest {
 
     @Test
     fun `instructor registration and profile APIs support approval and public query`() {
-        val owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()))
-        val instructor = userRepository.save(User.create(displayName = "Guide", email = "guide@test.com", passwordHash = "hash", now = Instant.now()))
+        val owner =
+            userRepository.save(
+                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = Instant.now()),
+            )
+        val instructor =
+            userRepository.save(
+                User.create(displayName = "Guide", email = "guide@test.com", passwordHash = "hash", now = Instant.now()),
+            )
 
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"slug":"seoul-team","name":"Seoul Team","timezone":"Asia/Seoul"}""")
+                .content("""{"slug":"seoul-team","name":"Seoul Team","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
 
         val organizationId = requireNotNull(organizationRepository.findBySlug("seoul-team")?.id)
@@ -74,19 +80,20 @@ class InstructorControllerIntegrationTest {
                       "headline":"City storyteller",
                       "languages":["ko","en"],
                       "specialties":["history"]
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.status").value("PENDING"))
 
-        val registrationId = requireNotNull(
-            instructorRegistrationRepository.findByOrganizationIdAndUserId(organizationId, requireNotNull(instructor.id))?.id
-        )
+        val registrationId =
+            requireNotNull(
+                instructorRegistrationRepository.findByOrganizationIdAndUserId(organizationId, requireNotNull(instructor.id))?.id,
+            )
 
         mockMvc.perform(
             post("/instructor-registrations/$registrationId/approve")
-                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("X-Actor-User-Id", requireNotNull(owner.id)),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("APPROVED"))
@@ -94,7 +101,7 @@ class InstructorControllerIntegrationTest {
         mockMvc.perform(
             get("/me/instructor-profile")
                 .header("X-Actor-User-Id", requireNotNull(instructor.id))
-                .param("organizationId", organizationId.toString())
+                .param("organizationId", organizationId.toString()),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.headline").value("City storyteller"))
@@ -113,16 +120,17 @@ class InstructorControllerIntegrationTest {
                       "certifications":["first aid"],
                       "yearsOfExperience":6,
                       "internalNote":"private"
-                    }"""
-                )
+                    }""",
+                ),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.certifications[0]").value("first aid"))
             .andExpect(jsonPath("$.internalNote").value("private"))
 
-        val profileId = requireNotNull(
-            instructorProfileRepository.findByOrganizationIdAndUserId(organizationId, requireNotNull(instructor.id))?.id
-        )
+        val profileId =
+            requireNotNull(
+                instructorProfileRepository.findByOrganizationIdAndUserId(organizationId, requireNotNull(instructor.id))?.id,
+            )
 
         mockMvc.perform(get("/instructors/$profileId"))
             .andExpect(status().isOk)

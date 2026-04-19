@@ -12,7 +12,7 @@ import java.time.Instant
 @Entity
 @Table(
     name = "favorites",
-    indexes = [Index(name = "idx_favorites_user_created", columnList = "user_id,created_at")]
+    indexes = [Index(name = "idx_favorites_user_created", columnList = "user_id,created_at")],
 )
 data class FavoriteJpaEntity(
     @Id
@@ -23,5 +23,5 @@ data class FavoriteJpaEntity(
     @Column(name = "tour_id", nullable = false)
     val tourId: Long,
     @Column(name = "created_at", nullable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
 )

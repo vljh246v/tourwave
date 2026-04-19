@@ -9,7 +9,7 @@ import java.time.LocalDate
 @Repository
 @Profile("mysql", "mysql-test")
 class JpaPaymentReconciliationSummaryRepositoryAdapter(
-    private val paymentReconciliationDailySummaryJpaRepository: PaymentReconciliationDailySummaryJpaRepository
+    private val paymentReconciliationDailySummaryJpaRepository: PaymentReconciliationDailySummaryJpaRepository,
 ) : PaymentReconciliationSummaryRepository {
     override fun save(summary: PaymentReconciliationDailySummary): PaymentReconciliationDailySummary =
         paymentReconciliationDailySummaryJpaRepository.save(summary.toEntity()).toDomain()
@@ -19,7 +19,7 @@ class JpaPaymentReconciliationSummaryRepositoryAdapter(
 
     override fun findBetween(
         startInclusive: LocalDate,
-        endInclusive: LocalDate
+        endInclusive: LocalDate,
     ): List<PaymentReconciliationDailySummary> =
         paymentReconciliationDailySummaryJpaRepository
             .findBySummaryDateBetweenOrderBySummaryDateAsc(startInclusive, endInclusive)
@@ -46,7 +46,7 @@ private fun PaymentReconciliationDailySummary.toEntity(): PaymentReconciliationD
         captureMismatchCount = captureMismatchCount,
         refundMismatchCount = refundMismatchCount,
         internalStatusMismatchCount = internalStatusMismatchCount,
-        refreshedAtUtc = refreshedAtUtc
+        refreshedAtUtc = refreshedAtUtc,
     )
 
 private fun PaymentReconciliationDailySummaryJpaEntity.toDomain(): PaymentReconciliationDailySummary =
@@ -65,5 +65,5 @@ private fun PaymentReconciliationDailySummaryJpaEntity.toDomain(): PaymentReconc
         captureMismatchCount = captureMismatchCount,
         refundMismatchCount = refundMismatchCount,
         internalStatusMismatchCount = internalStatusMismatchCount,
-        refreshedAtUtc = refreshedAtUtc
+        refreshedAtUtc = refreshedAtUtc,
     )

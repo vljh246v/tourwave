@@ -10,17 +10,20 @@ import java.time.Clock
 class UserService(
     private val userPort: UserPort,
     private val auditEventPort: AuditEventPort,
-    private val clock: Clock
+    private val clock: Clock,
 ) {
     fun getCurrentUser(userId: Long): User {
         return userPort.findById(userId) ?: throw DomainException(
             errorCode = ErrorCode.UNAUTHORIZED,
             status = 401,
-            message = "authenticated user does not exist"
+            message = "authenticated user does not exist",
         )
     }
 
-    fun updateProfile(userId: Long, displayName: String): User {
+    fun updateProfile(
+        userId: Long,
+        displayName: String,
+    ): User {
         val normalizedDisplayName = requireValidDisplayName(displayName)
         val user = getCurrentUser(userId)
         val updated = user.updateProfile(displayName = normalizedDisplayName, now = clock.instant())
@@ -33,13 +36,16 @@ class UserService(
                 resourceId = userId,
                 occurredAtUtc = clock.instant(),
                 reasonCode = "SELF_SERVICE_PROFILE_UPDATE",
-                afterJson = mapOf("displayName" to saved.displayName)
-            )
+                afterJson = mapOf("displayName" to saved.displayName),
+            ),
         )
         return saved
     }
 
-    fun getOrCreate(email: String, displayName: String): User {
+    fun getOrCreate(
+        email: String,
+        displayName: String,
+    ): User {
         val normalizedEmail = email.trim().lowercase()
         val existing = userPort.findByEmail(normalizedEmail)
         if (existing != null) return existing
@@ -49,8 +55,8 @@ class UserService(
                 displayName = displayName,
                 email = normalizedEmail,
                 passwordHash = "[OAUTH]",
-                now = now
-            )
+                now = now,
+            ),
         )
     }
 
@@ -60,7 +66,7 @@ class UserService(
             throw DomainException(
                 errorCode = ErrorCode.VALIDATION_ERROR,
                 status = 422,
-                message = "displayName must be between 1 and 100 characters"
+                message = "displayName must be between 1 and 100 characters",
             )
         }
         return normalized

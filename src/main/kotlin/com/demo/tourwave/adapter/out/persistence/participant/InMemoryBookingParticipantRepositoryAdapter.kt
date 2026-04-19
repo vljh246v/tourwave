@@ -31,7 +31,10 @@ class InMemoryBookingParticipantRepositoryAdapter : BookingParticipantRepository
             .sortedWith(compareBy<BookingParticipant> { it.createdAt }.thenBy { it.id ?: Long.MAX_VALUE })
     }
 
-    override fun findByBookingIdAndUserId(bookingId: Long, userId: Long): BookingParticipant? {
+    override fun findByBookingIdAndUserId(
+        bookingId: Long,
+        userId: Long,
+    ): BookingParticipant? {
         return participants.values.firstOrNull { it.bookingId == bookingId && it.userId == userId }
     }
 
