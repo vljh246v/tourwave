@@ -27,7 +27,11 @@ class CatalogQueryServiceTest {
         occurrenceRepository = occurrenceRepository,
         bookingRepository = bookingRepository,
         reviewRepository = reviewRepository,
-        timeWindowPolicyService = TimeWindowPolicyService()
+        timeWindowPolicyService = TimeWindowPolicyService(
+            invitationWindowMinutes = 360,
+            invitationExpiryHours = 48,
+            refundFullWindowHours = 48
+        )
     )
 
     @BeforeEach

@@ -29,6 +29,11 @@ tourwave:
       stale-after-seconds: ${TOURWAVE_JOB_LOCK_STALE_AFTER_SECONDS:300}
   organization:
     invitation-token-ttl-seconds: ${TOURWAVE_ORG_INVITATION_TOKEN_TTL_SECONDS:604800}
+  timewindow:
+    invitation-window-minutes: 360
+    invitation-expiry-hours: 48
+    refund-full-window-hours: 48
+    offer-window-seconds: 86400
 
 management:
   endpoints:

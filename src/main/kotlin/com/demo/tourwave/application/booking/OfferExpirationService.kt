@@ -21,11 +21,9 @@ class OfferExpirationService(
     private val auditEventPort: AuditEventPort,
     private val paymentLedgerService: PaymentLedgerService,
     private val timeWindowPolicyService: TimeWindowPolicyService,
-    private val clock: Clock
+    private val clock: Clock,
+    private val offerWindowSeconds: Long
 ) {
-    companion object {
-        private const val OFFER_WINDOW_SECONDS = 24 * 60 * 60L
-    }
 
     fun expireOffers(): OfferExpirationJobResult {
         val now = clock.instant()
@@ -72,7 +70,7 @@ class OfferExpirationService(
                 return@forEach
             }
 
-            val promoted = bookingRepository.save(waitlisted.offer(now.plusSeconds(OFFER_WINDOW_SECONDS)))
+            val promoted = bookingRepository.save(waitlisted.offer(now.plusSeconds(offerWindowSeconds)))
             availableSeats -= promoted.partySize
             auditEventPort.append(
                 AuditEventCommand(

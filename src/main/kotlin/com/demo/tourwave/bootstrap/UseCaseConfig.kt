@@ -36,6 +36,7 @@ import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.UserCommandService
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.application.payment.PaymentProviderPort
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
@@ -44,7 +45,15 @@ import java.time.Duration
 @Configuration
 class UseCaseConfig {
     @Bean
-    fun timeWindowPolicyService(): TimeWindowPolicyService = TimeWindowPolicyService()
+    fun timeWindowPolicyService(
+        @Value("\${tourwave.timewindow.invitation-window-minutes}") invitationWindowMinutes: Long,
+        @Value("\${tourwave.timewindow.invitation-expiry-hours}") invitationExpiryHours: Long,
+        @Value("\${tourwave.timewindow.refund-full-window-hours}") refundFullWindowHours: Long
+    ): TimeWindowPolicyService = TimeWindowPolicyService(
+        invitationWindowMinutes = invitationWindowMinutes,
+        invitationExpiryHours = invitationExpiryHours,
+        refundFullWindowHours = refundFullWindowHours
+    )
 
     @Bean
     fun bookingCommandService(
@@ -55,7 +64,8 @@ class UseCaseConfig {
         auditEventPort: AuditEventPort,
         paymentLedgerService: PaymentLedgerService,
         timeWindowPolicyService: TimeWindowPolicyService,
-        clock: Clock
+        clock: Clock,
+        @Value("\${tourwave.timewindow.offer-window-seconds}") offerWindowSeconds: Long
     ): BookingCommandService {
         return BookingCommandService(
             bookingRepository = bookingRepository,
@@ -65,7 +75,8 @@ class UseCaseConfig {
             auditEventPort = auditEventPort,
             paymentLedgerService = paymentLedgerService,
             timeWindowPolicyService = timeWindowPolicyService,
-            clock = clock
+            clock = clock,
+            offerWindowSeconds = offerWindowSeconds
         )
     }
 
@@ -238,7 +249,8 @@ class UseCaseConfig {
         auditEventPort: AuditEventPort,
         paymentLedgerService: PaymentLedgerService,
         timeWindowPolicyService: TimeWindowPolicyService,
-        clock: Clock
+        clock: Clock,
+        @Value("\${tourwave.timewindow.offer-window-seconds}") offerWindowSeconds: Long
     ): OfferExpirationService {
         return OfferExpirationService(
             bookingRepository = bookingRepository,
@@ -246,7 +258,8 @@ class UseCaseConfig {
             auditEventPort = auditEventPort,
             paymentLedgerService = paymentLedgerService,
             timeWindowPolicyService = timeWindowPolicyService,
-            clock = clock
+            clock = clock,
+            offerWindowSeconds = offerWindowSeconds
         )
     }
 

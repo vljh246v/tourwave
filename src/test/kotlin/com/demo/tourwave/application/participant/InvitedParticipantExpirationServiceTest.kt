@@ -29,7 +29,11 @@ class InvitedParticipantExpirationServiceTest {
         bookingRepository = bookingRepository,
         occurrenceRepository = occurrenceRepository,
         bookingParticipantRepository = bookingParticipantRepository,
-        timeWindowPolicyService = TimeWindowPolicyService(),
+        timeWindowPolicyService = TimeWindowPolicyService(
+            invitationWindowMinutes = 360,
+            invitationExpiryHours = 48,
+            refundFullWindowHours = 48
+        ),
         clock = clock
     )
 

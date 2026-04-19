@@ -25,6 +25,11 @@ tourwave:
       stale-after-seconds: 300
   organization:
     invitation-token-ttl-seconds: 604800
+  timewindow:
+    invitation-window-minutes: 360
+    invitation-expiry-hours: 48
+    refund-full-window-hours: 48
+    offer-window-seconds: 86400
 
 integration:
   payment:
