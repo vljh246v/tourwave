@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: adapter.in
 size: XS
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-20
 updated: 2026-04-20
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-925 — [BE] infra — AuthController ktlint multiline 수정
 
