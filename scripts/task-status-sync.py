@@ -1,0 +1,1 @@
+../../obsidian/tourwave/_scripts/task-status-sync.py
