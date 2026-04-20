@@ -3,7 +3,13 @@ name: CI
 on:
   push:
     branches: ["**"]
+    paths-ignore:
+      - 'docs/tasks/**'
+      - 'docs/exec-plans/**'
   pull_request:
+    paths-ignore:
+      - 'docs/tasks/**'
+      - 'docs/exec-plans/**'
 
 jobs:
   validate-required-env:
