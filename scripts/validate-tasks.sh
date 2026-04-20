@@ -125,6 +125,37 @@ for card_file in "${CARDS[@]}"; do
     ((issues++))
   fi
 
+  # status 값 화이트리스트 검증
+  status_val=$(awk '
+    NR==1 && /^---$/ { in_fm=1; next }
+    in_fm && /^---$/ { exit }
+    in_fm && /^status:[[:space:]]*/ {
+      sub(/^status:[[:space:]]*/, "")
+      gsub(/[[:space:]]+$/, "")
+      print
+      exit
+    }
+  ' "$card_file")
+  case "$status_val" in
+    backlog|in-progress|done) ;;
+    "")
+      echo "[$card_id] status field empty or missing" >&2
+      ((issues++))
+      ;;
+    *)
+      echo "[$card_id] invalid status: '$status_val' (allowed: backlog|in-progress|done)" >&2
+      ((issues++))
+      ;;
+  esac
+
+  # frontmatter status ↔ 본문 #status/ 태그 일치 검증
+  tag_val=$(head -30 "$card_file" | \
+            grep -oE '#status/[a-z-]+' | head -1 | sed 's|#status/||')
+  if [[ -n "$tag_val" && "$tag_val" != "$status_val" ]]; then
+    echo "[$card_id] tag mismatch: #status/$tag_val vs frontmatter status:$status_val" >&2
+    ((issues++))
+  fi
+
   if [[ $issues -gt 0 ]]; then
     ((MISSING_SECTIONS += issues))
   else
