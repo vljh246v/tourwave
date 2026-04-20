@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: application
 size: M
-status: backlog
+status: done
 
 depends_on: []
 blocks: ['T-005', 'T-006']
@@ -19,10 +19,10 @@ github_issue: null
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-20
 ---
 
-#status/backlog #area/be
+#status/done #area/be
 
 # T-004 — [BE] user — User ApplicationService 도입 (계층 격리)
 

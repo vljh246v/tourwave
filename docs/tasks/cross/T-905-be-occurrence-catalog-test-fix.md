@@ -9,7 +9,7 @@ milestone: cross
 domain: occurrence
 layer: test
 size: M
-status: backlog
+status: done
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: 9
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-20
 ---
 
-#status/backlog #area/be
+#status/done #area/be
 
 # T-905 — [BE] OccurrenceCatalogControllerIntegrationTest 수정 (main fail)
 

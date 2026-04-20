@@ -9,7 +9,7 @@ milestone: cross
 domain: tour
 layer: test
 size: M
-status: backlog
+status: done
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: 10
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-20
 ---
 
-#status/backlog #area/be
+#status/done #area/be
 
 # T-906 — [BE] InstructorAndTourControllerIntegrationTest 분리 (테스트 독립성)
 
