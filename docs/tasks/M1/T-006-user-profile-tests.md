@@ -1,16 +1,30 @@
-# T-006 — [BE] user — User 프로필 테스트 강화
+---
+id: T-006
+title: "T-006 — [BE] user — User 프로필 테스트 강화"
+aliases: [T-006]
 
-## Meta
-- ID: T-006
-- Milestone: M1 (인증·탐색)
-- Domain: user
-- Area: BE
-- Layer: domain + application + adapter.in
-- Size: M (~4h)
-- Depends on: T-004, T-005
-- Blocks: 없음
-- GitHub Issue: #22 (생성 전)
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: M1
+domain: auth
+layer: domain + application + adapter.in
+size: M
+status: backlog
+
+depends_on: ['T-004', 'T-005']
+blocks: []
+sub_tasks: []
+
+github_issue: null
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-006 — [BE] user — User 프로필 테스트 강화
 
 ## 파일 소유권
 WRITE:

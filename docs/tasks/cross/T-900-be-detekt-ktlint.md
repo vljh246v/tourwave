@@ -1,16 +1,30 @@
-# T-900 — [BE] detekt/ktlint 설정 (git pre-commit hook)
+---
+id: T-900
+title: "T-900 — [BE] detekt/ktlint 설정 (git pre-commit hook)"
+aliases: [T-900]
 
-## Meta
-- ID: T-900
-- Milestone: Cross-cutting
-- Domain: common
-- Area: BE
-- Layer: tooling
-- Size: M
-- Depends on: 없음
-- Blocks: M1 전체 (lint 인프라 필수)
-- GitHub Issue: #4
-- Status: Done
+repo: tourwave
+area: be
+milestone: cross
+domain: infra
+layer: tooling
+size: M
+status: done
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: 4
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-19
+---
+
+#status/done #area/be
+
+# T-900 — [BE] detekt/ktlint 설정 (git pre-commit hook)
 
 ## 파일 소유권
 WRITE:

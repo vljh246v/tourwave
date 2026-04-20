@@ -1,16 +1,30 @@
-# T-901 — [BE] AuditEventTest 생성 (감사 이벤트 커버리지)
+---
+id: T-901
+title: "T-901 — [BE] AuditEventTest 생성 (감사 이벤트 커버리지)"
+aliases: [T-901]
 
-## Meta
-- ID: T-901
-- Milestone: Cross-cutting
-- Domain: common
-- Area: BE
-- Layer: test
-- Size: S
-- Depends on: 없음
-- Blocks: T-904 (감사 커버리지 강화)
-- GitHub Issue: #5
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: cross
+domain: infra
+layer: test
+size: S
+status: backlog
+
+depends_on: []
+blocks: ['T-904']
+sub_tasks: []
+
+github_issue: 5
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-901 — [BE] AuditEventTest 생성 (감사 이벤트 커버리지)
 
 ## 파일 소유권
 WRITE:

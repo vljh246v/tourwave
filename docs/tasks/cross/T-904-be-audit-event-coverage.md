@@ -1,16 +1,30 @@
-# T-904 — [BE] 감사 이벤트 커버리지 강화 (announcement/organization/instructor/tour 모든 write)
+---
+id: T-904
+title: "T-904 — [BE] 감사 이벤트 커버리지 강화 (announcement/organization/instructor/tour 모든 write)"
+aliases: [T-904]
 
-## Meta
-- ID: T-904
-- Milestone: Cross-cutting
-- Domain: common
-- Area: BE
-- Layer: test + implementation
-- Size: L
-- Depends on: T-901 (AuditEventTest 정의)
-- Blocks: M1 (감사 컴플라이언스)
-- GitHub Issue: #8
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: cross
+domain: infra
+layer: test + implementation
+size: L
+status: backlog
+
+depends_on: ['T-901']
+blocks: []
+sub_tasks: []
+
+github_issue: 8
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-904 — [BE] 감사 이벤트 커버리지 강화 (announcement/organization/instructor/tour 모든 write)
 
 ## 파일 소유권
 WRITE:

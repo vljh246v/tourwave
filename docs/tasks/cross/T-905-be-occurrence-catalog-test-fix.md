@@ -1,16 +1,30 @@
-# T-905 — [BE] OccurrenceCatalogControllerIntegrationTest 수정 (main fail)
+---
+id: T-905
+title: "T-905 — [BE] OccurrenceCatalogControllerIntegrationTest 수정 (main fail)"
+aliases: [T-905]
 
-## Meta
-- ID: T-905
-- Milestone: Cross-cutting
-- Domain: common
-- Area: BE
-- Layer: test
-- Size: M
-- Depends on: 없음
-- Blocks: 없음
-- GitHub Issue: #9
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: cross
+domain: occurrence
+layer: test
+size: M
+status: backlog
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: 9
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-905 — [BE] OccurrenceCatalogControllerIntegrationTest 수정 (main fail)
 
 ## 파일 소유권
 WRITE:

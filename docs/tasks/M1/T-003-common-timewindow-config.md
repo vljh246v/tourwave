@@ -1,16 +1,30 @@
-# T-003 — [BE] common — TimeWindowPolicyService 상수 설정화
+---
+id: T-003
+title: "T-003 — [BE] common — TimeWindowPolicyService 상수 설정화"
+aliases: [T-003]
 
-## Meta
-- ID: T-003
-- Milestone: M1 (인증·탐색)
-- Domain: common
-- Area: BE
-- Layer: application + bootstrap
-- Size: S (~2h)
-- Depends on: 없음
-- Blocks: 없음
-- GitHub Issue: #19 (생성 전)
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: M1
+domain: infra
+layer: application + bootstrap
+size: S
+status: backlog
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: null
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-003 — [BE] common — TimeWindowPolicyService 상수 설정화
 
 ## 파일 소유권
 WRITE:

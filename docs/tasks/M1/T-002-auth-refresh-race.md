@@ -1,16 +1,30 @@
-# T-002 — [BE] auth — Refresh token 로테이션 race condition 해결
+---
+id: T-002
+title: "T-002 — [BE] auth — Refresh token 로테이션 race condition 해결"
+aliases: [T-002]
 
-## Meta
-- ID: T-002
-- Milestone: M1 (인증·탐색)
-- Domain: auth
-- Area: BE
-- Layer: domain + adapter.out
-- Size: L (~6h)
-- Depends on: 없음
-- Blocks: 없음
-- GitHub Issue: #18 (생성 전)
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: M1
+domain: auth
+layer: domain + adapter.out
+size: L
+status: backlog
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: null
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-002 — [BE] auth — Refresh token 로테이션 race condition 해결
 
 ## 파일 소유권
 WRITE:
