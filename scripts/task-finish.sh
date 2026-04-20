@@ -184,14 +184,23 @@ if [[ "$STRATEGY" == "pr" ]]; then
   # PR 모드: exec-plan 정리를 feature 브랜치에 포함시킨 뒤 push
   # ===========================================================================
   echo ""
-  echo " [ARCHIVE] exec-plan 정리 중 (feature 브랜치에 포함)..."
+  echo " [ARCHIVE] exec-plan 정리 + card status → done (feature 브랜치 포함)..."
   archive_exec_plan
+
+  # card status: * → done (패치만, 커밋은 아래서 합침)
+  python3 "$SCRIPT_DIR/task-status-sync.py" set \
+    --task-id "$TASK_NAME" \
+    --status done \
+    --repo-root "$WORKTREE_PATH" \
+    2>&1 || echo "[WARN] task card status → done 패치 실패 (파이프라인 계속)" >&2
 
   # 워크트리(feature 브랜치)에서 정리 커밋
   cd "$WORKTREE_PATH"
-  git add "$PROJECT_ROOT/logs/validators/history.jsonl" "$EXEC_PLAN_DIR/" 2>/dev/null || true
+  git add "$PROJECT_ROOT/logs/validators/history.jsonl" \
+          "$EXEC_PLAN_DIR/" \
+          "$PROJECT_ROOT/docs/tasks/" 2>/dev/null || true
   if ! git diff --cached --quiet 2>/dev/null; then
-    git commit -m "chore: $TASK_NAME 검증 로그 + exec-plan 정리" --quiet
+    git commit -m "chore: $TASK_NAME 검증 로그 + exec-plan 정리 + status → done" --quiet
   fi
 
   echo " [PUSH] feature 브랜치를 push..."
@@ -244,12 +253,20 @@ else
   git -C "$PROJECT_ROOT" worktree remove "$WORKTREE_PATH"
   git -C "$PROJECT_ROOT" branch -d "$BRANCH_NAME" 2>/dev/null || true
 
-  # merge 후 develop에서 exec-plan 정리 + 자동 커밋
+  # merge 후 develop에서 exec-plan 정리 + card status → done + 자동 커밋
   archive_exec_plan
+  python3 "$SCRIPT_DIR/task-status-sync.py" set \
+    --task-id "$TASK_NAME" \
+    --status done \
+    --repo-root "$PROJECT_ROOT" \
+    2>&1 || echo "[WARN] task card status → done 패치 실패 (파이프라인 계속)" >&2
+
   cd "$PROJECT_ROOT"
-  git add logs/validators/history.jsonl docs/exec-plans/ 2>/dev/null || true
+  git add logs/validators/history.jsonl \
+          docs/exec-plans/ \
+          docs/tasks/ 2>/dev/null || true
   if ! git diff --cached --quiet 2>/dev/null; then
-    git commit -m "chore: $TASK_NAME 검증 로그 + exec-plan 정리" --quiet
+    git commit -m "chore: $TASK_NAME 검증 로그 + exec-plan 정리 + status → done" --quiet
   fi
 
   log_event "task_finish" "\"result\":\"success\",\"strategy\":\"direct\",\"validators_passed\":${PASSED}"
