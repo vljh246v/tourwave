@@ -57,7 +57,8 @@ for validator in \
   "$VALIDATORS_DIR/02-test.sh" \
   "$VALIDATORS_DIR/03-lint.sh" \
   "$VALIDATORS_DIR/04-security.sh" \
-  "$VALIDATORS_DIR/05-docs-freshness.sh"; do
+  "$VALIDATORS_DIR/05-docs-freshness.sh" \
+  "$VALIDATORS_DIR/07-status-sync-smoke.sh"; do
 
   [[ -f "$validator" ]] || continue
 
