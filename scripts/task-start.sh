@@ -37,6 +37,25 @@ if [[ -d "$WORKTREE_PATH" ]]; then
 fi
 
 # =============================================================================
+# 1.5. Task card status: backlog → in-progress (develop 에서, 워크트리 생성 전)
+#      → Obsidian 이 즉시 in-progress 를 봄. 워크트리는 이 커밋 이후 HEAD 에서 분기.
+# =============================================================================
+current_branch=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD)
+if [[ "$current_branch" != "$BASE_BRANCH" ]]; then
+  echo "[ERROR] task-start.sh 는 $BASE_BRANCH 에서 실행되어야 합니다. 현재: $current_branch" >&2
+  echo "  'git checkout $BASE_BRANCH' 후 재시도하세요." >&2
+  exit 1
+fi
+
+python3 "$SCRIPT_DIR/task-status-sync.py" set \
+  --task-id "$TASK_NAME" \
+  --status in-progress \
+  --repo-root "$PROJECT_ROOT" \
+  --commit \
+  --commit-message "chore: $TASK_NAME 작업 시작 (status → in-progress)" \
+  2>&1 || echo "[WARN] task card status 패치 실패 (파이프라인은 계속)" >&2
+
+# =============================================================================
 # 2. 워크트리 생성
 # =============================================================================
 echo "[INFO] 워크트리 생성 중..."
@@ -73,7 +92,6 @@ if [[ ! -f "$EXEC_PLAN_FILE" ]]; then
 ---
 task_id: ${TASK_NAME}
 type: feat
-status: in-progress
 created: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 owner: (작성자)
 ---
