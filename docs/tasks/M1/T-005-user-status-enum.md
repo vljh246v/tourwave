@@ -1,16 +1,30 @@
-# T-005 — [BE] user — UserStatus enum 완성 (SUSPENDED, DELETED 구현)
+---
+id: T-005
+title: "T-005 — [BE] user — UserStatus enum 완성 (SUSPENDED, DELETED 구현)"
+aliases: [T-005]
 
-## Meta
-- ID: T-005
-- Milestone: M1 (인증·탐색)
-- Domain: user
-- Area: BE
-- Layer: domain + application
-- Size: M (~4h)
-- Depends on: 없음
-- Blocks: T-006
-- GitHub Issue: #21 (생성 전)
-- Status: Done
+repo: tourwave
+area: be
+milestone: M1
+domain: auth
+layer: domain + application
+size: M
+status: done
+
+depends_on: []
+blocks: ['T-006']
+sub_tasks: []
+
+github_issue: null
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-19
+---
+
+#status/done #area/be
+
+# T-005 — [BE] user — UserStatus enum 완성 (SUSPENDED, DELETED 구현)
 
 ## 파일 소유권
 WRITE:

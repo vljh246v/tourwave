@@ -1,16 +1,30 @@
-# T-007 — [BE] user — User soft-delete 정책 문서화
+---
+id: T-007
+title: "T-007 — [BE] user — User soft-delete 정책 문서화"
+aliases: [T-007]
 
-## Meta
-- ID: T-007
-- Milestone: M1 (인증·탐색)
-- Domain: user
-- Area: BE
-- Layer: documentation
-- Size: S (~2h)
-- Depends on: T-005
-- Blocks: 없음
-- GitHub Issue: #23 (생성 전)
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: M1
+domain: auth
+layer: documentation
+size: S
+status: backlog
+
+depends_on: ['T-005']
+blocks: []
+sub_tasks: []
+
+github_issue: null
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-007 — [BE] user — User soft-delete 정책 문서화
 
 ## 파일 소유권
 WRITE:

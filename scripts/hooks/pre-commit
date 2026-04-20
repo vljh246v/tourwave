@@ -1,0 +1,5 @@
+#!/bin/sh
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(kt|kts)$')
+if [ -n "$STAGED" ]; then
+  ./gradlew ktlintCheck --quiet
+fi

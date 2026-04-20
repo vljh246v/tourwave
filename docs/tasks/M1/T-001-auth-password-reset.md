@@ -1,16 +1,32 @@
+---
+id: T-001
+title: "[BE] auth — Password reset 이메일 발송 구현"
+aliases: [T-001]
+
+repo: tourwave
+area: be
+milestone: M1
+domain: auth
+layer: application
+size: M
+status: backlog
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: null
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
 # T-001 — [BE] auth — Password reset 이메일 발송 구현
 
-## Meta
-- ID: T-001
-- Milestone: M1 (인증·탐색)
-- Domain: auth
-- Area: BE
-- Layer: application
-- Size: M (~4h)
-- Depends on: 없음
-- Blocks: 없음
-- GitHub Issue: #17 (생성 전)
-- Status: Backlog
+> GitHub Issue: #17 (생성 전 — 예약 번호)
 
 ## 파일 소유권
 WRITE:
@@ -58,7 +74,9 @@ DO NOT TOUCH:
 - [ ] `./gradlew test --tests "*AuthCommandServiceTest*"` 통과 (기존 테스트 회귀 확인)
 
 ## Verification
-`./scripts/verify-task.sh T-001`
+```bash
+./scripts/verify-task.sh T-001
+```
 예상 결과: build ✓ / test ✓ / lint ✓ / security ✓ / docs ✓
 
 ## Rollback
@@ -74,5 +92,5 @@ git clean -fd src/test/kotlin/com/demo/tourwave/application/auth/PasswordResetSe
 ## Notes
 - `UserActionTokenService.issue(userId, PASSWORD_RESET, ttl)` 패턴 재사용
 - 이메일 템플릿은 하드코드 또는 classpath 리소스로 관리 (향후 i18n 고려)
-- 실제 SMTP/SES 어댑터는 T-207에서 구현; 현재는 인터페이스만 정의
+- 실제 SMTP/SES 어댑터는 T-207 에서 구현; 현재는 인터페이스만 정의
 - 감사 이벤트는 "PASSWORD_RESET_EMAIL_SENT" 액션으로 기록 (user 식별 시점 고려)

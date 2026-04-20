@@ -1,16 +1,30 @@
-# T-903 — [BE] Idempotency-Key 일관성 검토 (announcement/operations/organization/instructor)
+---
+id: T-903
+title: "T-903 — [BE] Idempotency-Key 일관성 검토 (announcement/operations/organization/instructor)"
+aliases: [T-903]
 
-## Meta
-- ID: T-903
-- Milestone: Cross-cutting
-- Domain: common
-- Area: BE
-- Layer: policy
-- Size: L
-- Depends on: 없음
-- Blocks: M1 (idempotency 컴플라이언스)
-- GitHub Issue: #7
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: cross
+domain: infra
+layer: policy
+size: L
+status: backlog
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: 7
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-903 — [BE] Idempotency-Key 일관성 검토 (announcement/operations/organization/instructor)
 
 ## 파일 소유권
 WRITE:

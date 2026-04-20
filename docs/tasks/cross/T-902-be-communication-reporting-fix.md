@@ -1,16 +1,30 @@
-# T-902 — [BE] CommunicationReportingIntegrationTest 수정 (main fail)
+---
+id: T-902
+title: "T-902 — [BE] CommunicationReportingIntegrationTest 수정 (main fail)"
+aliases: [T-902]
 
-## Meta
-- ID: T-902
-- Milestone: Cross-cutting
-- Domain: common
-- Area: BE
-- Layer: test
-- Size: M
-- Depends on: 없음
-- Blocks: 없음
-- GitHub Issue: #6
-- Status: Backlog
+repo: tourwave
+area: be
+milestone: cross
+domain: communication
+layer: test
+size: M
+status: backlog
+
+depends_on: []
+blocks: []
+sub_tasks: []
+
+github_issue: 6
+exec_plan: ""
+
+created: 2026-04-18
+updated: 2026-04-18
+---
+
+#status/backlog #area/be
+
+# T-902 — [BE] CommunicationReportingIntegrationTest 수정 (main fail)
 
 ## 파일 소유권
 WRITE:
