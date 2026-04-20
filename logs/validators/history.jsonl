@@ -169,3 +169,9 @@
 {"ts":"2026-04-20T05:53:15Z","task":"T-998-status-sync-e2e","validator":"04-security","result":"pass"}
 {"ts":"2026-04-20T05:53:15Z","task":"T-998-status-sync-e2e","validator":"05-docs-freshness","result":"pass"}
 {"ts":"2026-04-20T05:53:16Z","task":"T-998-status-sync-e2e","validator":"07-status-sync-smoke","result":"pass"}
+{"ts":"2026-04-20T06:01:10Z","task":"T-925-ktlint-authcontroller-fix","validator":"01-build","result":"pass"}
+{"ts":"2026-04-20T06:01:22Z","task":"T-925-ktlint-authcontroller-fix","validator":"02-test","result":"pass"}
+{"ts":"2026-04-20T06:01:22Z","task":"T-925-ktlint-authcontroller-fix","validator":"03-lint","result":"pass"}
+{"ts":"2026-04-20T06:01:22Z","task":"T-925-ktlint-authcontroller-fix","validator":"04-security","result":"pass"}
+{"ts":"2026-04-20T06:01:22Z","task":"T-925-ktlint-authcontroller-fix","validator":"05-docs-freshness","result":"pass"}
+{"ts":"2026-04-20T06:01:22Z","task":"T-925-ktlint-authcontroller-fix","validator":"07-status-sync-smoke","result":"pass"}

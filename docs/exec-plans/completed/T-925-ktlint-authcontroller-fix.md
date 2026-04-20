@@ -1,0 +1,35 @@
+---
+task_id: T-925-ktlint-authcontroller-fix
+type: feat
+created: 2026-04-20T06:00:20Z
+owner: (작성자)
+---
+
+# T-925-ktlint-authcontroller-fix
+
+## 배경 및 목표
+
+[작업 목표를 작성하세요]
+
+## 구현 단계
+
+- [ ] 1. 영향 범위 파악 (관련 파일 확인)
+- [ ] 2. 구현
+- [ ] 3. 테스트 작성/수정
+- [ ] 4. verify-task.sh로 검증
+- [ ] 5. task-finish.sh로 병합
+
+## 영향 범위
+
+[레이어/파일 작성]
+
+## 완료 기준
+
+- [ ] 검증기 5개 전부 통과
+- [ ] 기존 테스트 통과
+
+## 참고
+
+- ARCHITECTURE.md
+- docs/golden-principles.md
+- logs/trends/failure-patterns.md
