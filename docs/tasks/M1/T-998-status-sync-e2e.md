@@ -48,3 +48,5 @@ updated: 2026-04-20
 ## Notes
 - 이 카드는 smoke 전용이며 실제 코드 변경을 포함하지 않습니다.
 - 검증 완료 후 `chore(smoke): T-998 e2e smoke 카드 제거` 커밋으로 삭제됩니다.
+
+<!-- smoke-change -->
