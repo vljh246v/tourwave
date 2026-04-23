@@ -156,6 +156,43 @@ for card_file in "${CARDS[@]}"; do
     ((issues++))
   fi
 
+  # ssot_refs 허용값 검증
+  allowed_ssot="docs/openapi.yaml docs/schema.md docs/policies.md docs/domain-rules.md"
+  ssot_line=$(awk '
+    NR==1 && /^---$/ { in_fm=1; next }
+    in_fm && /^---$/ { exit }
+    in_fm && /^ssot_refs:/ { print; exit }
+  ' "$card_file")
+  if [[ -n "$ssot_line" ]]; then
+    # Extract content between brackets using parameter expansion
+    # "ssot_refs: [docs/openapi.yaml docs/schema.md]" -> "docs/openapi.yaml docs/schema.md"
+    refs="${ssot_line#*\[}"  # Remove everything up to and including [
+    refs="${refs%\]}"        # Remove ] and everything after
+    # Split by space and validate each ref
+    for ref in $refs; do
+      [[ -z "$ref" ]] && continue
+      if ! echo " $allowed_ssot " | grep -q " $ref "; then
+        echo "[$card_id] ssot_refs 허용 외 값: '$ref'" >&2
+        ((issues++))
+      fi
+    done
+  fi
+
+  # reviewed 포맷 검증 (YYYY-MM-DD 또는 빈 문자열)
+  reviewed_line=$(awk '
+    NR==1 && /^---$/ { in_fm=1; next }
+    in_fm && /^---$/ { exit }
+    in_fm && /^reviewed:/ { print; exit }
+  ' "$card_file")
+  if [[ -n "$reviewed_line" ]]; then
+    # Extract value: "reviewed: "not-a-date"" -> "not-a-date" or "reviewed: 2026-04-20" -> "2026-04-20"
+    reviewed_val=$(echo "$reviewed_line" | sed -E 's/^reviewed:\s*//;s/"//g;s/^ *//;s/ *$//')
+    if [[ -n "$reviewed_val" && ! "$reviewed_val" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+      echo "[$card_id] reviewed 포맷 오류: '$reviewed_val'" >&2
+      ((issues++))
+    fi
+  fi
+
   if [[ $issues -gt 0 ]]; then
     ((MISSING_SECTIONS += issues))
   else
