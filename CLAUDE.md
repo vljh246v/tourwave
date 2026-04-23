@@ -34,6 +34,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Tourwave는 투어/액티비티 운영사를 위한 예약 플랫폼 백엔드다. 고객 예약, 운영 실행, 사후 관리(출석/리뷰/환불)를 하나의 도메인으로 다룬다. Spring Boot 3.3.1 / Kotlin 1.9.24 / JDK 17, MySQL + Flyway, Spring Security (JWT), Micrometer + Prometheus.
 
+**프론트엔드 repo:** `/Users/jaehyun/Documents/workspace/tourwave-web` (별도 repo, Next.js + TypeScript). `docs/openapi.yaml`을 SSOT로 공유한다.
+
 ## 빌드 & 테스트 명령어
 
 ```bash
