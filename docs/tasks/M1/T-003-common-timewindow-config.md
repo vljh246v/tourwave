@@ -9,7 +9,7 @@ milestone: M1
 domain: infra
 layer: application + bootstrap
 size: S
-status: in-progress
+status: done
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-18
 updated: 2026-04-23
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-003 — [BE] common — TimeWindowPolicyService 상수 설정화
 
