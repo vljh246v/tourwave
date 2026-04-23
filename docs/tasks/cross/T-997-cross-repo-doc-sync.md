@@ -16,7 +16,7 @@ blocks: []
 sub_tasks: []
 
 github_issue: null
-exec_plan: "docs/exec-plans/active/T-997-cross-repo-doc-sync.md"
+exec_plan: ""
 
 ssot_refs: []
 reviewed: ""
@@ -59,8 +59,8 @@ READ:
 - [x] task-finish.sh 훅 (Phase 3 Task 12)
 - [x] 템플릿 3개 + migrate-tasks.py coerce (Phase 4 Task 13)
 - [x] vault index Dataview (Phase 4 Task 14)
-- [ ] E2E 실전 시뮬레이션 (Phase 5 Task 15)
-- [ ] 최종 문서 업데이트 + task-finish (Phase 5 Task 16)
+- [x] E2E 실전 시뮬레이션 (Phase 5 Task 15)
+- [x] 최종 문서 업데이트 + task-finish (Phase 5 Task 16)
 
 ## 구현 지침
 1. 17개 시뮬레이션 카드 CRUD 완성 (08-propagate-smoke.sh)
@@ -69,10 +69,10 @@ READ:
 4. 전체 주기 엔드-투-엔드 테스트
 
 ## Acceptance Criteria
-- [ ] 17개 시뮬레이션 카드 전부 CRUD 완료
-- [ ] task-status-sync.py 모든 CLI 정상 동작
-- [ ] verify-task.sh 통과 (검증기 5/5)
-- [ ] task-finish.sh 병합 및 PR 자동 생성
+- [x] 17개 시뮬레이션 카드 전부 CRUD 완료
+- [x] task-status-sync.py 모든 CLI 정상 동작
+- [x] verify-task.sh 통과 (검증기 7/7)
+- [x] task-finish.sh 병합 및 status → done 자동 전이
 
 ## Verification
 `./scripts/verify-task.sh T-997`
