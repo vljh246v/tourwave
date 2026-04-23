@@ -194,6 +194,12 @@ if [[ "$STRATEGY" == "pr" ]]; then
     --repo-root "$WORKTREE_PATH" \
     2>&1 || echo "[WARN] task card status → done 패치 실패 (파이프라인 계속)" >&2
 
+  # (#5) 연관 문서 drift dry-run — WARN only, 파이프라인 비블로킹
+  python3 "$SCRIPT_DIR/task-status-sync.py" propagate --dry-run \
+    --repo-root "$PROJECT_ROOT" 2>&1 \
+    | grep -E "^\[DRIFT\]|^\[SUMMARY\]" \
+    | sed 's/^/[propagate] /' >&2 || true
+
   # 워크트리(feature 브랜치)에서 정리 커밋
   cd "$WORKTREE_PATH"
   git add "$PROJECT_ROOT/logs/validators/history.jsonl" \
@@ -260,6 +266,12 @@ else
     --status done \
     --repo-root "$PROJECT_ROOT" \
     2>&1 || echo "[WARN] task card status → done 패치 실패 (파이프라인 계속)" >&2
+
+  # (#5) 연관 문서 drift dry-run — WARN only, 파이프라인 비블로킹
+  python3 "$SCRIPT_DIR/task-status-sync.py" propagate --dry-run \
+    --repo-root "$PROJECT_ROOT" 2>&1 \
+    | grep -E "^\[DRIFT\]|^\[SUMMARY\]" \
+    | sed 's/^/[propagate] /' >&2 || true
 
   cd "$PROJECT_ROOT"
   git add logs/validators/history.jsonl \
