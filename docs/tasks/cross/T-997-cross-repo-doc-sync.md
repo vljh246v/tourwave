@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: infra
 size: M
-status: in-progress
+status: done
 
 depends_on: []
 blocks: []
@@ -26,7 +26,7 @@ created: 2026-04-20
 updated: 2026-04-23
 ---
 
-#status/in-progress #area/cross
+#status/done #area/cross
 
 # T-997 — Cross-repo doc sync (Sub-project #5)
 
