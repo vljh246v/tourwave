@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: domain + adapter.out
 size: L
-status: in-progress
+status: done
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-18
 updated: 2026-04-26
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-002 — [BE] auth — Refresh token 로테이션 race condition 해결
 
