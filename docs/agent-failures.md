@@ -12,6 +12,7 @@
 | ID | 날짜 | 증상 | 근본 원인 | 강화책 | 도메인 |
 |----|------|------|-----------|--------|--------|
 | F-2026-04-26-1 | 2026-04-26 | T-001 orchestrator가 구현 완료 보고 후 task-finish.sh 1차 실행 시 빈 merge("Already up to date"), 워크트리 cleanup 실패. 실제로는 구현 파일이 모두 워크트리에 미커밋 상태로 잔존 | tdd-backend 서브에이전트가 Write로 파일 생성 후 git commit 누락. verify 검증기는 작업트리 파일을 직접 읽어 PASS, orchestrator/Phase 8도 워크트리 git status 미확인 | (1) task-finish.sh 시작 시 `git status --porcelain` 가드 추가 권고 — 미커밋 시 즉시 abort. (2) orchestrator.md Phase 8.5 "워크트리 git status 청결 확인" 단계 추가 검토. (3) 반복 시 golden-principles 승격 | 워크플로우 |
+| F-2026-04-26-2 | 2026-04-26 | T-002 task-finish.sh 직전 점검 시 메인 repo에 `docs/audit/BE-auth.md` 미커밋 수정이 잔존. 워크트리 commit `69b5e36` 메시지에는 "M-1 BE-auth.md updated" 명시되어 있었으나 실제 커밋 stat에는 미포함 — orchestrator/서브에이전트가 워크트리 외부(메인 repo) 절대경로로 Edit 실행 | 서브에이전트 prompt에 "워크트리 절대경로 안에서만 작업"을 명시했음에도 일부 docs 수정이 메인 repo로 누출. F-2026-04-26-1과 같은 root cause 계열(워크트리 위생 위반)이며 같은 날 2회째 발생 | (1) **golden-principles GP-007 신규 등재**: 서브에이전트는 워크트리 외부 파일 수정 금지. (2) Phase 8 가드: 메인 repo `git status --porcelain`도 검사 (history.jsonl/exec-plans 외 변경 시 abort). (3) 3회 반복 시 hook으로 구조적 차단 | 워크플로우 |
 
 ## 기록 방법
 

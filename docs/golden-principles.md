@@ -47,4 +47,10 @@
 - **대신**: exec-plan에 Impact/Rollback/Verification 작성 후 승인
 - **강제**: `escalation-policy.md` 에스컬레이션 절차
 
+### GP-007: 서브에이전트는 워크트리 절대경로 외부 파일을 수정하지 않는다
+
+- **왜**: F-2026-04-26-1 / F-2026-04-26-2 — orchestrator/tdd-* 서브에이전트가 워크트리 외부 메인 repo 파일을 직접 수정 시 (1) 워크트리 commit 메시지와 실제 변경의 불일치, (2) merge에 누락된 변경이 메인 repo에 미커밋 상태로 잔존, (3) task-finish.sh 후 develop 더러움 발생
+- **대신**: 모든 코드/문서 수정은 `.worktrees/<TASK_ID>/` 절대경로 안에서만 수행. 워크트리 외부 자동 수정이 허용되는 파일은 `logs/validators/history.jsonl` 한정 (verify-task.sh가 작성, task-finish.sh가 commit)
+- **강제**: orchestrator Phase 8/9에서 메인 repo `git status --porcelain` 검사 — `logs/validators/history.jsonl`과 `docs/exec-plans/active/<TASK_ID>.md` 외 변경 시 즉시 abort + 사용자 보고. 3회 반복 시 pre-tool-use hook으로 워크트리 외부 Edit/Write 구조적 차단
+
 > 새 원칙 추가 시 `GP-{N+1}` 번호를 부여하고, 반드시 **왜/대신/강제** 세 항목을 채우세요.
