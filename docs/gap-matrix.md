@@ -26,7 +26,7 @@
 |---|---|---|---|---|---|---|
 | announcement | ✅ | 🟡 [T-201](T-201) | 🟡 [T-202](T-202) Idempotency | ✅ | ❌ [T-901](T-901) | 🟡 [T-203](T-203) |
 | asset | 🟡 [T-204](T-204) Content-Type | ✅ | ✅ | ✅ | 🟡 [T-205](T-205) | ✅ |
-| auth | ✅ | 🟡 [T-001](T-001) Email 발송 | ✅ | 🟡 [T-002](T-002) Refresh token race | 🟡 [T-903](T-903) | ✅ |
+| auth | ✅ | ✅ | ✅ | 🟡 [T-002](T-002) Refresh token race; [T-207](T-207) Email adapter | 🟡 [T-903](T-903) | ✅ |
 | booking | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | common | ✅ | ✅ | N/A | ✅ | 🟡 [T-904](T-904) | 🟡 [T-003](T-003) TimeWindow 상수 |
 | customer | ✅ | 🟡 [T-206](T-206) Notification filtering | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-208](T-208) iCal RFC | 🟡 [T-209](T-209) |

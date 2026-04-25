@@ -11,6 +11,7 @@
 
 | ID | 날짜 | 증상 | 근본 원인 | 강화책 | 도메인 |
 |----|------|------|-----------|--------|--------|
+| F-2026-04-26-1 | 2026-04-26 | T-001 orchestrator가 구현 완료 보고 후 task-finish.sh 1차 실행 시 빈 merge("Already up to date"), 워크트리 cleanup 실패. 실제로는 구현 파일이 모두 워크트리에 미커밋 상태로 잔존 | tdd-backend 서브에이전트가 Write로 파일 생성 후 git commit 누락. verify 검증기는 작업트리 파일을 직접 읽어 PASS, orchestrator/Phase 8도 워크트리 git status 미확인 | (1) task-finish.sh 시작 시 `git status --porcelain` 가드 추가 권고 — 미커밋 시 즉시 abort. (2) orchestrator.md Phase 8.5 "워크트리 git status 청결 확인" 단계 추가 검토. (3) 반복 시 golden-principles 승격 | 워크플로우 |
 
 ## 기록 방법
 
