@@ -1,0 +1,1 @@
+ALTER TABLE auth_refresh_tokens ADD COLUMN version BIGINT NOT NULL DEFAULT 0;

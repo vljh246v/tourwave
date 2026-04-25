@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.time.Instant
 
 @Entity
@@ -31,4 +32,7 @@ data class AuthRefreshTokenJpaEntity(
     val issuedAtUtc: Instant,
     @Column(name = "revoked_at_utc")
     val revokedAtUtc: Instant? = null,
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Long = 0L,
 )
