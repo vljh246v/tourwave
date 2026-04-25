@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: domain + adapter.out
 size: L
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: null
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-26
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-002 — [BE] auth — Refresh token 로테이션 race condition 해결
 
