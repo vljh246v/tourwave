@@ -50,7 +50,7 @@ class AuthTokenLifecycleService(
 
     fun rotate(rawRefreshToken: String): AuthRefreshToken {
         val token = requireActiveRefreshToken(rawRefreshToken)
-        val rotated = authRefreshTokenRepository.rotate(token)
+        val rotated = authRefreshTokenRepository.rotate(token, clock.instant())
         authRefreshTokenRepository.revokeAllByUserId(
             userId = token.userId,
             revokedAtUtc = clock.instant(),

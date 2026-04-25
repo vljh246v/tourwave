@@ -13,7 +13,10 @@ interface AuthRefreshTokenRepository {
         revokedAtUtc: Instant,
     )
 
-    fun rotate(token: AuthRefreshToken): AuthRefreshToken
+    fun rotate(
+        token: AuthRefreshToken,
+        revokedAtUtc: Instant,
+    ): AuthRefreshToken
 
     fun clear()
 }

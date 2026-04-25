@@ -38,8 +38,11 @@ class InMemoryAuthRefreshTokenRepositoryAdapter : AuthRefreshTokenRepository {
         }
     }
 
-    override fun rotate(token: AuthRefreshToken): AuthRefreshToken {
-        val revoked = token.copy(revokedAtUtc = Instant.now())
+    override fun rotate(
+        token: AuthRefreshToken,
+        revokedAtUtc: Instant,
+    ): AuthRefreshToken {
+        val revoked = token.copy(revokedAtUtc = revokedAtUtc)
         return save(revoked)
     }
 

@@ -50,7 +50,7 @@ class MysqlAuthRefreshTokenRaceTest {
                         Callable {
                             latch.await()
                             try {
-                                authRefreshTokenRepository.rotate(token)
+                                authRefreshTokenRepository.rotate(token, Instant.parse("2026-04-26T10:00:00Z"))
                                 "success"
                             } catch (e: DomainException) {
                                 if (e.errorCode == ErrorCode.REFRESH_TOKEN_ROTATION_CONFLICT) {

@@ -160,8 +160,11 @@ class FakeAuthRefreshTokenRepository : com.demo.tourwave.application.auth.port.A
             }
     }
 
-    override fun rotate(token: com.demo.tourwave.domain.auth.AuthRefreshToken): com.demo.tourwave.domain.auth.AuthRefreshToken {
-        val revoked = token.copy(revokedAtUtc = java.time.Instant.now())
+    override fun rotate(
+        token: com.demo.tourwave.domain.auth.AuthRefreshToken,
+        revokedAtUtc: java.time.Instant,
+    ): com.demo.tourwave.domain.auth.AuthRefreshToken {
+        val revoked = token.copy(revokedAtUtc = revokedAtUtc)
         tokens[requireNotNull(revoked.id)] = revoked
         return revoked
     }

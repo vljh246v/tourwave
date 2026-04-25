@@ -35,9 +35,12 @@ class JpaAuthRefreshTokenRepositoryAdapter(
             }
     }
 
-    override fun rotate(token: AuthRefreshToken): AuthRefreshToken {
+    override fun rotate(
+        token: AuthRefreshToken,
+        revokedAtUtc: Instant,
+    ): AuthRefreshToken {
         try {
-            val revoked = token.copy(revokedAtUtc = Instant.now())
+            val revoked = token.copy(revokedAtUtc = revokedAtUtc)
             return authRefreshTokenJpaRepository.save(revoked.toEntity()).toDomain()
         } catch (e: OptimisticLockException) {
             throw DomainException(
