@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: application
 size: M
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: null
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-26
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-001 — [BE] auth — Password reset 이메일 발송 구현
 
