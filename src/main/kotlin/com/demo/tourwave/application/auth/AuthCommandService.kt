@@ -10,9 +10,11 @@ import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.user.User
 import com.demo.tourwave.domain.user.UserStatus
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Duration
 
+@Transactional
 class AuthCommandService(
     private val userRepository: UserRepository,
     private val passwordHasher: PasswordHasher,

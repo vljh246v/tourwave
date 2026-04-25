@@ -43,13 +43,13 @@ class JpaAuthRefreshTokenRepositoryAdapter(
             throw DomainException(
                 errorCode = ErrorCode.REFRESH_TOKEN_ROTATION_CONFLICT,
                 status = 409,
-                message = "refresh token rotation conflict - concurrent rotate detected",
+                message = "refresh token rotation conflict",
             )
         } catch (e: ObjectOptimisticLockingFailureException) {
             throw DomainException(
                 errorCode = ErrorCode.REFRESH_TOKEN_ROTATION_CONFLICT,
                 status = 409,
-                message = "refresh token rotation conflict - concurrent rotate detected",
+                message = "refresh token rotation conflict",
             )
         }
     }

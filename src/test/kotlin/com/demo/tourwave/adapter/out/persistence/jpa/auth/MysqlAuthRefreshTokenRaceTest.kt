@@ -15,7 +15,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 
 @SpringBootTest(classes = [TourwaveApplication::class])
 @ActiveProfiles("mysql-test")
@@ -30,37 +29,39 @@ class MysqlAuthRefreshTokenRaceTest {
 
     @Test
     fun `concurrent rotate on same token allows one success, others throw conflict`() {
-        val token = authRefreshTokenRepository.save(
-            AuthRefreshToken(
-                userId = 100L,
-                tokenHash = "hash123",
-                expiresAtUtc = Instant.parse("2026-05-01T00:00:00Z"),
-                issuedAtUtc = Instant.parse("2026-04-26T00:00:00Z"),
-            ),
-        )
+        val token =
+            authRefreshTokenRepository.save(
+                AuthRefreshToken(
+                    userId = 100L,
+                    tokenHash = "hash123",
+                    expiresAtUtc = Instant.parse("2026-05-01T00:00:00Z"),
+                    issuedAtUtc = Instant.parse("2026-04-26T00:00:00Z"),
+                ),
+            )
 
         val threadCount = 10
         val executor = Executors.newFixedThreadPool(threadCount)
         val latch = CountDownLatch(1)
 
         try {
-            val futures = (1..threadCount).map {
-                executor.submit(
-                    Callable {
-                        latch.await()
-                        try {
-                            authRefreshTokenRepository.rotate(token)
-                            "success"
-                        } catch (e: DomainException) {
-                            if (e.errorCode == ErrorCode.REFRESH_TOKEN_ROTATION_CONFLICT) {
-                                "conflict"
-                            } else {
-                                throw e
+            val futures =
+                (1..threadCount).map {
+                    executor.submit(
+                        Callable {
+                            latch.await()
+                            try {
+                                authRefreshTokenRepository.rotate(token)
+                                "success"
+                            } catch (e: DomainException) {
+                                if (e.errorCode == ErrorCode.REFRESH_TOKEN_ROTATION_CONFLICT) {
+                                    "conflict"
+                                } else {
+                                    throw e
+                                }
                             }
-                        }
-                    },
-                )
-            }
+                        },
+                    )
+                }
 
             latch.countDown()
             val results = futures.map { it.get() }

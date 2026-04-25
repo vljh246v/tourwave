@@ -132,3 +132,45 @@ class FakeUserPort : UserPort {
         sequence.set(0)
     }
 }
+
+class FakeAuthRefreshTokenRepository : com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository {
+    private val sequence = AtomicLong(0)
+    private val tokens = ConcurrentHashMap<Long, com.demo.tourwave.domain.auth.AuthRefreshToken>()
+    private val tokenHashIndex = ConcurrentHashMap<String, Long>()
+
+    override fun save(token: com.demo.tourwave.domain.auth.AuthRefreshToken): com.demo.tourwave.domain.auth.AuthRefreshToken {
+        val id = token.id ?: sequence.incrementAndGet()
+        val saved = token.copy(id = id)
+        tokens[id] = saved
+        tokenHashIndex[saved.tokenHash] = id
+        return saved
+    }
+
+    override fun findByTokenHash(tokenHash: String): com.demo.tourwave.domain.auth.AuthRefreshToken? {
+        val id = tokenHashIndex[tokenHash] ?: return null
+        return tokens[id]
+    }
+
+    override fun revokeAllByUserId(userId: Long, revokedAtUtc: java.time.Instant) {
+        tokens.values
+            .filter { it.userId == userId && it.revokedAtUtc == null }
+            .forEach { token ->
+                val revoked = token.copy(revokedAtUtc = revokedAtUtc)
+                tokens[requireNotNull(revoked.id)] = revoked
+            }
+    }
+
+    override fun rotate(token: com.demo.tourwave.domain.auth.AuthRefreshToken): com.demo.tourwave.domain.auth.AuthRefreshToken {
+        val revoked = token.copy(revokedAtUtc = java.time.Instant.now())
+        tokens[requireNotNull(revoked.id)] = revoked
+        return revoked
+    }
+
+    override fun clear() {
+        tokens.clear()
+        tokenHashIndex.clear()
+        sequence.set(0)
+    }
+
+    fun findAll(): List<com.demo.tourwave.domain.auth.AuthRefreshToken> = tokens.values.sortedBy { it.id }
+}
