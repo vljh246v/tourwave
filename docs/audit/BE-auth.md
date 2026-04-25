@@ -96,16 +96,23 @@
 ### 실패 중
 - 없음
 
+## 구현 완료 (T-002)
+
+**T-002 작업 (2026-04-26):** Refresh token rotation race condition 해결
+- OptimisticLock(@Version) 구현 추가: `AuthRefreshToken.version` 필드 및 JPA @Version 매핑
+- `rotate()` + `revokeAll()` 패턴: `AuthTokenLifecycleService.rotate()`가 해당 토큰 rotate 후 동일 userId의 다른 모든 토큰 철회
+- 보안 정책 일관성: logout=revokeAll, refresh=rotate+revokeAll 둘 다 모든 토큰 철회
+- 에러 메시지 동시성 힌트 제거 완료 (M-2)
+- MEDIUM 이슈 해소 완료
+
 ## 관찰된 문제
 
 1. **토큰 소비 멱등성** — `confirm*` 엔드포인트에서 Idempotency-Key 검증 미지원. 같은 토큰 2회 제출 시 2번 소비 가능.
 
-2. **Refresh Token 로테이션** — 현재 rotate() 구현이 기존 토큰 철회 후 신규 발급하므로 동시 요청에 race condition 위험. 분산 환경에서는 version 필드 추가 권장.
+2. **Password Reset 이메일 검증 부재** — requestPasswordReset()은 이메일 존재 여부만 확인하고 실제 이메일 발송 구현 부재. NotificationDeliveryService와 통합 필요.
 
-3. **Password Reset 이메일 검증 부재** — requestPasswordReset()은 이메일 존재 여부만 확인하고 실제 이메일 발송 구현 부재. NotificationDeliveryService와 통합 필요.
+3. **UserStatus.DELETED 미사용** — User 엔티티가 DELETED 상태를 정의했으나 애플리케이션에서 사용하지 않음. deactivate만 구현됨.
 
-4. **UserStatus.DELETED 미사용** — User 엔티티가 DELETED 상태를 정의했으나 애플리케이션에서 사용하지 않음. deactivate만 구현됨.
+4. **AccessTokenClaims 검증 부재** — JWT parse 후 claim 유효성 (iat, exp 범위) 검증이 기본 범위 초과/이전 체크만 함. clock skew 고려 권장.
 
-5. **AccessTokenClaims 검증 부재** — JWT parse 후 claim 유효성 (iat, exp 범위) 검증이 기본 범위 초과/이전 체크만 함. clock skew 고려 권장.
-
-6. **ORG_INVITATION 목적 미구현** — UserActionTokenPurpose enum에 정의했으나 signup/reset 외 사용 코드 없음.
+5. **ORG_INVITATION 목적 미구현** — UserActionTokenPurpose enum에 정의했으나 signup/reset 외 사용 코드 없음.
