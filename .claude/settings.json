@@ -1,7 +1,4 @@
 {
-  "skills": {
-    "harness-task": ".claude/skills/harness-task/SKILL.md"
-  },
   "hooks": {
     "PreToolUse": [
       {

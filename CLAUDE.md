@@ -6,16 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 작업 유형 | 먼저 읽을 문서 | 시작 명령 |
 |-----------|---------------|-----------|
-| BE 단독 기능 / 버그 수정 | `docs/golden-principles.md` → `docs/escalation-policy.md` | `/harness-task <id> <설명>` |
-| 풀스택 (BE+FE, OpenAPI 변경 동반) | `docs/golden-principles.md` → `docs/openapi.yaml` | `/dev <id> <설명>` |
+| 기능 / 버그 수정 (BE 단독·FE 단독·풀스택 모두) | `docs/golden-principles.md` → `docs/escalation-policy.md` (풀스택이면 `docs/openapi.yaml`도) | `/dev <id> <설명>` |
 | 고위험 변경 (DB 스키마, 인증, 상태 머신) | `docs/escalation-policy.md` → 사람 승인 필수 | - |
 | 반복 실패 분석 | `logs/trends/failure-patterns.md` → `docs/agent-failures.md` | - |
+
+`/dev`는 `orchestrator` 에이전트가 작업 범위(BE-only / FE-only / Fullstack)를 자동 분류하고 tdd-backend / tdd-frontend / security-reviewer / verification 서브에이전트를 dispatch한다.
 
 ## 하네스 워크플로우
 
 ```
-/harness-task <task-id> <설명>
-  → 계획 → task-start.sh → 구현 → verify-task.sh → PR push
+/dev <task-id> <설명>
+  → orchestrator가 분류 → task-start.sh → tdd-* 구현 → security-reviewer → verification(verify-task.sh) → task-finish.sh
 ```
 
 수동 실행:

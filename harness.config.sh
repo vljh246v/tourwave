@@ -16,7 +16,7 @@ PHASE_DEVELOP_BASE="develop"
 PHASE_RELEASE_BASE=""          # 매번 물어봄
 PHASE_HOTFIX_BASE="main"
 
-BASE_BRANCH="develop"          # 기본값 (harness-task가 단계에 따라 덮어씀)
+BASE_BRANCH="develop"          # 기본값 (orchestrator가 단계에 따라 덮어씀)
 
 # =============================================================================
 # 브랜치 & 커밋 규칙

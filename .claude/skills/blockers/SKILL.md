@@ -46,7 +46,7 @@ tourwave의 GitHub Projects 카드(`docs/tasks/**/T-*.md`) 간 `Depends on` / `B
 - **상위 블록커 1~3개**에 대해 각각 카드 파일을 읽어 `Depends on`과 `Status` 필드 확인.
 - **`Status: Done`인 카드는 건너뜀** (이미 완료된 카드는 블록커가 아님).
 - Depends on이 **비어있거나 "없음"**이고 Status가 Done이 아닌 블록커 = **지금 바로 시작 가능한 최우선 카드**.
-- 그 카드를 "추천 시작"으로 제시, 파일 경로 + `/harness-task` 명령 예시 함께.
+- 그 카드를 "추천 시작"으로 제시, 파일 경로 + `/dev` 명령 예시 함께.
 
 예:
 ```
@@ -54,7 +54,7 @@ tourwave의 GitHub Projects 카드(`docs/tasks/**/T-*.md`) 간 `Depends on` / `B
   T-912 — [FE] 인증 모듈 (11개 블로킹, Depends on: 없음)
 
 추천 명령:
-  /harness-task T-912 인증 모듈. 카드: docs/tasks/cross/T-912-fe-auth-module.md
+  /dev T-912 인증 모듈. 카드: docs/tasks/cross/T-912-fe-auth-module.md
 ```
 
 ### 모드 B: 개별 카드 조회 (`T-XXX`)
@@ -116,7 +116,7 @@ done | sort -rn
 - 한국어 요약
 - 테이블 형식 (순위 | ID | 블록 수 | 제목)
 - 추천 카드에 💡 이모지
-- `/harness-task` 명령을 복붙 가능한 코드블록으로 제시
+- `/dev` 명령을 복붙 가능한 코드블록으로 제시
 - 필요 시 관련 Project 링크: https://github.com/users/vljh246v/projects/4
 
 ## 주의사항
@@ -129,5 +129,5 @@ done | sort -rn
 ## 완료 후 제안
 
 조회 결과를 보여준 뒤:
-- 추천 카드 1개를 `/harness-task`로 시작할지 묻기
+- 추천 카드 1개를 `/dev`로 시작할지 묻기
 - 또는 여러 준비된 카드 중 병렬로 돌릴 2~3개 제안 (WRITE 충돌 없는 조합)
