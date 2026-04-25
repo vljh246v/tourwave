@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 작업 유형 | 먼저 읽을 문서 | 시작 명령 |
 |-----------|---------------|-----------|
-| 새 기능 / 버그 수정 | `docs/golden-principles.md` → `docs/escalation-policy.md` | `/harness-task <id> <설명>` |
+| BE 단독 기능 / 버그 수정 | `docs/golden-principles.md` → `docs/escalation-policy.md` | `/harness-task <id> <설명>` |
+| 풀스택 (BE+FE, OpenAPI 변경 동반) | `docs/golden-principles.md` → `docs/openapi.yaml` | `/dev <id> <설명>` |
 | 고위험 변경 (DB 스키마, 인증, 상태 머신) | `docs/escalation-policy.md` → 사람 승인 필수 | - |
 | 반복 실패 분석 | `logs/trends/failure-patterns.md` → `docs/agent-failures.md` | - |
 
