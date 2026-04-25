@@ -50,8 +50,7 @@ class AuthTokenLifecycleService(
 
     fun rotate(rawRefreshToken: String): AuthRefreshToken {
         val token = requireActiveRefreshToken(rawRefreshToken)
-        revokeAll(token.userId)
-        return token
+        return authRefreshTokenRepository.rotate(token)
     }
 
     private fun hash(value: String): String {
