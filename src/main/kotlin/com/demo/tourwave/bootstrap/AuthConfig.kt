@@ -1,9 +1,12 @@
 package com.demo.tourwave.bootstrap
 
+import com.demo.tourwave.adapter.out.notification.LoggingNotificationAdapter
 import com.demo.tourwave.application.auth.ActionTokenGenerator
 import com.demo.tourwave.application.auth.AuthCommandService
 import com.demo.tourwave.application.auth.AuthTokenLifecycleService
 import com.demo.tourwave.application.auth.JwtTokenService
+import com.demo.tourwave.application.auth.NotificationChannelPort
+import com.demo.tourwave.application.auth.PasswordResetService
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.auth.port.AuthRefreshTokenRepository
 import com.demo.tourwave.application.auth.port.PasswordHasher
@@ -50,12 +53,35 @@ class AuthConfig {
     }
 
     @Bean
+    fun notificationChannelPort(): NotificationChannelPort {
+        return LoggingNotificationAdapter()
+    }
+
+    @Bean
+    fun passwordResetService(
+        notificationChannelPort: NotificationChannelPort,
+        userActionTokenService: UserActionTokenService,
+        userRepository: UserRepository,
+        auditEventPort: AuditEventPort,
+        clock: Clock,
+    ): PasswordResetService {
+        return PasswordResetService(
+            notificationChannelPort = notificationChannelPort,
+            userActionTokenService = userActionTokenService,
+            userRepository = userRepository,
+            auditEventPort = auditEventPort,
+            clock = clock,
+        )
+    }
+
+    @Bean
     fun authCommandService(
         userRepository: UserRepository,
         passwordHasher: PasswordHasher,
         jwtTokenService: JwtTokenService,
         authTokenLifecycleService: AuthTokenLifecycleService,
         userActionTokenService: UserActionTokenService,
+        passwordResetService: PasswordResetService,
         auditEventPort: AuditEventPort,
         clock: Clock,
     ): AuthCommandService {
@@ -65,6 +91,7 @@ class AuthConfig {
             jwtTokenService = jwtTokenService,
             authTokenLifecycleService = authTokenLifecycleService,
             userActionTokenService = userActionTokenService,
+            passwordResetService = passwordResetService,
             auditEventPort = auditEventPort,
             clock = clock,
         )

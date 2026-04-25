@@ -33,6 +33,7 @@ class AuthCommandServiceTest {
     private val authRefreshTokenRepository: AuthRefreshTokenRepository = mock()
     private val userActionTokenRepository: UserActionTokenRepository = mock()
     private val auditEventPort: AuditEventPort = mock()
+    private val passwordResetService: PasswordResetService = mock()
     private val clock = Clock.fixed(Instant.parse("2026-03-17T00:00:00Z"), ZoneOffset.UTC)
     private val userActionTokenService =
         UserActionTokenService(
@@ -62,6 +63,7 @@ class AuthCommandServiceTest {
             jwtTokenService = jwtTokenService,
             authTokenLifecycleService = authTokenLifecycleService,
             userActionTokenService = userActionTokenService,
+            passwordResetService = passwordResetService,
             auditEventPort = auditEventPort,
             clock = clock,
         )

@@ -19,6 +19,7 @@ class AuthCommandService(
     private val jwtTokenService: JwtTokenService,
     private val authTokenLifecycleService: AuthTokenLifecycleService,
     private val userActionTokenService: UserActionTokenService,
+    private val passwordResetService: PasswordResetService,
     private val auditEventPort: AuditEventPort,
     private val clock: Clock,
 ) {
@@ -124,16 +125,7 @@ class AuthCommandService(
     }
 
     fun requestPasswordReset(email: String) {
-        val normalizedEmail = requireValidEmail(email)
-        val user = userRepository.findByEmail(normalizedEmail) ?: return
-        if (user.status != UserStatus.ACTIVE) {
-            return
-        }
-        userActionTokenService.issue(
-            userId = requireNotNull(user.id),
-            purpose = UserActionTokenPurpose.PASSWORD_RESET,
-            ttl = Duration.ofHours(2),
-        )
+        passwordResetService.requestPasswordReset(email)
     }
 
     fun confirmPasswordReset(
