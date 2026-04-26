@@ -362,7 +362,9 @@ fun delete(now: Instant): User {
 - `resource_type`: `USER`
 - `resource_id`: user_id
 - `occurred_at_utc`
-- `before_json` / `after_json`: PII 마스킹 상태로 기록 (DELETED 이후 after_json은 마스킹 완료 스냅샷)
+- `before_json` / `after_json`: **PII 필드(email, displayName, passwordHash)는 감사 로그에 기록하지 않는다.** 상태(status)와 비식별 메타데이터만 포함.
+
+> **PII in audit logs 규칙:** `before_json`/`after_json`에 원본 email, displayName, passwordHash를 포함하지 않는다. 이를 포함하면 감사 로그 자체가 PII 저장소가 되어 GDPR 준수 목적이 무효화된다. `status`, `deletedAt` 같은 비식별 필드만 스냅샷에 포함한다.
 
 **예시 이벤트 (USER_DELETED):**
 ```json
@@ -373,8 +375,8 @@ fun delete(now: Instant): User {
   "resource_type": "USER",
   "resource_id": 42,
   "occurred_at_utc": "2026-04-26T10:00:00Z",
-  "before_json": {"email": "user@example.com", "status": "ACTIVE"},
-  "after_json": {"email": "deleted_42@deleted.local", "status": "DELETED"}
+  "before_json": {"status": "ACTIVE"},
+  "after_json": {"status": "DELETED", "deleted_at_utc": "2026-04-26T10:00:00Z"}
 }
 ```
 
