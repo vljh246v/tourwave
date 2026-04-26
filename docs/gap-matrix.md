@@ -91,6 +91,7 @@
 | FE 테스트 러너 (vitest) 도입 | ❌ | [T-914](T-914) |
 | FE 라우트 가드 (middleware.ts) | ❌ | [T-915](T-915) |
 | FE 디자인 시스템 기본 컴포넌트 (Button/Input/Modal) | ❌ | [T-916](T-916) |
+| orchestrator Phase 0/7.6/8.5 신설 (문서·정합성 가드) | 🟡 | [T-907](T-907) — in-progress 2026-04-27 |
 
 ---
 
