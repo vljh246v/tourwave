@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: tooling
 size: L
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-27
 updated: 2026-04-27
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-907 — [Infra] orchestrator 문서·파일 정합성 가드
 
