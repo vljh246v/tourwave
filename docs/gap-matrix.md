@@ -81,7 +81,7 @@
 | AuditEventTest 부재 | ❌ | [T-901](T-901) |
 | CommunicationReportingIntegrationTest 실패 (main) | ❌ | [T-902](T-902) |
 | Idempotency-Key 일관성 (announcement/operations/organization/instructor) | 🟡 | [T-903](T-903) |
-| 감사 이벤트 커버리지 (announcement/organization/instructor/tour) | 🟡 | [T-904](T-904) |
+| 감사 이벤트 커버리지 (announcement/organization/instructor/tour) | ✅ | [T-904](T-904) — done 2026-04-26 |
 | OccurrenceCatalogControllerIntegrationTest 실패 (main) | ❌ | [T-905](T-905) |
 | InstructorAndTourControllerIntegrationTest 분리 필요 | 🟡 | [T-906](T-906) |
 | FE API 클라이언트 fetch 래퍼 | ❌ | [T-910](T-910) |
@@ -197,14 +197,14 @@
 - T-209 [BE] customer — Customer 도메인 문서화
 - T-210 [BE] inquiry — OpenAPI 계약 테스트 (InquiryControllerIntegrationTest)
 - T-211 [BE] instructor — Instructor profile status 검증 강화
-- T-212 [BE] instructor — Instructor 감사 이벤트 기록 (registration action)
+- ~~T-212 [BE] instructor — Instructor 감사 이벤트 기록 (registration action)~~ → T-904로 흡수 완료 (2026-04-26)
 - T-213 [BE] instructor — Instructor Idempotency-Key 구현
 - T-214 [BE] instructor — Instructor registration 거부 사유 필수 검증
 - T-215 [BE] instructor — Instructor 문서화
-- T-219 [BE] organization — Organization 감사 이벤트 기록 (create/update/invite)
+- ~~T-219 [BE] organization — Organization 감사 이벤트 기록 (create/update/invite)~~ → T-904로 흡수 완료 (2026-04-26)
 - T-220 [BE] organization — Organization Idempotency-Key 구현 (invite)
 - T-221 [BE] organization — Organization slug 정규화 강화 (특수문자/공백)
-- T-223 [BE] tour — Tour 감사 이벤트 기록 (create/update/publish)
+- ~~T-223 [BE] tour — Tour 감사 이벤트 기록 (create/update/publish)~~ → T-904로 흡수 완료 (2026-04-26)
 - T-224 [BE] tour — Tour 생성 Idempotency-Key 구현
 - T-225 [BE] tour — Tour 통합 테스트 분리 (InstructorAndTourControllerIntegrationTest 분리)
 - T-226 [BE] tour — Tour 문서화 (발행 이후 수정 정책)

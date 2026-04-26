@@ -53,4 +53,10 @@
 - **대신**: 모든 코드/문서 수정은 `.worktrees/<TASK_ID>/` 절대경로 안에서만 수행. 워크트리 외부 자동 수정이 허용되는 파일은 `logs/validators/history.jsonl` 한정 (verify-task.sh가 작성, task-finish.sh가 commit)
 - **강제**: orchestrator Phase 8/9에서 메인 repo `git status --porcelain` 검사 — `logs/validators/history.jsonl`과 `docs/exec-plans/active/<TASK_ID>.md` 외 변경 시 즉시 abort + 사용자 보고. 3회 반복 시 pre-tool-use hook으로 워크트리 외부 Edit/Write 구조적 차단
 
+### GP-008: 서브에이전트는 stage 완료마다 git commit한다 (워크트리 미커밋 잔존 금지)
+
+- **왜**: F-2026-04-26-1 / F-2026-04-26-3 — tdd-* 서브에이전트가 Write/Edit으로 파일을 변경한 뒤 git commit을 누락하면 task-finish.sh의 develop merge가 빈 merge("Already up to date")로 끝나고 워크트리 cleanup 실패. 검증기는 작업트리 파일을 직접 읽어 PASS하므로 검출 불가. 같은 패턴 같은 날 3회 도달 → 구조적 차단 의무
+- **대신**: 각 Red-Green-Refactor stage의 Green 단계 직후 `git add` + `git commit -m "stage: <설명>"` 실행. 최종 task-finish.sh 호출 전 워크트리 `git status --porcelain` 빈 출력 보장
+- **강제**: (1) `scripts/task-finish.sh` 시작부에 워크트리 미커밋 가드 즉시 추가 (필수). (2) `~/.claude/agents/tdd-backend.md` / `tdd-frontend.md` 절차에 "stage별 commit" 명시. (3) 추가 반복 시 pre-tool-use hook으로 비커밋 상태에서의 task-finish.sh 호출 차단
+
 > 새 원칙 추가 시 `GP-{N+1}` 번호를 부여하고, 반드시 **왜/대신/강제** 세 항목을 채우세요.

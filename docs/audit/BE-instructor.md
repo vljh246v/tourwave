@@ -71,7 +71,7 @@
 - 없음 (모두 통과)
 
 ## 관찰된 문제
-1. **감사 이벤트 미기록**: 등록 제출/승인/거부 시 AuditEvent 기록 없음
+1. ~~**감사 이벤트 미기록**: 등록 제출/승인/거부 시 AuditEvent 기록 없음~~ → T-904 (2026-04-26) 해결: INSTRUCTOR_REGISTRATION_SUBMITTED/APPROVED/REJECTED + INSTRUCTOR_PROFILE_CREATED/UPDATED 발행 (approve 시 신규 프로필 생성 분기는 PROFILE_CREATED 동시 발행), InstructorAuditTest 커버
 2. **Idempotency-Key 미사용**: 중복 제출 검증 미보장
 3. **승인자 역할 검증 부족**: approveRegistration() 호출 시 OWNER 체크 있나 확인 필요
 4. **통합 테스트 분리 필요**: InstructorAndTourControllerIntegrationTest → InstructorControllerIntegrationTest + TourControllerIntegrationTest 분리 권장

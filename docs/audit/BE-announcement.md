@@ -103,4 +103,4 @@
 ## 관찰된 문제
 1. **Idempotency-Key 미구현**: POST/PATCH/DELETE 엔드포인트가 멱등성 키를 사용하지 않음 (도메인 규칙 위반)
 2. **상태 머신 부재**: 공지사항에 명시적 상태 머신이 없어 DRAFT → PUBLIC 정규 전이 검증 불가
-3. **감사 이벤트 미기록**: create/update/delete 시 감사 로그 기록 안 됨
+3. ~~**감사 이벤트 미기록**: create/update/delete 시 감사 로그 기록 안 됨~~ → T-904 (2026-04-26) 해결: ANNOUNCEMENT_CREATED/UPDATED/DELETED 발행, AnnouncementAuditTest 커버

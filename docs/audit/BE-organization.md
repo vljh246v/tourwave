@@ -73,7 +73,7 @@
 - 없음 (모두 통과)
 
 ## 관찰된 문제
-1. **감사 이벤트 미기록**: 조직 생성/수정/멤버 초대 시 AuditEvent 기록 없음
+1. ~~**감사 이벤트 미기록**: 조직 생성/수정/멤버 초대 시 AuditEvent 기록 없음~~ → T-904 (2026-04-26) 해결: ORGANIZATION_CREATED/PROFILE_UPDATED + ORGANIZATION_MEMBER_INVITED/ROLE_CHANGED/DEACTIVATED 발행, OrganizationCommandAuditTest + OrganizationMembershipAuditTest 커버
 2. **Idempotency-Key 미사용**: 멤버 초대 중복 요청 시 멱등성 미보장
 3. **slug 정규화 미완전**: 소문자만 처리, 특수문자/공백 검증 부족
 4. **타임존 검증 없음**: IANA tz db 검증 미실행

@@ -66,7 +66,7 @@
 - `CatalogQueryService` 관련 통합 테스트는 CLAUDE.md에 기존부터 실패 중 명시
 
 ## 관찰된 문제
-1. **감사 이벤트 미기록**: 투어 생성/수정/발행 시 AuditEvent 기록 없음
+1. ~~**감사 이벤트 미기록**: 투어 생성/수정/발행 시 AuditEvent 기록 없음~~ → T-904 (2026-04-26) 해결: TOUR_CREATED/UPDATED/PUBLISHED/ARCHIVED 발행 + Tour.archive() 도메인 메서드 신규(PUBLISHED 외 전이 차단), TourCommandAuditTest 커버
 2. **Idempotency-Key 미사용**: 중복 생성 요청 미보장
 3. **발행 이후 수정 정책 미정의**: publishedAt 이후 updateContent() 허용 여부 비-명시
 4. **접근 제어 검증 부족**: updateContent() 호출 시 organizationId 소유권 검증 필요 (현재 tourId만 사용)
