@@ -251,6 +251,72 @@ Use alongside `docs/openapi.yaml` `x-error-code-map`:
 
 ## 5. Trust Surface Policy
 
+### 5.1 User Privacy & Deletion Policy
+
+#### Soft-Delete vs Hard-Delete 선택 근거
+
+Tourwave는 **Soft-Delete** 방식을 채택한다.
+
+| 방식 | 설명 | 채택 여부 |
+|---|---|---|
+| Soft-Delete | 레코드 유지 + 개인정보 마스킹 | **채택** |
+| Hard-Delete | DB 레코드 물리 삭제 | 미래 과제 (GDPR hard-delete 요건 시) |
+
+**Soft-Delete 채택 이유:**
+1. **감사 추적 유지:** 예약, 결제, 리뷰 등 연관 레코드의 참조 무결성 보존
+2. **규제 대응:** 개인정보보호법 / GDPR 준수를 위한 처리 이력 보존 의무
+3. **데이터 복구 용이성:** 실수 또는 법적 분쟁 시 마스킹 전 이력 추적 가능 (감사 로그 기반)
+4. **운영 안전성:** FK 참조를 끊지 않으므로 cascade 삭제 버그 위험 없음
+
+#### 마스킹 필드 목록
+
+`DELETED` 전이 시 아래 필드를 즉시 마스킹한다. 마스킹은 비가역적이다.
+
+| 필드 | 마스킹 후 값 | 이유 |
+|---|---|---|
+| `email` | `deleted_<userId>@deleted.local` | 이메일 주소는 개인식별정보(PII) |
+| `displayName` | `Deleted User #<userId>` | 이름은 개인식별정보(PII) |
+| `passwordHash` | `[DELETED]` | 인증 자격증명 무효화 |
+| `createdAt` | 유지 | 감사 목적 (생성 시점) |
+| `updatedAt` | 유지 | 감사 목적 (마지막 처리 시점) |
+| `deletedAt` | `<삭제 시각 UTC>` | 삭제 이력 기록 필수 |
+
+**유지되는 비식별 정보 (마스킹 대상 아님):**
+- `id` (PK) — 연관 레코드 참조 유지
+- `createdAt`, `updatedAt` — 감사 목적
+- `deletedAt` — 삭제 시점 기록
+
+#### 복구 가능 기간
+
+| 상태 | 복구 가능 여부 | 복구 방법 |
+|---|---|---|
+| `DEACTIVATED` | **가능** | 사용자가 직접 로그인 후 복구 요청 |
+| `SUSPENDED` | **가능** | 운영자 수동 해제 처리 |
+| `DELETED` | **불가** | 마스킹 비가역적 — 개인정보 삭제 완료 상태 |
+
+`DELETED` 상태 이후에는 어떤 방법으로도 원본 데이터 복구가 불가능하다. 감사 이벤트 로그만 운영 목적으로 접근 가능하다.
+
+#### GDPR "Right to be Forgotten" 대응 계획
+
+**현재 상태 (MVP):**
+- Soft-Delete + 개인정보 마스킹으로 실질적 삭제 효과 달성
+- 감사 로그에 마스킹 전/후 스냅샷 보존 (운영자 전용 접근)
+- `deleted_<userId>@deleted.local` 형식의 식별자는 원본 PII를 포함하지 않음
+
+**미래 과제 (별도 태스크):**
+- EU GDPR 대응 시 Hard-Delete 기능 추가 (데이터 보존 기간 만료 후 레코드 물리 삭제)
+- 개인정보 처리 방침 내 삭제 요청 처리 SLA 정의
+- 데이터 보존 기간 정책 수립 (e.g., 삭제 후 N년 감사 로그만 유지)
+- Right to Access / Right to Portability 엔드포인트 설계
+
+#### 보안 경계 규칙
+
+- **인증 차단:** `DEACTIVATED`, `SUSPENDED`, `DELETED` 사용자는 유효한 JWT가 있어도 요청 거부
+- **API 응답:** DELETED 사용자를 조회 API에서 노출하지 않음 (조회 시 404 반환 원칙)
+- **감사 로그 접근:** DELETED 사용자의 감사 이벤트는 운영자 전용 API로만 접근 가능
+
+> 상세 상태 전이 규칙 및 마스킹 구현은 `docs/domain-rules.md § User Entity & Lifecycle` 참조
+
 ### Review Aggregation
 
 Aggregation mode: **query-time** (not materialized projection). Source of truth: `reviews` + linked `occurrences` / `tours` / `instructor_profiles`.
