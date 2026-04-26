@@ -234,7 +234,6 @@ echo ""
 # Avoid pipe to while to preserve variable scope
 while IFS= read -r card_file; do
   [[ -z "$card_file" ]] && continue
-  card_id=$(basename "$card_file" .md)
 
   # Apply milestone filter using frontmatter field
   if [[ "$MILESTONE" != "all" ]]; then
