@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: documentation
 size: S
-status: in-progress
+status: done
 
 depends_on: ['T-005']
 blocks: []
@@ -20,9 +20,10 @@ exec_plan: ""
 
 created: 2026-04-18
 updated: 2026-04-26
+reviewed: 2026-04-26
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-007 — [BE] user — User soft-delete 정책 문서화
 
@@ -132,3 +133,6 @@ git checkout -- docs/policies.md
 
 - 기존 문서와 링크: `docs/domain-rules.md` §Explicit State Transition Rules에 User 전이 추가
 - T-005 완료 후 시작 권장 (도메인 로직 확정 후)
+
+## Review log
+- 2026-04-26 — domain-rules.md User Entity & Lifecycle 추가, policies.md §5.1 User Privacy 추가
