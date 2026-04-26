@@ -29,3 +29,8 @@ data class PublishTourCommand(
     val actorUserId: Long,
     val tourId: Long,
 )
+
+data class ArchiveTourCommand(
+    val actorUserId: Long,
+    val tourId: Long,
+)

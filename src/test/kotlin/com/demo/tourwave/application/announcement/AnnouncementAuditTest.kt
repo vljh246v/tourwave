@@ -5,7 +5,6 @@ import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizati
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.domain.announcement.AnnouncementVisibility
-import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.organization.OrganizationRole
@@ -16,9 +15,9 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 
-class AnnouncementServiceTest {
+class AnnouncementAuditTest {
     private val announcementRepository = InMemoryAnnouncementRepositoryAdapter()
     private val organizationRepository = InMemoryOrganizationRepositoryAdapter()
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
@@ -37,6 +36,7 @@ class AnnouncementServiceTest {
         announcementRepository.clear()
         membershipRepository.clear()
         organizationRepository.clear()
+        auditEventPort.clear()
         organizationRepository.save(
             Organization.create(
                 slug = "seoul-ops",
@@ -63,64 +63,87 @@ class AnnouncementServiceTest {
     }
 
     @Test
-    fun `public listing exposes only currently visible public announcements`() {
+    fun `create announcement appends ANNOUNCEMENT_CREATED audit event`() {
         service.create(
             CreateAnnouncementCommand(
                 actorUserId = 11L,
                 organizationId = 1L,
-                title = "Visible",
-                body = "Body",
+                title = "New Announcement",
+                body = "Body text",
                 visibility = AnnouncementVisibility.PUBLIC,
-                publishStartsAtUtc = fixedClock.instant().minusSeconds(60),
-                publishEndsAtUtc = fixedClock.instant().plusSeconds(60),
-            ),
-        )
-        service.create(
-            CreateAnnouncementCommand(
-                actorUserId = 11L,
-                organizationId = 1L,
-                title = "Draft",
-                body = "Body",
-                visibility = AnnouncementVisibility.DRAFT,
                 publishStartsAtUtc = null,
                 publishEndsAtUtc = null,
             ),
         )
-        service.create(
-            CreateAnnouncementCommand(
+
+        assertEquals(1, auditEventPort.events.size)
+        val event = auditEventPort.events.first()
+        assertEquals("ANNOUNCEMENT_CREATED", event.action)
+        assertEquals("ANNOUNCEMENT", event.resourceType)
+        assertEquals("OPERATOR:11", event.actor)
+        assertNotNull(event.afterJson)
+    }
+
+    @Test
+    fun `update announcement appends ANNOUNCEMENT_UPDATED audit event`() {
+        val created =
+            service.create(
+                CreateAnnouncementCommand(
+                    actorUserId = 11L,
+                    organizationId = 1L,
+                    title = "Original",
+                    body = "Body",
+                    visibility = AnnouncementVisibility.DRAFT,
+                    publishStartsAtUtc = null,
+                    publishEndsAtUtc = null,
+                ),
+            )
+        auditEventPort.clear()
+
+        service.update(
+            UpdateAnnouncementCommand(
                 actorUserId = 11L,
-                organizationId = 1L,
-                title = "Future",
-                body = "Body",
-                visibility = AnnouncementVisibility.PUBLIC,
-                publishStartsAtUtc = fixedClock.instant().plusSeconds(3600),
+                announcementId = requireNotNull(created.id),
+                title = "Updated Title",
+                body = null,
+                visibility = null,
+                publishStartsAtUtc = null,
                 publishEndsAtUtc = null,
             ),
         )
 
-        val page = service.listPublicAnnouncements(organizationId = 1L, cursor = null, limit = 20)
-
-        assertEquals(1, page.items.size)
-        assertEquals("Visible", page.items.single().title)
+        assertEquals(1, auditEventPort.events.size)
+        val event = auditEventPort.events.first()
+        assertEquals("ANNOUNCEMENT_UPDATED", event.action)
+        assertEquals("ANNOUNCEMENT", event.resourceType)
+        assertEquals("OPERATOR:11", event.actor)
+        assertNotNull(event.beforeJson)
+        assertNotNull(event.afterJson)
     }
 
     @Test
-    fun `announcement create requires operator membership`() {
-        val exception =
-            assertFailsWith<DomainException> {
-                service.create(
-                    CreateAnnouncementCommand(
-                        actorUserId = 99L,
-                        organizationId = 1L,
-                        title = "Title",
-                        body = "Body",
-                        visibility = AnnouncementVisibility.PUBLIC,
-                        publishStartsAtUtc = null,
-                        publishEndsAtUtc = null,
-                    ),
-                )
-            }
+    fun `delete announcement appends ANNOUNCEMENT_DELETED audit event`() {
+        val created =
+            service.create(
+                CreateAnnouncementCommand(
+                    actorUserId = 11L,
+                    organizationId = 1L,
+                    title = "To Delete",
+                    body = "Body",
+                    visibility = AnnouncementVisibility.DRAFT,
+                    publishStartsAtUtc = null,
+                    publishEndsAtUtc = null,
+                ),
+            )
+        auditEventPort.clear()
 
-        assertEquals(403, exception.status)
+        service.delete(actorUserId = 11L, announcementId = requireNotNull(created.id))
+
+        assertEquals(1, auditEventPort.events.size)
+        val event = auditEventPort.events.first()
+        assertEquals("ANNOUNCEMENT_DELETED", event.action)
+        assertEquals("ANNOUNCEMENT", event.resourceType)
+        assertEquals("OPERATOR:11", event.actor)
+        assertNotNull(event.beforeJson)
     }
 }

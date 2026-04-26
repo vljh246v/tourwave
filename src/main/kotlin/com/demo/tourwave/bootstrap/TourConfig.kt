@@ -1,5 +1,6 @@
 package com.demo.tourwave.bootstrap
 
+import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.tour.TourCommandService
@@ -16,12 +17,14 @@ class TourConfig {
         tourRepository: TourRepository,
         organizationRepository: OrganizationRepository,
         organizationAccessGuard: OrganizationAccessGuard,
+        auditEventPort: AuditEventPort,
         clock: Clock,
     ): TourCommandService =
         TourCommandService(
             tourRepository = tourRepository,
             organizationRepository = organizationRepository,
             organizationAccessGuard = organizationAccessGuard,
+            auditEventPort = auditEventPort,
             clock = clock,
         )
 

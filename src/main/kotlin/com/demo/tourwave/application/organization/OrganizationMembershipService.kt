@@ -1,5 +1,7 @@
 package com.demo.tourwave.application.organization
 
+import com.demo.tourwave.application.common.port.AuditEventCommand
+import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.common.DomainException
@@ -7,13 +9,16 @@ import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.organization.OrganizationMembershipStatus
 import com.demo.tourwave.domain.organization.OrganizationRole
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
+@Transactional
 class OrganizationMembershipService(
     private val membershipRepository: OrganizationMembershipRepository,
     private val userRepository: UserRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
     private val organizationInvitationDeliveryService: OrganizationInvitationDeliveryService,
+    private val auditEventPort: AuditEventPort,
     private val clock: Clock,
 ) {
     fun invite(command: InviteOrganizationMemberCommand): OrganizationMembership {
@@ -51,9 +56,22 @@ class OrganizationMembershipService(
                     message = "organization membership already active",
                 )
             }
-        return membershipRepository.save(saved).also {
-            organizationInvitationDeliveryService.sendInvitation(it)
-        }
+        val result =
+            membershipRepository.save(saved).also {
+                organizationInvitationDeliveryService.sendInvitation(it)
+            }
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "OPERATOR:${command.actorUserId}",
+                action = "ORGANIZATION_MEMBER_INVITED",
+                resourceType = "ORGANIZATION_MEMBERSHIP",
+                resourceId = requireNotNull(targetUser.id),
+                occurredAtUtc = clock.instant(),
+                reasonCode = "ORGANIZATION_MEMBER_INVITED",
+                afterJson = membershipSnapshot(result),
+            ),
+        )
+        return result
     }
 
     fun acceptInvitation(command: AcceptOrganizationInvitationCommand): OrganizationMembership {
@@ -93,7 +111,20 @@ class OrganizationMembershipService(
             targetUserId = command.memberUserId,
             actorUserId = command.actorUserId,
         )
-        return membershipRepository.save(membership.changeRole(command.role, clock.instant()))
+        val saved = membershipRepository.save(membership.changeRole(command.role, clock.instant()))
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "OPERATOR:${command.actorUserId}",
+                action = "ORGANIZATION_MEMBER_ROLE_CHANGED",
+                resourceType = "ORGANIZATION_MEMBERSHIP",
+                resourceId = command.memberUserId,
+                occurredAtUtc = clock.instant(),
+                reasonCode = "ORGANIZATION_MEMBER_ROLE_CHANGED",
+                beforeJson = membershipSnapshot(membership),
+                afterJson = membershipSnapshot(saved),
+            ),
+        )
+        return saved
     }
 
     fun deactivate(command: DeactivateOrganizationMemberCommand): OrganizationMembership {
@@ -119,7 +150,20 @@ class OrganizationMembershipService(
                 message = "only owner can manage owner membership",
             )
         }
-        return membershipRepository.save(membership.deactivate(clock.instant()))
+        val saved = membershipRepository.save(membership.deactivate(clock.instant()))
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "OPERATOR:${command.actorUserId}",
+                action = "ORGANIZATION_MEMBER_DEACTIVATED",
+                resourceType = "ORGANIZATION_MEMBERSHIP",
+                resourceId = command.memberUserId,
+                occurredAtUtc = clock.instant(),
+                reasonCode = "ORGANIZATION_MEMBER_DEACTIVATED",
+                beforeJson = membershipSnapshot(membership),
+                afterJson = membershipSnapshot(saved),
+            ),
+        )
+        return saved
     }
 
     fun listMemberships(
@@ -129,6 +173,14 @@ class OrganizationMembershipService(
         organizationAccessGuard.requireOperator(actorUserId, organizationId)
         return membershipRepository.findByOrganizationId(organizationId)
     }
+
+    private fun membershipSnapshot(membership: OrganizationMembership): Map<String, Any?> =
+        mapOf(
+            "organizationId" to membership.organizationId,
+            "userId" to membership.userId,
+            "role" to membership.role.name,
+            "status" to membership.status.name,
+        )
 
     private fun validateRoleAssignment(
         actorRole: OrganizationRole,
