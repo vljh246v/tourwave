@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: test + implementation
 size: L
-status: in-progress
+status: done
 
 depends_on: ['T-901']
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-18
 updated: 2026-04-26
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-904 — [BE] 감사 이벤트 커버리지 강화 (announcement/organization/instructor/tour 모든 write)
 
