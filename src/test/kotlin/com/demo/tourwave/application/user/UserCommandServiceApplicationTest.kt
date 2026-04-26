@@ -26,15 +26,19 @@ class UserCommandServiceApplicationTest {
         fakeUserRepository.clear()
     }
 
-    private fun saveActiveUser(email: String = "user@example.com", displayName: String = "Test User"): Long {
-        val user = fakeUserRepository.save(
-            com.demo.tourwave.domain.user.User.create(
-                displayName = displayName,
-                email = email,
-                passwordHash = "hash",
-                now = fixedInstant,
-            ),
-        )
+    private fun saveActiveUser(
+        email: String = "user@example.com",
+        displayName: String = "Test User",
+    ): Long {
+        val user =
+            fakeUserRepository.save(
+                com.demo.tourwave.domain.user.User.create(
+                    displayName = displayName,
+                    email = email,
+                    passwordHash = "hash",
+                    now = fixedInstant,
+                ),
+            )
         return requireNotNull(user.id)
     }
 
@@ -64,7 +68,7 @@ class UserCommandServiceApplicationTest {
         val deleted = fakeUserRepository.findById(userId)!!
         assertEquals(UserStatus.DELETED, deleted.status)
         assertEquals("Deleted User #$userId", deleted.displayName)
-        assertEquals("deleted_${userId}@deleted.local", deleted.email)
+        assertEquals("deleted_$userId@deleted.local", deleted.email)
         assertEquals("[DELETED]", deleted.passwordHash)
     }
 
