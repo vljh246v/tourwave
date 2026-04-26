@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: infra
 size: M
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: null
 exec_plan: ""
 
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-27
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-923 — [BE] infra — publish-tasks.sh YAML 재작성
 
