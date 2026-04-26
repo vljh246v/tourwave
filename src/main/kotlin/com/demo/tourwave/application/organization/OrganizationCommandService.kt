@@ -1,5 +1,7 @@
 package com.demo.tourwave.application.organization
 
+import com.demo.tourwave.application.common.port.AuditEventCommand
+import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.user.port.UserRepository
@@ -8,13 +10,16 @@ import com.demo.tourwave.domain.common.ErrorCode
 import com.demo.tourwave.domain.organization.Organization
 import com.demo.tourwave.domain.organization.OrganizationMembership
 import com.demo.tourwave.domain.organization.OrganizationRole
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
+@Transactional
 class OrganizationCommandService(
     private val organizationRepository: OrganizationRepository,
     private val membershipRepository: OrganizationMembershipRepository,
     private val userRepository: UserRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
+    private val auditEventPort: AuditEventPort,
     private val clock: Clock,
 ) {
     fun createOrganization(command: CreateOrganizationCommand): Organization {
@@ -58,29 +63,66 @@ class OrganizationCommandService(
                 now = now,
             ),
         )
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "USER:${command.actorUserId}",
+                action = "ORGANIZATION_CREATED",
+                resourceType = "ORGANIZATION",
+                resourceId = requireNotNull(organization.id),
+                occurredAtUtc = clock.instant(),
+                reasonCode = "ORGANIZATION_CREATED",
+                afterJson = organizationSnapshot(organization),
+            ),
+        )
         return organization
     }
 
     fun updateOrganizationProfile(command: UpdateOrganizationProfileCommand): Organization {
+        organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
         val organization =
-            organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
-                .let { organizationRepository.findById(command.organizationId)!! }
+            organizationRepository.findById(command.organizationId)
+                ?: throw DomainException(
+                    errorCode = ErrorCode.VALIDATION_ERROR,
+                    status = 404,
+                    message = "organization ${command.organizationId} not found",
+                )
 
-        return organizationRepository.save(
-            organization.updateProfile(
-                name = requireValidOrganizationName(command.name),
-                description = normalizeOptionalText(command.description, 4000, "description"),
-                publicDescription = normalizeOptionalText(command.publicDescription, 4000, "public description"),
-                contactEmail = normalizeOptionalEmail(command.contactEmail),
-                contactPhone = normalizeOptionalPhone(command.contactPhone),
-                websiteUrl = normalizeOptionalUrl(command.websiteUrl),
-                businessName = normalizeOptionalText(command.businessName, 255, "business name"),
-                businessRegistrationNumber = normalizeOptionalText(command.businessRegistrationNumber, 128, "business registration number"),
-                timezone = requireValidTimezone(command.timezone),
-                now = clock.instant(),
+        val saved =
+            organizationRepository.save(
+                organization.updateProfile(
+                    name = requireValidOrganizationName(command.name),
+                    description = normalizeOptionalText(command.description, 4000, "description"),
+                    publicDescription = normalizeOptionalText(command.publicDescription, 4000, "public description"),
+                    contactEmail = normalizeOptionalEmail(command.contactEmail),
+                    contactPhone = normalizeOptionalPhone(command.contactPhone),
+                    websiteUrl = normalizeOptionalUrl(command.websiteUrl),
+                    businessName = normalizeOptionalText(command.businessName, 255, "business name"),
+                    businessRegistrationNumber = normalizeOptionalText(command.businessRegistrationNumber, 128, "business registration number"),
+                    timezone = requireValidTimezone(command.timezone),
+                    now = clock.instant(),
+                ),
+            )
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "OPERATOR:${command.actorUserId}",
+                action = "ORGANIZATION_PROFILE_UPDATED",
+                resourceType = "ORGANIZATION",
+                resourceId = requireNotNull(saved.id),
+                occurredAtUtc = clock.instant(),
+                reasonCode = "ORGANIZATION_PROFILE_UPDATED",
+                beforeJson = organizationSnapshot(organization),
+                afterJson = organizationSnapshot(saved),
             ),
         )
+        return saved
     }
+
+    private fun organizationSnapshot(org: Organization): Map<String, Any?> =
+        mapOf(
+            "slug" to org.slug,
+            "name" to org.name,
+            "timezone" to org.timezone,
+        )
 
     private fun unauthorized(): DomainException {
         return DomainException(

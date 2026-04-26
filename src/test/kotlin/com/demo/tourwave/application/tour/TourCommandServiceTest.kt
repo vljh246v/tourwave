@@ -20,6 +20,7 @@ import com.demo.tourwave.application.organization.OrganizationMembershipService
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.tour.TourStatus
 import com.demo.tourwave.domain.user.User
+import com.demo.tourwave.support.FakeAuditEventPort
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
@@ -34,6 +35,7 @@ class TourCommandServiceTest {
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val tourRepository = InMemoryTourRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
+    private val auditEventPort = FakeAuditEventPort()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val invitationDeliveryService =
         OrganizationInvitationDeliveryService(
@@ -62,6 +64,7 @@ class TourCommandServiceTest {
             membershipRepository = membershipRepository,
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
+            auditEventPort = auditEventPort,
             clock = clock,
         )
     private val membershipService =
@@ -70,6 +73,7 @@ class TourCommandServiceTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             organizationInvitationDeliveryService = invitationDeliveryService,
+            auditEventPort = auditEventPort,
             clock = clock,
         )
     private val tourCommandService =
@@ -77,6 +81,7 @@ class TourCommandServiceTest {
             tourRepository = tourRepository,
             organizationRepository = organizationRepository,
             organizationAccessGuard = accessGuard,
+            auditEventPort = auditEventPort,
             clock = clock,
         )
     private val tourQueryService = TourQueryService(tourRepository, accessGuard)

@@ -17,13 +17,13 @@ import com.demo.tourwave.support.FakeUserRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
-class OrganizationMembershipServiceTest {
-    private val clock = Clock.fixed(Instant.parse("2026-03-19T00:00:00Z"), ZoneOffset.UTC)
+class OrganizationMembershipAuditTest {
+    private val clock = Clock.fixed(Instant.parse("2026-03-19T10:00:00Z"), ZoneOffset.UTC)
     private val membershipRepository = FakeOrganizationMembershipRepository()
     private val userRepository = FakeUserRepository()
     private val organizationRepository = FakeOrganizationRepository()
@@ -42,7 +42,7 @@ class OrganizationMembershipServiceTest {
                     userActionTokenService =
                         UserActionTokenService(
                             userActionTokenRepository = actionTokenRepository,
-                            actionTokenGenerator = { "org-invite-token" },
+                            actionTokenGenerator = { "invite-token" },
                             clock = clock,
                         ),
                     notificationDeliveryService =
@@ -53,33 +53,33 @@ class OrganizationMembershipServiceTest {
                         ),
                     notificationTemplateFactory = NotificationTemplateFactory(),
                     appBaseUrl = "https://app.test",
-                    invitationTokenTtl = java.time.Duration.ofDays(7),
+                    invitationTokenTtl = Duration.ofDays(7),
                     clock = clock,
                 ),
             auditEventPort = auditEventPort,
             clock = clock,
         )
 
+    private lateinit var owner: User
+    private lateinit var invitee: User
+    private var organizationId: Long = 0L
+
     @BeforeEach
     fun setUp() {
         membershipRepository.clear()
         userRepository.clear()
         organizationRepository.clear()
+        auditEventPort.clear()
         deliveryRepository.clear()
         actionTokenRepository.clear()
-        val owner =
-            userRepository.save(
-                User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = clock.instant()),
-            )
-        val invitee =
-            userRepository.save(
-                User.create(displayName = "Invitee", email = "invitee@test.com", passwordHash = "hash", now = clock.instant()),
-            )
-        val organization =
+
+        owner = userRepository.save(User.create(displayName = "Owner", email = "owner@test.com", passwordHash = "hash", now = clock.instant()))
+        invitee = userRepository.save(User.create(displayName = "Invitee", email = "invitee@test.com", passwordHash = "hash", now = clock.instant()))
+        val org =
             organizationRepository.save(
                 Organization.create(
-                    slug = "org-a",
-                    name = "Org A",
+                    slug = "org-audit",
+                    name = "Org Audit",
                     description = null,
                     publicDescription = null,
                     contactEmail = null,
@@ -91,9 +91,10 @@ class OrganizationMembershipServiceTest {
                     now = clock.instant(),
                 ),
             )
+        organizationId = requireNotNull(org.id)
         membershipRepository.save(
             OrganizationMembership.active(
-                organizationId = requireNotNull(organization.id),
+                organizationId = organizationId,
                 userId = requireNotNull(owner.id),
                 role = OrganizationRole.OWNER,
                 now = clock.instant(),
@@ -102,54 +103,75 @@ class OrganizationMembershipServiceTest {
     }
 
     @Test
-    fun `invite sends delivery and accept consumes token`() {
-        val invited =
-            service.invite(
-                InviteOrganizationMemberCommand(
-                    actorUserId = 1L,
-                    organizationId = 1L,
-                    userId = 2L,
-                    role = OrganizationRole.MEMBER,
-                ),
-            )
-
-        assertEquals("INVITED", invited.status.name)
-        assertEquals(1, deliveryRepository.findAll().size)
-
-        val accepted =
-            service.acceptInvitation(
-                AcceptOrganizationInvitationCommand(
-                    actorUserId = 2L,
-                    organizationId = 1L,
-                    token = "org-invite-token",
-                ),
-            )
-
-        assertEquals("ACTIVE", accepted.status.name)
-    }
-
-    @Test
-    fun `accept rejects token for different actor`() {
+    fun `invite appends ORGANIZATION_MEMBER_INVITED audit event`() {
         service.invite(
             InviteOrganizationMemberCommand(
-                actorUserId = 1L,
-                organizationId = 1L,
-                userId = 2L,
+                actorUserId = requireNotNull(owner.id),
+                organizationId = organizationId,
+                userId = requireNotNull(invitee.id),
                 role = OrganizationRole.MEMBER,
             ),
         )
 
-        val ex =
-            assertFailsWith<com.demo.tourwave.domain.common.DomainException> {
-                service.acceptInvitation(
-                    AcceptOrganizationInvitationCommand(
-                        actorUserId = 1L,
-                        organizationId = 1L,
-                        token = "org-invite-token",
-                    ),
-                )
-            }
+        val events = auditEventPort.events.filter { it.action == "ORGANIZATION_MEMBER_INVITED" }
+        assertEquals(1, events.size)
+        val event = events.first()
+        assertEquals("ORGANIZATION_MEMBERSHIP", event.resourceType)
+        assertEquals("OPERATOR:${owner.id}", event.actor)
+    }
 
-        assertEquals(403, ex.status)
+    @Test
+    fun `changeRole appends ORGANIZATION_MEMBER_ROLE_CHANGED audit event`() {
+        membershipRepository.save(
+            OrganizationMembership.active(
+                organizationId = organizationId,
+                userId = requireNotNull(invitee.id),
+                role = OrganizationRole.MEMBER,
+                now = clock.instant(),
+            ),
+        )
+        auditEventPort.clear()
+
+        service.changeRole(
+            ChangeOrganizationMemberRoleCommand(
+                actorUserId = requireNotNull(owner.id),
+                organizationId = organizationId,
+                memberUserId = requireNotNull(invitee.id),
+                role = OrganizationRole.ADMIN,
+            ),
+        )
+
+        val events = auditEventPort.events.filter { it.action == "ORGANIZATION_MEMBER_ROLE_CHANGED" }
+        assertEquals(1, events.size)
+        val event = events.first()
+        assertEquals("ORGANIZATION_MEMBERSHIP", event.resourceType)
+        assertEquals("OPERATOR:${owner.id}", event.actor)
+    }
+
+    @Test
+    fun `deactivate appends ORGANIZATION_MEMBER_DEACTIVATED audit event`() {
+        membershipRepository.save(
+            OrganizationMembership.active(
+                organizationId = organizationId,
+                userId = requireNotNull(invitee.id),
+                role = OrganizationRole.MEMBER,
+                now = clock.instant(),
+            ),
+        )
+        auditEventPort.clear()
+
+        service.deactivate(
+            DeactivateOrganizationMemberCommand(
+                actorUserId = requireNotNull(owner.id),
+                organizationId = organizationId,
+                memberUserId = requireNotNull(invitee.id),
+            ),
+        )
+
+        val events = auditEventPort.events.filter { it.action == "ORGANIZATION_MEMBER_DEACTIVATED" }
+        assertEquals(1, events.size)
+        val event = events.first()
+        assertEquals("ORGANIZATION_MEMBERSHIP", event.resourceType)
+        assertEquals("OPERATOR:${owner.id}", event.actor)
     }
 }

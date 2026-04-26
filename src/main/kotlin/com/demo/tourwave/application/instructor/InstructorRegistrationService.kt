@@ -1,5 +1,7 @@
 package com.demo.tourwave.application.instructor
 
+import com.demo.tourwave.application.common.port.AuditEventCommand
+import com.demo.tourwave.application.common.port.AuditEventPort
 import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
@@ -12,14 +14,17 @@ import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.instructor.InstructorRegistration
 import com.demo.tourwave.domain.instructor.InstructorRegistrationStatus
 import com.demo.tourwave.domain.organization.OrganizationStatus
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
+@Transactional
 class InstructorRegistrationService(
     private val registrationRepository: InstructorRegistrationRepository,
     private val instructorProfileRepository: InstructorProfileRepository,
     private val organizationRepository: OrganizationRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
     private val userRepository: UserRepository,
+    private val auditEventPort: AuditEventPort,
     private val clock: Clock,
 ) {
     fun apply(command: ApplyInstructorRegistrationCommand): InstructorRegistration {
@@ -36,33 +41,46 @@ class InstructorRegistrationService(
         val normalizedLanguages = normalizeStringList(command.languages, "languages")
         val normalizedSpecialties = normalizeStringList(command.specialties, "specialties")
 
-        return registrationRepository.save(
-            when {
-                existing == null ->
-                    InstructorRegistration.create(
-                        organizationId = command.organizationId,
-                        userId = command.actorUserId,
-                        headline = normalizedHeadline,
-                        bio = normalizedBio,
-                        languages = normalizedLanguages,
-                        specialties = normalizedSpecialties,
-                        now = now,
+        val saved =
+            registrationRepository.save(
+                when {
+                    existing == null ->
+                        InstructorRegistration.create(
+                            organizationId = command.organizationId,
+                            userId = command.actorUserId,
+                            headline = normalizedHeadline,
+                            bio = normalizedBio,
+                            languages = normalizedLanguages,
+                            specialties = normalizedSpecialties,
+                            now = now,
+                        )
+                    existing.status == InstructorRegistrationStatus.REJECTED ->
+                        existing.resubmit(
+                            headline = normalizedHeadline,
+                            bio = normalizedBio,
+                            languages = normalizedLanguages,
+                            specialties = normalizedSpecialties,
+                            now = now,
+                        )
+                    else -> throw DomainException(
+                        errorCode = ErrorCode.VALIDATION_ERROR,
+                        status = 409,
+                        message = "instructor registration already exists",
                     )
-                existing.status == InstructorRegistrationStatus.REJECTED ->
-                    existing.resubmit(
-                        headline = normalizedHeadline,
-                        bio = normalizedBio,
-                        languages = normalizedLanguages,
-                        specialties = normalizedSpecialties,
-                        now = now,
-                    )
-                else -> throw DomainException(
-                    errorCode = ErrorCode.VALIDATION_ERROR,
-                    status = 409,
-                    message = "instructor registration already exists",
-                )
-            },
+                },
+            )
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "USER:${command.actorUserId}",
+                action = "INSTRUCTOR_REGISTRATION_SUBMITTED",
+                resourceType = "INSTRUCTOR_REGISTRATION",
+                resourceId = requireNotNull(saved.id),
+                occurredAtUtc = clock.instant(),
+                reasonCode = "INSTRUCTOR_REGISTRATION_SUBMITTED",
+                afterJson = registrationSnapshot(saved),
+            ),
         )
+        return saved
     }
 
     fun approve(command: ReviewInstructorRegistrationCommand): InstructorRegistration {
@@ -79,6 +97,7 @@ class InstructorRegistrationService(
                 registration.organizationId,
                 registration.userId,
             )
+        val wasNewProfile = existingProfile == null
         val mergedProfile =
             (
                 existingProfile ?: InstructorProfile.create(
@@ -104,7 +123,32 @@ class InstructorRegistrationService(
                 internalNote = existingProfile?.internalNote,
                 now = now,
             ).copy(approvedAt = existingProfile?.approvedAt ?: now)
-        instructorProfileRepository.save(mergedProfile)
+        val savedProfile = instructorProfileRepository.save(mergedProfile)
+        if (wasNewProfile) {
+            auditEventPort.append(
+                AuditEventCommand(
+                    actor = "OPERATOR:${command.actorUserId}",
+                    action = "INSTRUCTOR_PROFILE_CREATED",
+                    resourceType = "INSTRUCTOR_PROFILE",
+                    resourceId = requireNotNull(savedProfile.id),
+                    occurredAtUtc = clock.instant(),
+                    reasonCode = "INSTRUCTOR_PROFILE_CREATED",
+                    afterJson = profileSnapshot(savedProfile),
+                ),
+            )
+        }
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "OPERATOR:${command.actorUserId}",
+                action = "INSTRUCTOR_REGISTRATION_APPROVED",
+                resourceType = "INSTRUCTOR_REGISTRATION",
+                resourceId = requireNotNull(approved.id),
+                occurredAtUtc = clock.instant(),
+                reasonCode = "INSTRUCTOR_REGISTRATION_APPROVED",
+                beforeJson = registrationSnapshot(registration),
+                afterJson = registrationSnapshot(approved),
+            ),
+        )
         return approved
     }
 
@@ -114,14 +158,42 @@ class InstructorRegistrationService(
         if (registration.status != InstructorRegistrationStatus.PENDING) {
             throw invalidState("only pending registration can be rejected")
         }
-        return registrationRepository.save(
-            registration.reject(
-                reviewedByUserId = command.actorUserId,
-                rejectionReason = normalizeOptionalText(command.rejectionReason, 2000, "rejectionReason"),
-                now = clock.instant(),
+        val saved =
+            registrationRepository.save(
+                registration.reject(
+                    reviewedByUserId = command.actorUserId,
+                    rejectionReason = normalizeOptionalText(command.rejectionReason, 2000, "rejectionReason"),
+                    now = clock.instant(),
+                ),
+            )
+        auditEventPort.append(
+            AuditEventCommand(
+                actor = "OPERATOR:${command.actorUserId}",
+                action = "INSTRUCTOR_REGISTRATION_REJECTED",
+                resourceType = "INSTRUCTOR_REGISTRATION",
+                resourceId = requireNotNull(saved.id),
+                occurredAtUtc = clock.instant(),
+                reasonCode = "INSTRUCTOR_REGISTRATION_REJECTED",
+                beforeJson = registrationSnapshot(registration),
+                afterJson = registrationSnapshot(saved),
             ),
         )
+        return saved
     }
+
+    private fun registrationSnapshot(registration: InstructorRegistration): Map<String, Any?> =
+        mapOf(
+            "organizationId" to registration.organizationId,
+            "userId" to registration.userId,
+            "status" to registration.status.name,
+        )
+
+    private fun profileSnapshot(profile: InstructorProfile): Map<String, Any?> =
+        mapOf(
+            "organizationId" to profile.organizationId,
+            "userId" to profile.userId,
+            "status" to profile.status.name,
+        )
 
     fun listByOrganization(
         actorUserId: Long,

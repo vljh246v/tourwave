@@ -54,6 +54,24 @@ data class Tour(
         )
     }
 
+    /**
+     * Archive this tour. Only PUBLISHED tours may be archived.
+     * Re-archiving an already-ARCHIVED tour is a no-op (idempotent).
+     * DRAFT → ARCHIVED is rejected as an invalid state transition.
+     *
+     * @throws IllegalStateException if status is neither PUBLISHED nor ARCHIVED
+     */
+    fun archive(now: Instant): Tour {
+        if (status == TourStatus.ARCHIVED) return this
+        check(status == TourStatus.PUBLISHED) {
+            "tour can only be archived from PUBLISHED status, current status: $status"
+        }
+        return copy(
+            status = TourStatus.ARCHIVED,
+            updatedAt = now,
+        )
+    }
+
     companion object {
         fun create(
             organizationId: Long,

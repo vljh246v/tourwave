@@ -18,6 +18,7 @@ import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.instructor.InstructorProfile
 import com.demo.tourwave.domain.user.User
+import com.demo.tourwave.support.FakeAuditEventPort
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
@@ -35,6 +36,7 @@ class OccurrenceCommandServiceTest {
     private val instructorProfileRepository = InMemoryInstructorProfileRepositoryAdapter()
     private val tourRepository = InMemoryTourRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
+    private val auditEventPort = FakeAuditEventPort()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val organizationCommandService =
         OrganizationCommandService(
@@ -42,6 +44,7 @@ class OccurrenceCommandServiceTest {
             membershipRepository = membershipRepository,
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
+            auditEventPort = auditEventPort,
             clock = clock,
         )
     private val tourCommandService =
@@ -49,6 +52,7 @@ class OccurrenceCommandServiceTest {
             tourRepository = tourRepository,
             organizationRepository = organizationRepository,
             organizationAccessGuard = accessGuard,
+            auditEventPort = auditEventPort,
             clock = clock,
         )
     private val occurrenceCommandService =
