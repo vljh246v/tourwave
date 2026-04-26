@@ -82,7 +82,7 @@ log_event "task_start" \
 # =============================================================================
 # 4. exec-plan 스켈레톤 자동 생성
 # =============================================================================
-EXEC_PLAN_DIR="${PROJECT_ROOT}/docs/exec-plans/active"
+EXEC_PLAN_DIR="${WORKTREE_PATH}/docs/exec-plans/active"
 EXEC_PLAN_FILE="${EXEC_PLAN_DIR}/${TASK_NAME}.md"
 
 mkdir -p "$EXEC_PLAN_DIR"
