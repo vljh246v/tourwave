@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: domain + application + adapter.in
 size: M
-status: backlog
+status: in-progress
 
 depends_on: ['T-004', 'T-005']
 blocks: []
@@ -19,10 +19,10 @@ github_issue: null
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-26
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-006 — [BE] user — User 프로필 테스트 강화
 
