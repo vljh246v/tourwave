@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: infra
 size: S
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: null
 exec_plan: ""
 
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-26
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-924 — [BE] infra — /blockers skill YAML 재작성
 
