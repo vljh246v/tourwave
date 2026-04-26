@@ -258,3 +258,16 @@
 {"ts":"2026-04-26T13:51:11Z","task":"T-904","validator":"04-security","result":"pass"}
 {"ts":"2026-04-26T13:51:11Z","task":"T-904","validator":"05-docs-freshness","result":"pass"}
 {"ts":"2026-04-26T13:51:11Z","task":"T-904","validator":"07-status-sync-smoke","result":"pass"}
+{"ts":"2026-04-26T14:04:14Z","task":"T-924","validator":"01-build","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:04:28Z","task":"T-924","validator":"02-test","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:04:29Z","task":"T-924","validator":"03-lint","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:04:29Z","task":"T-924","validator":"04-security","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:04:29Z","task":"T-924","validator":"05-docs-freshness","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:04:29Z","task":"T-924","validator":"07-status-sync-smoke","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:04:30Z","task":"T-924","validator":"08-propagate-smoke","result":"pass","mode":"verify"}
+{"ts":"2026-04-26T14:06:47Z","task":"T-924","validator":"01-build","result":"pass"}
+{"ts":"2026-04-26T14:06:48Z","task":"T-924","validator":"02-test","result":"pass"}
+{"ts":"2026-04-26T14:06:48Z","task":"T-924","validator":"03-lint","result":"pass"}
+{"ts":"2026-04-26T14:06:48Z","task":"T-924","validator":"04-security","result":"pass"}
+{"ts":"2026-04-26T14:06:48Z","task":"T-924","validator":"05-docs-freshness","result":"pass"}
+{"ts":"2026-04-26T14:06:48Z","task":"T-924","validator":"07-status-sync-smoke","result":"pass"}

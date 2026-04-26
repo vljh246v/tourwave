@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: infra
 size: S
-status: in-progress
+status: done
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-20
 updated: 2026-04-26
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-924 — [BE] infra — /blockers skill YAML 재작성
 
