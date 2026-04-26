@@ -79,46 +79,78 @@ TEMP_PUBLISHED=0
 TEMP_SKIPPED=0
 TEMP_ERRORS=0
 
-# Helper: Extract metadata from card
-extract_meta() {
+# Helper: Extract a field value from YAML frontmatter (--- ... ---)
+# Usage: frontmatter_get_field <field> <file>
+# Returns: field value with leading/trailing whitespace and surrounding quotes stripped
+# Returns empty string if field not found or file has no frontmatter
+frontmatter_get_field() {
   local field="$1"
   local file="$2"
-
-  grep "^- $field" "$file" | sed "s/^- $field //; s/[[:space:]]*$//" | head -1
+  awk -v f="$field" '
+    NR == 1 && /^---$/ { in_fm=1; next }
+    in_fm && /^---$/ { exit }
+    in_fm && $0 ~ ("^" f ":") {
+      val = $0
+      sub("^" f ":[[:space:]]*", "", val)
+      # Strip surrounding quotes if present
+      gsub(/^["'"'"']|["'"'"']$/, "", val)
+      # Strip trailing whitespace
+      gsub(/[[:space:]]+$/, "", val)
+      print val
+      exit
+    }
+  ' "$file"
 }
 
 # Helper: Create GitHub issue from card
 publish_card() {
   local card_file="$1"
-  local card_id=$(basename "$card_file" .md)
+  local card_id
+  card_id=$(basename "$card_file" .md)
 
-  # Extract title (first line after #)
-  local title=$(head -1 "$card_file" | sed 's/^# //' | sed 's/ — /: /')
+  # Extract title from frontmatter `title:` field
+  # Fallback: first `# ` heading after frontmatter
+  local title
+  title=$(frontmatter_get_field "title" "$card_file")
+  if [[ -z "$title" ]]; then
+    # Fallback: find first # heading after frontmatter
+    title=$(awk '
+      NR == 1 && /^---$/ { in_fm=1; next }
+      in_fm && /^---$/ { in_fm=0; next }
+      !in_fm && /^# / { sub(/^# /, ""); print; exit }
+    ' "$card_file")
+  fi
+  # Normalize em-dash separator for GitHub issue title
+  title=$(echo "$title" | sed 's/ — /: /')
 
-  # Extract metadata
-  local milestone=$(extract_meta "Milestone:" "$card_file" | sed 's/ .*//')
-  local domain=$(extract_meta "Domain:" "$card_file")
-  local area=$(extract_meta "Area:" "$card_file")
-  local size=$(extract_meta "Size:" "$card_file" | sed 's/ .*//')
+  # Extract metadata from frontmatter
+  local milestone
+  milestone=$(frontmatter_get_field "milestone" "$card_file")
+  local domain
+  domain=$(frontmatter_get_field "domain" "$card_file")
+  local area
+  area=$(frontmatter_get_field "area" "$card_file")
+  local size
+  size=$(frontmatter_get_field "size" "$card_file")
 
-  # Check if already published
-  local current_issue=$(grep "^- GitHub Issue: #" "$card_file" | sed 's/.*#//' | sed 's/[^0-9].*//')
-  if [[ "$current_issue" != "—" ]] && [[ -n "$current_issue" ]] && [[ "$current_issue" =~ ^[0-9]+$ ]]; then
-    if [[ $DRY_RUN -eq 0 ]]; then
-      echo "[skip] $card_id: Already published as #$current_issue"
-      ((TEMP_SKIPPED++))
-      return 0
-    fi
+  # Check if already published: github_issue field is a number (not null / empty / missing)
+  local current_issue
+  current_issue=$(frontmatter_get_field "github_issue" "$card_file")
+  if [[ -n "$current_issue" ]] && [[ "$current_issue" != "null" ]] && [[ "$current_issue" =~ ^[0-9]+$ ]]; then
+    echo "[skip] $card_id: Already published as #$current_issue"
+    ((TEMP_SKIPPED++))
+    return 0
   fi
 
   # Build labels
-  # Handle Cross-cutting milestone
+  # Handle cross milestone variations (cross / Cross-cutting)
   local milestone_label="$milestone"
-  if [[ "$milestone" == "Cross-cutting" ]]; then
+  if [[ "$milestone" == "Cross-cutting" ]] || [[ "$milestone" == "cross" ]]; then
     milestone_label="cross"
   fi
   # Sanitize domain: replace spaces with hyphens, shorten long names
-  local domain_label=$(echo "$domain" | sed 's/ /-/g')
+  local domain_label
+  domain_label=$(echo "$domain" | sed 's/ /-/g')
   # Special shortening for long domains
   if [[ "$domain_label" == "API-Layer" ]]; then
     domain_label="api"
@@ -141,11 +173,12 @@ publish_card() {
     --label "$labels" 2>&1); then
 
     # Extract issue number from URL
-    local issue_num=$(echo "$issue_url" | grep -oE '[0-9]+$')
+    local issue_num
+    issue_num=$(echo "$issue_url" | grep -oE '[0-9]+$')
 
-    # Update card file with issue number (sed in-place)
-    if sed -i '' "s/^- GitHub Issue: #—/- GitHub Issue: #$issue_num/" "$card_file"; then
-      echo "[✓] $card_id: Created #$issue_num"
+    # Update card file: replace `github_issue: null` with `github_issue: <num>`
+    if sed -i '' "s/^github_issue: null$/github_issue: $issue_num/" "$card_file"; then
+      echo "[v] $card_id: Created #$issue_num"
       ((TEMP_PUBLISHED++))
 
       # Add to Projects v2 (if PROJECT_NUMBER is set)
@@ -201,17 +234,17 @@ echo ""
 # Avoid pipe to while to preserve variable scope
 while IFS= read -r card_file; do
   [[ -z "$card_file" ]] && continue
-  card_id=$(basename "$card_file" .md)
 
-  # Apply milestone filter
+  # Apply milestone filter using frontmatter field
   if [[ "$MILESTONE" != "all" ]]; then
-    # Special handling for cross-cutting milestone
+    card_milestone=$(frontmatter_get_field "milestone" "$card_file")
     if [[ "$MILESTONE" == "cross" ]]; then
-      if ! grep -q "^- Milestone: Cross-cutting" "$card_file"; then
+      # Match both "cross" and "Cross-cutting" frontmatter values
+      if [[ "$card_milestone" != "cross" ]] && [[ "$card_milestone" != "Cross-cutting" ]]; then
         continue
       fi
     else
-      if ! grep -q "^- Milestone: $MILESTONE" "$card_file"; then
+      if [[ "$card_milestone" != "$MILESTONE" ]]; then
         continue
       fi
     fi
