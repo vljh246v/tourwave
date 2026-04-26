@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: infra
 size: M
-status: in-progress
+status: done
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-20
 updated: 2026-04-27
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-923 — [BE] infra — publish-tasks.sh YAML 재작성
 
