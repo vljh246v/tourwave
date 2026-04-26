@@ -9,7 +9,7 @@ milestone: M1
 domain: auth
 layer: domain + application + adapter.in
 size: M
-status: in-progress
+status: done
 
 depends_on: ['T-004', 'T-005']
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-18
 updated: 2026-04-26
 ---
 
-#status/in-progress #area/be
+#status/done #area/be
 
 # T-006 — [BE] user — User 프로필 테스트 강화
 
