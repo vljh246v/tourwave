@@ -246,6 +246,138 @@ MVP simplified:
 ## Calendar (ICS)
 Provide ICS for booking and occurrence to add to external calendars.
 
+## User Entity & Lifecycle
+
+### UserStatus States
+
+| Status | Description | Recoverable |
+|---|---|---|
+| `ACTIVE` | 정상 인증된 사용자. 모든 기능 접근 가능. | — |
+| `DEACTIVATED` | 사용자 본인 요청으로 비활성화. 로그인 불가, 복구 가능. | Yes (→ ACTIVE) |
+| `SUSPENDED` | 운영자 정책 위반 또는 어뷰징으로 운영자가 차단. 복구 가능. | Yes (→ ACTIVE) |
+| `DELETED` | 영구 삭제(soft-delete). 개인정보 마스킹 완료. 복구 불가. | No (terminal) |
+
+### State Transition Rules
+
+```
+ACTIVE
+  ├─→ DEACTIVATED  (actor: 본인, 사유: 계정 비활성화 요청)
+  ├─→ SUSPENDED    (actor: 운영자, 사유: 정책 위반)
+  └─→ DELETED      (actor: 본인 또는 운영자, 사유: 영구 삭제 요청)
+
+DEACTIVATED
+  ├─→ ACTIVE       (actor: 본인, 사유: 계정 복구)
+  └─→ DELETED      (actor: 본인 또는 운영자, 사유: 영구 삭제 요청)
+
+SUSPENDED
+  ├─→ ACTIVE       (actor: 운영자, 사유: 정지 해제)
+  └─→ DELETED      (actor: 운영자, 사유: 영구 삭제)
+
+DELETED → (terminal, 추가 전이 불가)
+```
+
+| From \ To | ACTIVE | DEACTIVATED | SUSPENDED | DELETED |
+|---|---|---|---|---|
+| `ACTIVE` | — | ✓ (self) | ✓ (operator) | ✓ (self/operator) |
+| `DEACTIVATED` | ✓ (self) | — | ✗ | ✓ (self/operator) |
+| `SUSPENDED` | ✓ (operator) | ✗ | — | ✓ (operator) |
+| `DELETED` | ✗ | ✗ | ✗ | — |
+
+**Preconditions:**
+- DEACTIVATED → ACTIVE: 사용자가 유효한 인증 자격증명 보유
+- SUSPENDED → ACTIVE: 운영자가 명시적으로 정지 해제 처리
+- * → DELETED: 현재 상태가 terminal(`DELETED`)이 아닌 경우
+
+**Postconditions:**
+- * → DELETED: 개인정보 마스킹 즉시 적용 (아래 마스킹 정책 참조)
+- * → DEACTIVATED: 활성 세션(토큰) 즉시 무효화
+- * → SUSPENDED: 활성 세션(토큰) 즉시 무효화
+
+### SUSPENDED vs DEACTIVATED 구분 기준
+
+| 구분 기준 | DEACTIVATED | SUSPENDED |
+|---|---|---|
+| 발동 주체 | 본인 자발적 요청 | 운영자 직권 처리 |
+| 사용 사례 | 서비스 일시 탈퇴, 개인 사유 | 어뷰징, 정책 위반, 결제 사기 의심 |
+| 복구 주체 | 본인 직접 복구 가능 | 운영자 승인 후 복구 |
+| 알림 | 사용자에게 확인 메일 | 사용자에게 사유 및 이의제기 안내 |
+
+### Soft-Delete Masking Policy
+
+`DELETED` 전이 시 아래 필드를 **즉시 마스킹**한다. 마스킹은 비가역적이며 복구 불가.
+
+| Field | Before (example) | After |
+|---|---|---|
+| `email` | `user@example.com` | `deleted_<userId>@deleted.local` |
+| `displayName` | `홍길동` | `Deleted User #<userId>` |
+| `passwordHash` | `$2a$10$...` | `[DELETED]` |
+| `deletedAt` | `null` | `<삭제 시각 UTC>` |
+| `createdAt` | 그대로 유지 | 그대로 유지 (감사 목적) |
+| `updatedAt` | 그대로 유지 | 그대로 유지 (감사 목적) |
+
+**구현 예시 (의사 코드):**
+```kotlin
+fun delete(now: Instant): User {
+    return copy(
+        status = UserStatus.DELETED,
+        displayName = "Deleted User #$id",
+        email = "deleted_${id}@deleted.local",
+        passwordHash = "[DELETED]",
+        deletedAt = now,
+        updatedAt = now,
+    )
+}
+```
+
+### Query Filtering Rules
+
+- **기본 쿼리:** `DELETED` 상태 사용자를 결과에서 제외한다.
+- **감사/리포트 쿼리:** `includeDeleted = true` 플래그로 모든 상태 포함 가능 (운영자 전용).
+- **인증 경계:** `DEACTIVATED`, `SUSPENDED`, `DELETED` 사용자는 인증 단계에서 차단된다 — 유효한 토큰이어도 거부.
+
+```
+일반 조회:  WHERE status != 'DELETED'
+감사 조회:  (no status filter) — 운영자 권한 확인 후
+인증 체크:  status == ACTIVE 만 허용
+```
+
+### Audit Events (User Lifecycle)
+
+아래 사용자 상태 변경은 **append-only** 감사 이벤트로 반드시 기록한다.
+
+| Event | Trigger | Actor |
+|---|---|---|
+| `USER_CREATED` | 회원가입 완료 | SYSTEM |
+| `USER_EMAIL_VERIFIED` | 이메일 인증 완료 | USER |
+| `USER_PROFILE_UPDATED` | 프로필 수정 (displayName) | USER |
+| `USER_DEACTIVATED` | 계정 비활성화 | USER |
+| `USER_RESTORED` | 계정 복구 (DEACTIVATED → ACTIVE) | USER |
+| `USER_SUSPENDED` | 운영자 정지 처리 | OPERATOR |
+| `USER_UNSUSPENDED` | 운영자 정지 해제 | OPERATOR |
+| `USER_DELETED` | 영구 삭제 (soft-delete 완료) | USER or OPERATOR |
+
+**감사 이벤트 최소 필드:**
+- `actor` (actor_type: USER / OPERATOR / SYSTEM, actor_id)
+- `action` (위 이벤트 코드)
+- `resource_type`: `USER`
+- `resource_id`: user_id
+- `occurred_at_utc`
+- `before_json` / `after_json`: PII 마스킹 상태로 기록 (DELETED 이후 after_json은 마스킹 완료 스냅샷)
+
+**예시 이벤트 (USER_DELETED):**
+```json
+{
+  "actor_type": "USER",
+  "actor_id": 42,
+  "action": "USER_DELETED",
+  "resource_type": "USER",
+  "resource_id": 42,
+  "occurred_at_utc": "2026-04-26T10:00:00Z",
+  "before_json": {"email": "user@example.com", "status": "ACTIVE"},
+  "after_json": {"email": "deleted_42@deleted.local", "status": "DELETED"}
+}
+```
+
 ## Normative Addendum (Implementation-Blocking Rules)
 
 아래 규칙은 구현 시 필수이며, 위 본문과 동등한 강제력을 가진다.
