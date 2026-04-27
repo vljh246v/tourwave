@@ -25,7 +25,7 @@
 | 도메인 | Domain | Application | Adapter.in | Adapter.out | Tests | Docs |
 |---|---|---|---|---|---|---|
 | announcement | ✅ | 🟡 [T-201](T-201) | ✅ [T-202](T-202) Idempotency — T-903 | ✅ | ❌ [T-901](T-901) | 🟡 [T-203](T-203) |
-| asset | 🟡 [T-204](T-204) Content-Type | ✅ | ✅ | ✅ | 🟡 [T-205](T-205) | ✅ |
+| asset | ✅ | ✅ | ✅ | ✅ | 🟡 [T-205](T-205) | ✅ |
 | auth | ✅ | ✅ | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-903](T-903) | ✅ |
 | booking | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | common | ✅ | ✅ | N/A | ✅ | 🟡 [T-904](T-904) | 🟡 [T-003](T-003) TimeWindow 상수 |
@@ -264,7 +264,7 @@
 ## 주요 갭 요약
 
 ### 🔴 고위험 (즉시 해결 필수)
-1. **BE: Asset Content-Type 검증 없음** (T-204) — 악성 파일 업로드 가능
+1. ~~**BE: Asset Content-Type 검증 없음** (T-204) — 악성 파일 업로드 가능~~ ✅ 완료 (2026-04-28)
 2. **BE: Refresh token 로테이션 race condition** (T-002) — 분산 환경 취약
 3. **BE: Occurrence 용량 동시성 제어** (T-100) — 오버부킹 위험
 

@@ -9,20 +9,21 @@ milestone: M3
 domain: asset
 layer: domain
 size: M
-status: in-progress
+status: done
+completed_at: 2026-04-28
 
 depends_on: []
 blocks: []
 sub_tasks: []
 
 github_issue: null
-exec_plan: ""
+exec_plan: "docs/exec-plans/active/T-204.md"
 
 created: 2026-04-28
 updated: 2026-04-28
 ---
 
-#status/in-progress #area/be #risk/high
+#status/done #area/be #risk/high
 
 # T-204 — [BE] asset — Content-Type 화이트리스트 검증
 
@@ -60,13 +61,13 @@ DO NOT TOUCH:
 5. `docs/policies.md` 자산 정책 섹션에 화이트리스트 명시
 
 ## Acceptance Criteria
-- [ ] `AssetContentType` 값 객체 정의 (sealed class 또는 enum)
-- [ ] 허용 MIME 5개 이상 (image/jpeg, image/png, image/webp, image/gif, application/pdf)
-- [ ] `Asset.create()` 또는 도메인 진입점에서 검증 호출
-- [ ] 거부 시 422 + `ASSET_UNSUPPORTED_CONTENT_TYPE` 응답
-- [ ] 단위 테스트 8개 이상 PASS
-- [ ] `./gradlew test --tests "*AssetContentTypeTest"` 통과
-- [ ] `./gradlew test --tests "*AssetCommandServiceTest*"` 회귀 PASS
+- [x] `AssetContentType` 값 객체 정의 (enum)
+- [x] 허용 MIME 5개 이상 (image/jpeg, image/png, image/webp, image/gif, application/pdf)
+- [x] `AssetCommandService.issueUpload()`에서 검증 호출
+- [x] 거부 시 422 + `ASSET_UNSUPPORTED_CONTENT_TYPE` 응답
+- [x] 단위 테스트 13개 PASS (8개 이상 요건 충족)
+- [x] `./gradlew test --tests "*AssetContentTypeTest"` 통과
+- [x] `./gradlew test --tests "*AssetCommandServiceTest*"` 회귀 PASS
 
 ## Verification
 ```bash
