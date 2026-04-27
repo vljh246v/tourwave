@@ -191,6 +191,24 @@ git -C /Users/jaehyun/Documents/workspace/tourwave status --porcelain | grep "^.
 
 `logs/validators/history.jsonl`과 `docs/exec-plans/active/<TASK_ID>.md` 외 변경이 있으면 HIGH (GP-007 위반).
 
+**(e) 태스크 카드 존재 + status: done 확인 (FIX_REQUIRED)**
+
+```bash
+find <BE_WORKTREE>/docs/tasks -name "<TASK_ID>-*.md" | head -1
+```
+
+- 파일 없으면 FIX_REQUIRED (Phase 7.6 Step 5 미실행)
+- 파일 있으면 `status:` 필드가 `done`인지 확인. 아니면 FIX_REQUIRED.
+
+**(f) 세션 노트 갱신 확인 (FIX_REQUIRED)**
+
+```bash
+TODAY=$(date -u +%Y-%m-%d)
+ls <BE_WORKTREE>/docs/session-notes/${TODAY}.md 2>/dev/null
+```
+
+파일 없으면 FIX_REQUIRED (Phase 7.6 Step 6 미실행).
+
 ### Step 8 — 결과 집계
 
 dialog.md에 append:
@@ -225,6 +243,8 @@ dialog.md에 append:
 - exec-plan 본문: 채워짐 | 빈 템플릿 잔존 (FIX_REQUIRED)
 - audit 갱신: 완료 | 변동 없음 | 누락 의심 (INFO)
 - gap-matrix 갱신: 완료 | 누락 의심 (INFO)
+- 태스크 카드: 존재 + done | 없음 (FIX_REQUIRED)
+- 세션 노트: 오늘 파일 존재 | 없음 (FIX_REQUIRED)
 - 메인 repo src/ 청결: OK | 누출 감지 (HIGH)
 
 **종합 판정**: PASS | FIX_REQUIRED

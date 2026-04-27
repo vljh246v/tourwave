@@ -12,6 +12,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `/dev`는 `orchestrator` 에이전트가 작업 범위(BE-only / FE-only / Fullstack)를 자동 분류하고 tdd-backend / tdd-frontend / security-reviewer / verification 서브에이전트를 dispatch한다.
 
+**에이전트·커맨드 위치 (프로젝트 로컬, 2026-04-28 이후):**
+- `.claude/agents/` — orchestrator/tdd-backend/tdd-frontend/security-reviewer/verification 5개
+- `.claude/commands/dev.md` — `/dev` 슬래시 커맨드 본체
+- 글로벌 `~/.claude/agents/`에는 더 이상 두지 않음 (tourwave 전용 하드코딩 경로 때문에 다른 프로젝트 오염 방지)
+
 ## 하네스 워크플로우
 
 ```

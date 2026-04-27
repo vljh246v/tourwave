@@ -310,7 +310,7 @@ cd /Users/jaehyun/Documents/workspace/tourwave
 
 SSOT 변경 여부와 무관하게 **항상** 실행. 작업 완료 후 관련 문서 정합성을 보장한다.
 
-아래 5단계를 순서대로 실행하고, 모든 변경은 워크트리 안에서 commit (GP-007):
+아래 7단계를 순서대로 실행하고, 모든 변경은 워크트리 안에서 commit (GP-007):
 
 **1. exec-plan 본문 작성**
 
@@ -340,16 +340,42 @@ grep -l '\[작업 목표를 작성하세요\]\|\\[레이어/파일 작성\\]' \
 - 완료됐으면: `🟡 [T-xxx]` → `✅` (또는 행 제거)
 - 신규 발견이면: 적절한 상태로 행 추가
 
+`마지막 갱신:` 날짜도 오늘 날짜로 업데이트.
+
 **4. testing.md 미커버 항목 갱신**
 
 새 테스트가 추가됐으면 `docs/testing.md`의 "미커버 항목" 섹션에서 해당 라인 제거.
 
-**5. 모든 변경을 워크트리 안에서 commit**
+**5. 태스크 카드 존재 확인 + 생성/갱신 (필수)**
+
+```bash
+find <BE_WORKTREE>/docs/tasks -name "<TASK_ID>-*.md" | head -1
+```
+
+- **카드 없으면**: `docs/tasks/cross/<TASK_ID>-<slug>.md` 신규 생성. YAML frontmatter 필수 필드: `id`, `title`, `status: done`, `scope`, `depends_on`, `blocks`, `github_issue`, `completed_at`. 본문에 목표·완료기준·변경 파일 기록.
+- **카드 있으면**: `status: done`, `completed_at: <오늘 날짜>` 갱신.
+- FE-only 작업이어도 카드는 **BE repo**(`tourwave/docs/tasks/`)에 생성. FE repo에는 task card 디렉터리 없음.
+
+**6. 세션 노트 추가/갱신 (필수)**
+
+`docs/session-notes/<YYYY-MM-DD>.md` (오늘 날짜):
+- 파일 없으면 신규 생성.
+- 파일 있으면 "수행한 작업" 섹션에 이번 태스크 요약 추가.
+
+포함 항목:
+- 태스크 ID/제목/scope
+- 핵심 변경 (파일 N개, 테스트 M개)
+- 결정 기록 (escalation/포기/대안)
+- 커밋 해시 + 메시지 목록
+- 남은 후속 작업
+
+**7. 모든 변경을 워크트리 안에서 commit**
 
 ```bash
 cd <WORKTREE>
-git add docs/exec-plans/active/<TASK_ID>.md docs/audit/ docs/gap-matrix.md docs/testing.md
-git commit -m "docs: T-<ID> Phase 7.6 문서 동기화 (exec-plan/audit/gap-matrix)"
+git add docs/exec-plans/active/<TASK_ID>.md docs/audit/ docs/gap-matrix.md \
+        docs/testing.md docs/tasks/ docs/session-notes/
+git commit -m "docs: T-<ID> Phase 7.6 문서 동기화 (exec-plan/gap-matrix/card/session-note)"
 ```
 
 체크리스트는 verification 에이전트 Step 7.5가 검증.
@@ -430,6 +456,8 @@ Phase 7.6 문서 동기화:
   - audit 갱신: 완료 (또는 변동 없음)
   - gap-matrix 갱신: 완료
   - testing.md 갱신: 완료 (또는 변동 없음)
+  - 태스크 카드: 완료 (신규 생성 또는 status→done 갱신)
+  - 세션 노트: 완료 (docs/session-notes/<날짜>.md)
 
 Phase 8.5 잔재·중복:
   - 파일 위치 중복: 없음 (또는 사용자 확인 필요)
