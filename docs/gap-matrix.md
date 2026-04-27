@@ -24,17 +24,17 @@
 
 | 도메인 | Domain | Application | Adapter.in | Adapter.out | Tests | Docs |
 |---|---|---|---|---|---|---|
-| announcement | ✅ | 🟡 [T-201](T-201) | 🟡 [T-202](T-202) Idempotency | ✅ | ❌ [T-901](T-901) | 🟡 [T-203](T-203) |
+| announcement | ✅ | 🟡 [T-201](T-201) | ✅ [T-202](T-202) Idempotency — T-903 | ✅ | ❌ [T-901](T-901) | 🟡 [T-203](T-203) |
 | asset | 🟡 [T-204](T-204) Content-Type | ✅ | ✅ | ✅ | 🟡 [T-205](T-205) | ✅ |
 | auth | ✅ | ✅ | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-903](T-903) | ✅ |
 | booking | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | common | ✅ | ✅ | N/A | ✅ | 🟡 [T-904](T-904) | 🟡 [T-003](T-003) TimeWindow 상수 |
 | customer | ✅ | 🟡 [T-206](T-206) Notification filtering | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-208](T-208) iCal RFC | 🟡 [T-209](T-209) |
 | inquiry | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ [T-210](T-210) OpenAPI 계약 |
-| instructor | 🟡 [T-211](T-211) Status 검증 | 🟡 [T-212](T-212) Audit events | 🟡 [T-213](T-213) Idempotency | 🟡 [T-214](T-214) Role 검증 | 🟡 [T-905](T-905) | 🟡 [T-215](T-215) |
+| instructor | 🟡 [T-211](T-211) Status 검증 | 🟡 [T-212](T-212) Audit events | ✅ [T-213](T-213) Idempotency — T-903 | 🟡 [T-214](T-214) Role 검증 | 🟡 [T-905](T-905) | 🟡 [T-215](T-215) |
 | occurrence | ✅ | 🟡 [T-100](T-100) Race condition | 🟡 [T-101](T-101) Idempotency reschedule | 🟡 [T-102](T-102) Status guard | ✅ | 🟡 [T-103](T-103) Timezone 중앙화 |
-| operations | ✅ | 🟡 [T-216](T-216) Audit events | 🟡 [T-217](T-217) Idempotency | ✅ | ✅ | 🟡 [T-218](T-218) |
-| organization | ✅ | 🟡 [T-219](T-219) Audit events | 🟡 [T-220](T-220) Idempotency | ✅ | ✅ | 🟡 [T-221](T-221) slug normalize |
+| operations | ✅ | 🟡 [T-216](T-216) Audit events | ✅ [T-217](T-217) Idempotency — T-903 | ✅ | ✅ | 🟡 [T-218](T-218) |
+| organization | ✅ | 🟡 [T-219](T-219) Audit events | ✅ [T-220](T-220) Idempotency — T-903 | ✅ | ✅ | 🟡 [T-221](T-221) slug normalize |
 | participant | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | payment | 🟡 [T-104](T-104) Provider port | 🟡 [T-105](T-105) Capture flow | 🟡 [T-106](T-106) Webhook provider | ✅ | ✅ | 🟡 [T-107](T-107) |
 | review | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 [T-222](T-222) Audit events |
@@ -80,7 +80,7 @@
 | detekt/ktlint 설정 (코드 스타일 게이트) | ❌ | [T-900](T-900) |
 | AuditEventTest 부재 | ❌ | [T-901](T-901) |
 | CommunicationReportingIntegrationTest 실패 (main) | ❌ | [T-902](T-902) |
-| Idempotency-Key 일관성 (announcement/operations/organization/instructor) | 🟡 | [T-903](T-903) |
+| Idempotency-Key 일관성 (announcement/operations/organization/instructor) | ✅ | [T-903](T-903) — done 2026-04-28 |
 | 감사 이벤트 커버리지 (announcement/organization/instructor/tour) | ✅ | [T-904](T-904) — done 2026-04-26 |
 | OccurrenceCatalogControllerIntegrationTest 실패 (main) | ❌ | [T-905](T-905) |
 | InstructorAndTourControllerIntegrationTest 분리 필요 | 🟡 | [T-906](T-906) |
