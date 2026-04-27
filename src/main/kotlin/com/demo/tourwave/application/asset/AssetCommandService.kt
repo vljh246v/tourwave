@@ -8,6 +8,7 @@ import com.demo.tourwave.application.organization.port.OrganizationRepository
 import com.demo.tourwave.application.tour.port.TourRepository
 import com.demo.tourwave.application.user.port.UserRepository
 import com.demo.tourwave.domain.asset.Asset
+import com.demo.tourwave.domain.asset.AssetContentType
 import com.demo.tourwave.domain.asset.AssetStatus
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
@@ -52,7 +53,7 @@ class AssetCommandService(
         requireActor(command.actorUserId)
         command.organizationId?.let { organizationAccessGuard.requireMembership(command.actorUserId, it) }
         val normalizedFileName = requireFileName(command.fileName)
-        val normalizedContentType = requireContentType(command.contentType)
+        val normalizedContentType = AssetContentType.fromString(command.contentType).mimeType
         val upload =
             assetStoragePort.issueUpload(
                 ownerUserId = command.actorUserId,
@@ -173,14 +174,6 @@ class AssetCommandService(
         val normalized = fileName.trim()
         if (normalized.isBlank() || normalized.length > 255) {
             throw validation("fileName must be between 1 and 255 characters")
-        }
-        return normalized
-    }
-
-    private fun requireContentType(contentType: String): String {
-        val normalized = contentType.trim().lowercase()
-        if (normalized.isBlank() || !normalized.contains("/")) {
-            throw validation("contentType must be a valid media type")
         }
         return normalized
     }
