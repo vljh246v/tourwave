@@ -12,8 +12,6 @@ import com.demo.tourwave.domain.booking.Booking
 import com.demo.tourwave.domain.booking.BookingStatus
 import com.demo.tourwave.domain.booking.PaymentStatus
 import com.demo.tourwave.domain.occurrence.Occurrence
-import com.demo.tourwave.domain.booking.RefundPolicyAction
-import com.demo.tourwave.domain.occurrence.OccurrenceStatus
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -36,7 +34,6 @@ import kotlin.test.fail
  *       Spring/DB/Testcontainers 사용 금지 — 순수 단위 테스트.
  */
 class BookingCommandServiceLockOrderTest {
-
     // ──────────────────────────────────────────────────────────────────────────
     // Spy 래퍼: lock() 및 getOrCreate() 호출 순서를 기록
     // ──────────────────────────────────────────────────────────────────────────
@@ -69,18 +66,24 @@ class BookingCommandServiceLockOrderTest {
         private val store = mutableMapOf<Long, Occurrence>()
 
         override fun nextId(): Long = (store.keys.maxOrNull() ?: 0L) + 1
+
         override fun getOrCreate(occurrenceId: Long): Occurrence =
             store.computeIfAbsent(occurrenceId) {
                 Occurrence(id = occurrenceId, organizationId = 1L, capacity = 100)
             }
 
         override fun findById(occurrenceId: Long): Occurrence? = store[occurrenceId]
+
         override fun findByTourId(tourId: Long): List<Occurrence> = emptyList()
+
         override fun findAll(): List<Occurrence> = store.values.toList()
+
         override fun lock(occurrenceId: Long): Occurrence = getOrCreate(occurrenceId)
+
         override fun save(occurrence: Occurrence) {
             store[occurrence.id] = occurrence
         }
+
         override fun clear() = store.clear()
     }
 
@@ -95,11 +98,12 @@ class BookingCommandServiceLockOrderTest {
     private val idempotencyStore = mock(IdempotencyStore::class.java)
     private val auditEventPort = mock(AuditEventPort::class.java)
     private val paymentLedgerService = mock(PaymentLedgerService::class.java)
-    private val timeWindowPolicyService = TimeWindowPolicyService(
-        invitationWindowMinutes = 360,
-        invitationExpiryHours = 48,
-        refundFullWindowHours = 48,
-    )
+    private val timeWindowPolicyService =
+        TimeWindowPolicyService(
+            invitationWindowMinutes = 360,
+            invitationExpiryHours = 48,
+            refundFullWindowHours = 48,
+        )
 
     private lateinit var spyOccurrenceRepo: SpyOccurrenceRepository
     private lateinit var service: BookingCommandService
@@ -109,17 +113,18 @@ class BookingCommandServiceLockOrderTest {
         val inner = SimpleOccurrenceRepository()
         spyOccurrenceRepo = SpyOccurrenceRepository(inner)
 
-        service = BookingCommandService(
-            bookingRepository = bookingRepository,
-            occurrenceRepository = spyOccurrenceRepo,
-            bookingParticipantRepository = bookingParticipantRepository,
-            idempotencyStore = idempotencyStore,
-            auditEventPort = auditEventPort,
-            paymentLedgerService = paymentLedgerService,
-            timeWindowPolicyService = timeWindowPolicyService,
-            clock = clock,
-            offerWindowSeconds = 3600L,
-        )
+        service =
+            BookingCommandService(
+                bookingRepository = bookingRepository,
+                occurrenceRepository = spyOccurrenceRepo,
+                bookingParticipantRepository = bookingParticipantRepository,
+                idempotencyStore = idempotencyStore,
+                auditEventPort = auditEventPort,
+                paymentLedgerService = paymentLedgerService,
+                timeWindowPolicyService = timeWindowPolicyService,
+                clock = clock,
+                offerWindowSeconds = 3600L,
+            )
 
         // 공통 mock 설정
         whenever(bookingRepository.findByOccurrenceAndStatuses(any(), any())).thenReturn(emptyList())
@@ -171,16 +176,17 @@ class BookingCommandServiceLockOrderTest {
     @Test
     fun `createBooking - lock이 capacity 읽기보다 먼저 호출된다`() {
         val occurrenceId = 1001L
-        val savedBooking = Booking(
-            id = 1L,
-            occurrenceId = occurrenceId,
-            organizationId = 1L,
-            leaderUserId = 10L,
-            partySize = 1,
-            status = BookingStatus.REQUESTED,
-            paymentStatus = PaymentStatus.AUTHORIZED,
-            createdAt = clock.instant(),
-        )
+        val savedBooking =
+            Booking(
+                id = 1L,
+                occurrenceId = occurrenceId,
+                organizationId = 1L,
+                leaderUserId = 10L,
+                partySize = 1,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = clock.instant(),
+            )
         whenever(bookingRepository.save(any())).thenReturn(savedBooking)
 
         service.createBooking(
@@ -203,16 +209,17 @@ class BookingCommandServiceLockOrderTest {
     fun `mutateBooking APPROVE - lock이 capacity 읽기보다 먼저 호출된다`() {
         val occurrenceId = 1002L
         val bookingId = 2L
-        val booking = Booking(
-            id = bookingId,
-            occurrenceId = occurrenceId,
-            organizationId = 1L,
-            leaderUserId = 10L,
-            partySize = 1,
-            status = BookingStatus.REQUESTED,
-            paymentStatus = PaymentStatus.AUTHORIZED,
-            createdAt = clock.instant(),
-        )
+        val booking =
+            Booking(
+                id = bookingId,
+                occurrenceId = occurrenceId,
+                organizationId = 1L,
+                leaderUserId = 10L,
+                partySize = 1,
+                status = BookingStatus.REQUESTED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = clock.instant(),
+            )
         whenever(bookingRepository.findById(bookingId)).thenReturn(booking)
         whenever(bookingRepository.save(any())).thenReturn(booking.copy(status = BookingStatus.CONFIRMED))
 
@@ -236,16 +243,17 @@ class BookingCommandServiceLockOrderTest {
     fun `mutateBooking CANCEL - lock이 capacity 읽기보다 먼저 호출된다`() {
         val occurrenceId = 1003L
         val bookingId = 3L
-        val booking = Booking(
-            id = bookingId,
-            occurrenceId = occurrenceId,
-            organizationId = 1L,
-            leaderUserId = 10L,
-            partySize = 1,
-            status = BookingStatus.CONFIRMED,
-            paymentStatus = PaymentStatus.AUTHORIZED,
-            createdAt = clock.instant(),
-        )
+        val booking =
+            Booking(
+                id = bookingId,
+                occurrenceId = occurrenceId,
+                organizationId = 1L,
+                leaderUserId = 10L,
+                partySize = 1,
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = PaymentStatus.AUTHORIZED,
+                createdAt = clock.instant(),
+            )
         whenever(bookingRepository.findById(bookingId)).thenReturn(booking)
         whenever(bookingRepository.save(any())).thenReturn(booking.copy(status = BookingStatus.CANCELED))
         whenever(bookingRepository.findByOccurrenceAndStatuses(any(), any())).thenReturn(emptyList())
