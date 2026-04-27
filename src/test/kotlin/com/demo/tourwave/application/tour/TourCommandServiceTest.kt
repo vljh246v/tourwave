@@ -3,6 +3,7 @@ package com.demo.tourwave.application.tour
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
@@ -36,6 +37,7 @@ class TourCommandServiceTest {
     private val tourRepository = InMemoryTourRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val invitationDeliveryService =
         OrganizationInvitationDeliveryService(
@@ -65,6 +67,7 @@ class TourCommandServiceTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val membershipService =
@@ -74,6 +77,7 @@ class TourCommandServiceTest {
             organizationAccessGuard = accessGuard,
             organizationInvitationDeliveryService = invitationDeliveryService,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val tourCommandService =
@@ -88,6 +92,7 @@ class TourCommandServiceTest {
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         tourRepository.clear()
         membershipRepository.clear()
         organizationRepository.clear()
@@ -107,6 +112,7 @@ class TourCommandServiceTest {
                     slug = "jeju-tours",
                     name = "Jeju Tours",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-tour-001",
                 ),
             )
 
@@ -172,6 +178,7 @@ class TourCommandServiceTest {
                     slug = "seoul-tour-op",
                     name = "Seoul Tour Op",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-tour-002",
                 ),
             )
         membershipService.invite(
@@ -180,6 +187,7 @@ class TourCommandServiceTest {
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(member.id),
                 role = com.demo.tourwave.domain.organization.OrganizationRole.MEMBER,
+                idempotencyKey = "invite-member-tour-001",
             ),
         )
         membershipService.acceptInvitation(

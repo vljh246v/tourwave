@@ -1,5 +1,6 @@
 package com.demo.tourwave.application.organization
 
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
@@ -19,6 +20,7 @@ class OrganizationCommandAuditTest {
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val organizationCommandService =
         OrganizationCommandService(
@@ -27,11 +29,13 @@ class OrganizationCommandAuditTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         organizationRepository.clear()
         membershipRepository.clear()
         userRepository.clear()
@@ -51,6 +55,7 @@ class OrganizationCommandAuditTest {
                 slug = "audit-org",
                 name = "Audit Org",
                 timezone = "Asia/Seoul",
+                idempotencyKey = "audit-create-001",
             ),
         )
 
@@ -75,6 +80,7 @@ class OrganizationCommandAuditTest {
                     slug = "audit-org-2",
                     name = "Audit Org 2",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "audit-create-002",
                 ),
             )
         auditEventPort.clear()
@@ -85,6 +91,7 @@ class OrganizationCommandAuditTest {
                 organizationId = requireNotNull(org.id),
                 name = "Updated Name",
                 timezone = "Asia/Seoul",
+                idempotencyKey = "audit-update-001",
             ),
         )
 

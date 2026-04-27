@@ -2,6 +2,7 @@ package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
@@ -37,6 +38,7 @@ class OrganizationConfig {
         userRepository: UserRepository,
         organizationAccessGuard: OrganizationAccessGuard,
         auditEventPort: AuditEventPort,
+        idempotencyStore: IdempotencyStore,
         clock: Clock,
     ): OrganizationCommandService =
         OrganizationCommandService(
@@ -45,6 +47,7 @@ class OrganizationConfig {
             userRepository = userRepository,
             organizationAccessGuard = organizationAccessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
@@ -55,6 +58,7 @@ class OrganizationConfig {
         organizationAccessGuard: OrganizationAccessGuard,
         organizationInvitationDeliveryService: OrganizationInvitationDeliveryService,
         auditEventPort: AuditEventPort,
+        idempotencyStore: IdempotencyStore,
         clock: Clock,
     ): OrganizationMembershipService =
         OrganizationMembershipService(
@@ -63,6 +67,7 @@ class OrganizationConfig {
             organizationAccessGuard = organizationAccessGuard,
             organizationInvitationDeliveryService = organizationInvitationDeliveryService,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 

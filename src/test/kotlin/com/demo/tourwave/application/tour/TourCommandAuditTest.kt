@@ -1,5 +1,6 @@
 package com.demo.tourwave.application.tour
 
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.tour.InMemoryTourRepositoryAdapter
@@ -24,6 +25,7 @@ class TourCommandAuditTest {
     private val tourRepository = InMemoryTourRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val organizationCommandService =
         OrganizationCommandService(
@@ -32,6 +34,7 @@ class TourCommandAuditTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val tourCommandService =
@@ -48,6 +51,7 @@ class TourCommandAuditTest {
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         organizationRepository.clear()
         membershipRepository.clear()
         tourRepository.clear()
@@ -62,6 +66,7 @@ class TourCommandAuditTest {
                     slug = "tour-audit-org",
                     name = "Tour Audit Org",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-tour-audit-001",
                 ),
             )
         organizationId = requireNotNull(org.id)

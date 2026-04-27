@@ -14,6 +14,7 @@ data class CreateOrganizationCommand(
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
     val timezone: String,
+    val idempotencyKey: String,
 )
 
 data class UpdateOrganizationProfileCommand(
@@ -28,6 +29,7 @@ data class UpdateOrganizationProfileCommand(
     val businessName: String? = null,
     val businessRegistrationNumber: String? = null,
     val timezone: String,
+    val idempotencyKey: String,
 )
 
 data class InviteOrganizationMemberCommand(
@@ -35,6 +37,7 @@ data class InviteOrganizationMemberCommand(
     val organizationId: Long,
     val userId: Long,
     val role: OrganizationRole,
+    val idempotencyKey: String,
 )
 
 data class AcceptOrganizationInvitationCommand(
@@ -48,10 +51,12 @@ data class ChangeOrganizationMemberRoleCommand(
     val organizationId: Long,
     val memberUserId: Long,
     val role: OrganizationRole,
+    val idempotencyKey: String,
 )
 
 data class DeactivateOrganizationMemberCommand(
     val actorUserId: Long,
     val organizationId: Long,
     val memberUserId: Long,
+    val idempotencyKey: String,
 )

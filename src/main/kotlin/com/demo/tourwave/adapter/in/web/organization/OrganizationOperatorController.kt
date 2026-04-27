@@ -29,6 +29,7 @@ class OrganizationOperatorController(
     @PostMapping("/operator/organizations")
     fun createOrganization(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: CreateOrganizationWebRequest,
     ): ResponseEntity<OrganizationOperatorResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
@@ -46,6 +47,7 @@ class OrganizationOperatorController(
                     businessName = request.businessName,
                     businessRegistrationNumber = request.businessRegistrationNumber,
                     timezone = request.timezone,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.status(201).body(organization.toOperatorResponse())
@@ -66,6 +68,7 @@ class OrganizationOperatorController(
     fun updateOrganization(
         @PathVariable organizationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: UpdateOrganizationWebRequest,
     ): ResponseEntity<OrganizationOperatorResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
@@ -83,6 +86,7 @@ class OrganizationOperatorController(
                     businessName = request.businessName,
                     businessRegistrationNumber = request.businessRegistrationNumber,
                     timezone = request.timezone,
+                    idempotencyKey = idempotencyKey,
                 ),
             ).toOperatorResponse(),
         )
@@ -103,6 +107,7 @@ class OrganizationOperatorController(
     fun inviteMember(
         @PathVariable organizationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: InviteOrganizationMemberWebRequest,
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
@@ -113,6 +118,7 @@ class OrganizationOperatorController(
                     organizationId = organizationId,
                     userId = request.userId,
                     role = OrganizationRole.valueOf(request.role.trim().uppercase()),
+                    idempotencyKey = idempotencyKey,
                 ),
             ).toResponse(),
         )
@@ -123,6 +129,7 @@ class OrganizationOperatorController(
         @PathVariable organizationId: Long,
         @PathVariable memberUserId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: UpdateOrganizationMemberRoleWebRequest,
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
@@ -133,6 +140,7 @@ class OrganizationOperatorController(
                     organizationId = organizationId,
                     memberUserId = memberUserId,
                     role = OrganizationRole.valueOf(request.role.trim().uppercase()),
+                    idempotencyKey = idempotencyKey,
                 ),
             ).toResponse(),
         )
@@ -143,6 +151,7 @@ class OrganizationOperatorController(
         @PathVariable organizationId: Long,
         @PathVariable memberUserId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
     ): ResponseEntity<OrganizationMembershipResponse> {
         val actorUserIdRequired = authzGuardPort.requireActorUserId(actorUserId)
         return ResponseEntity.ok(
@@ -151,6 +160,7 @@ class OrganizationOperatorController(
                     actorUserId = actorUserIdRequired,
                     organizationId = organizationId,
                     memberUserId = memberUserId,
+                    idempotencyKey = idempotencyKey,
                 ),
             ).toResponse(),
         )

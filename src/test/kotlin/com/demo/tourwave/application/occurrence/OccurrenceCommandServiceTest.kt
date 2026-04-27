@@ -1,6 +1,7 @@
 package com.demo.tourwave.application.occurrence
 
 import com.demo.tourwave.adapter.out.persistence.booking.InMemoryBookingRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.occurrence.InMemoryOccurrenceRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
@@ -37,6 +38,7 @@ class OccurrenceCommandServiceTest {
     private val tourRepository = InMemoryTourRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val organizationCommandService =
         OrganizationCommandService(
@@ -45,6 +47,7 @@ class OccurrenceCommandServiceTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val tourCommandService =
@@ -67,6 +70,7 @@ class OccurrenceCommandServiceTest {
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         occurrenceRepository.clear()
         bookingRepository.clear()
         instructorProfileRepository.clear()
@@ -89,6 +93,7 @@ class OccurrenceCommandServiceTest {
                     slug = "seoul-occ",
                     name = "Seoul Occ",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-occ-001",
                 ),
             )
         val tour =
@@ -179,6 +184,7 @@ class OccurrenceCommandServiceTest {
                     slug = "seoul-cap",
                     name = "Seoul Cap",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-occ-002",
                 ),
             )
         val tour =
