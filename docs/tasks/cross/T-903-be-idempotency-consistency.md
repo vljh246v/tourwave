@@ -9,7 +9,7 @@ milestone: cross
 domain: infra
 layer: policy
 size: L
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -19,10 +19,10 @@ github_issue: 7
 exec_plan: ""
 
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-28
 ---
 
-#status/backlog #area/be
+#status/in-progress #area/be
 
 # T-903 — [BE] Idempotency-Key 일관성 검토 (announcement/operations/organization/instructor)
 
