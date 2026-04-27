@@ -129,6 +129,7 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("Authorization", "Bearer $resetAccessToken")
+                .header("Idempotency-Key", "auth-create-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"jae-ops","name":"Jae Ops","timezone":"Asia/Seoul"}"""),
         )

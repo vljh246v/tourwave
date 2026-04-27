@@ -81,6 +81,7 @@ class CustomerControllerIntegrationTest {
             .perform(
                 post("/operator/organizations")
                     .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .header("Idempotency-Key", "cust-create-org-001")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"slug":"cust-s12","name":"Customer Surface","timezone":"Asia/Seoul"}"""),
             ).andExpect(status().isCreated)

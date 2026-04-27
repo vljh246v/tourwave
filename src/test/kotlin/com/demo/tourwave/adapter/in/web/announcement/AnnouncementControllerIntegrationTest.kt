@@ -61,6 +61,7 @@ class AnnouncementControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "ann-create-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"announce-org","name":"Announce Org","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
@@ -111,6 +112,7 @@ class AnnouncementControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "ann-create-org-002")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"replay-org","name":"Replay Org","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
@@ -154,6 +156,7 @@ class AnnouncementControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "ann-create-org-003")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"conflict-org","name":"Conflict Org","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
@@ -192,6 +195,7 @@ class AnnouncementControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "ann-create-org-004")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"update-conflict-org","name":"Update Conflict Org","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)

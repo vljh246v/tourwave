@@ -50,6 +50,7 @@ class TourControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "tour-create-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"jeju-team","name":"Jeju Team","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)

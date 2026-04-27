@@ -85,6 +85,7 @@ class OccurrenceCatalogControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "catalog-create-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"catalog-team","name":"Catalog Team","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)

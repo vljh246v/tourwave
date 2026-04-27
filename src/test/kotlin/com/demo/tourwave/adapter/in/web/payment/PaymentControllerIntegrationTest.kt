@@ -290,6 +290,7 @@ class PaymentControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/operations/remediation-queue/NOTIFICATION_DELIVERY/${requireNotNull(failedDelivery.id)}")
                 .header("X-Actor-User-Id", 999L)
+                .header("Idempotency-Key", "remediation-resolve-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"action":"RESOLVE","note":"accepted as manual case"}"""),
         )
