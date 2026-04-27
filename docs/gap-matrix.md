@@ -1,6 +1,6 @@
 # Gap Matrix — Phase 2
 
-마지막 갱신: 2026-04-28
+마지막 갱신: 2026-04-28 (재감사)
 
 이 문서는 Phase 1 감사 결과 + SSOT 문서 대비 현재 구현의 갭을 태스크 ID로 매핑한 것이다.
 
@@ -24,22 +24,22 @@
 
 | 도메인 | Domain | Application | Adapter.in | Adapter.out | Tests | Docs |
 |---|---|---|---|---|---|---|
-| announcement | ✅ | 🟡 [T-201](T-201) | ✅ [T-202](T-202) Idempotency — T-903 | ✅ | ❌ [T-901](T-901) | 🟡 [T-203](T-203) |
-| asset | ✅ | ✅ | ✅ | ✅ | 🟡 [T-205](T-205) | ✅ |
-| auth | ✅ | ✅ | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-903](T-903) | ✅ |
+| announcement | ✅ | 🟡 [T-201](T-201) | ✅ T-903 done | ✅ | ✅ T-901 done | 🟡 [T-203](T-203) |
+| asset | ✅ T-204 done 2026-04-28 | ✅ | ✅ | ✅ | 🟡 [T-205](T-205) | ✅ |
+| auth | ✅ | ✅ | ✅ | 🟡 [T-207](T-207) Email adapter | ✅ T-903 done 2026-04-28 | ✅ |
 | booking | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| common | ✅ | ✅ | N/A | ✅ | 🟡 [T-904](T-904) | 🟡 [T-003](T-003) TimeWindow 상수 |
+| common | ✅ | ✅ | N/A | ✅ | ✅ T-904 done 2026-04-26 | ✅ T-003 done |
 | customer | ✅ | 🟡 [T-206](T-206) Notification filtering | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-208](T-208) iCal RFC | 🟡 [T-209](T-209) |
 | inquiry | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ [T-210](T-210) OpenAPI 계약 |
-| instructor | 🟡 [T-211](T-211) Status 검증 | 🟡 [T-212](T-212) Audit events | ✅ [T-213](T-213) Idempotency — T-903 | 🟡 [T-214](T-214) Role 검증 | 🟡 [T-905](T-905) | 🟡 [T-215](T-215) |
+| instructor | 🟡 [T-211](T-211) Status 검증 | ✅ T-904 흡수 (감사) | ✅ T-903 done | 🟡 [T-214](T-214) Role 검증 | ✅ T-905 done | 🟡 [T-215](T-215) |
 | occurrence | ✅ | 🟡 [T-100](T-100) Race condition | 🟡 [T-101](T-101) Idempotency reschedule | 🟡 [T-102](T-102) Status guard | ✅ | 🟡 [T-103](T-103) Timezone 중앙화 |
-| operations | ✅ | 🟡 [T-216](T-216) Audit events | ✅ [T-217](T-217) Idempotency — T-903 | ✅ | ✅ | 🟡 [T-218](T-218) |
-| organization | ✅ | 🟡 [T-219](T-219) Audit events | ✅ [T-220](T-220) Idempotency — T-903 | ✅ | ✅ | 🟡 [T-221](T-221) slug normalize |
+| operations | ✅ | 🟡 [T-216](T-216) Audit events | ✅ T-903 done | ✅ | ✅ | 🟡 [T-218](T-218) |
+| organization | ✅ | ✅ T-904 흡수 | ✅ T-903 done | ✅ | ✅ | 🟡 [T-221](T-221) slug normalize |
 | participant | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | payment | 🟡 [T-104](T-104) Provider port | 🟡 [T-105](T-105) Capture flow | 🟡 [T-106](T-106) Webhook provider | ✅ | ✅ | 🟡 [T-107](T-107) |
 | review | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 [T-222](T-222) Audit events |
-| tour | ✅ | 🟡 [T-223](T-223) Audit events | 🟡 [T-224](T-224) Idempotency | ✅ | 🟡 [T-225](T-225) | 🟡 [T-226](T-226) |
-| user | 🟡 [T-004](T-004) ApplicationService | 🟡 [T-005](T-005) Status enum | ✅ | ✅ | 🟡 [T-006](T-006) | 🟡 [T-007](T-007) Soft delete |
+| tour | ✅ | ✅ T-904 흡수 | 🟡 [T-224](T-224) Idempotency | ✅ | ✅ T-906 done | 🟡 [T-226](T-226) |
+| user | ✅ T-004 done | ✅ T-005 done | ✅ | ✅ | ✅ T-006 done | ✅ T-007 done |
 
 ---
 
@@ -77,21 +77,21 @@
 
 | 항목 | 상태 | 태스크 |
 |---|---|---|
-| detekt/ktlint 설정 (코드 스타일 게이트) | ❌ | [T-900](T-900) |
-| AuditEventTest 부재 | ❌ | [T-901](T-901) |
-| CommunicationReportingIntegrationTest 실패 (main) | ❌ | [T-902](T-902) |
+| detekt/ktlint 설정 (코드 스타일 게이트) | ✅ | [T-900](T-900) — done |
+| AuditEventTest 부재 | ✅ | [T-901](T-901) — done |
+| CommunicationReportingIntegrationTest 실패 (main) | ✅ | [T-902](T-902) — done |
 | Idempotency-Key 일관성 (announcement/operations/organization/instructor) | ✅ | [T-903](T-903) — done 2026-04-28 |
 | 감사 이벤트 커버리지 (announcement/organization/instructor/tour) | ✅ | [T-904](T-904) — done 2026-04-26 |
-| OccurrenceCatalogControllerIntegrationTest 실패 (main) | ❌ | [T-905](T-905) |
-| InstructorAndTourControllerIntegrationTest 분리 필요 | 🟡 | [T-906](T-906) |
+| OccurrenceCatalogControllerIntegrationTest 실패 (main) | ✅ | [T-905](T-905) — done |
+| InstructorAndTourControllerIntegrationTest 분리 필요 | ✅ | [T-906](T-906) — done |
 | FE API 클라이언트 fetch 래퍼 | ✅ | [T-910](T-910) — done 2026-04-28 |
-| FE OpenAPI 타입 생성 (schema.ts) | ❌ | [T-911](T-911) |
-| FE 인증 모듈 (httpOnly cookie) | ❌ | [T-912](T-912) |
-| FE 상태 관리 라이브러리 선택·도입 (Zustand/Redux) | ❌ | [T-913](T-913) |
-| FE 테스트 러너 (vitest) 도입 | ❌ | [T-914](T-914) |
+| FE OpenAPI 타입 생성 (schema.ts) | ✅ | [T-911](T-911) — done (T-910에 흡수, schema.ts 재생성) |
+| FE 인증 모듈 (storage/useAuth/AuthProvider/ClientAuthGuard/roleGuard) | ✅ | [T-912](T-912) — done (httpOnly cookie 검증 별도) |
+| FE 상태 관리 라이브러리 (Zustand v5) | ✅ | [T-913](T-913) — done (zustand ^5.0.12 설치) |
+| FE 테스트 러너 (vitest v4 + MSW) | ✅ | [T-914](T-914) — done (vitest ^4.1.4 설치) |
 | FE 라우트 가드 (middleware.ts) | ❌ | [T-915](T-915) |
-| FE 디자인 시스템 기본 컴포넌트 (Button/Input/Modal) | ❌ | [T-916](T-916) |
-| orchestrator Phase 0/7.6/8.5 신설 (문서·정합성 가드) | 🟡 | [T-907](T-907) — in-progress 2026-04-27 |
+| FE 디자인 시스템 기본 컴포넌트 (Button/Card/Input/Modal/FormField) | ✅ | [T-916](T-916) — done (src/components/ui/) |
+| orchestrator Phase 0/7.6/8.5 신설 (문서·정합성 가드) | ✅ | [T-907](T-907) — done 2026-04-27 |
 
 ---
 
@@ -265,14 +265,13 @@
 
 ### 🔴 고위험 (즉시 해결 필수)
 1. ~~**BE: Asset Content-Type 검증 없음** (T-204) — 악성 파일 업로드 가능~~ ✅ 완료 (2026-04-28)
-2. **BE: Refresh token 로테이션 race condition** (T-002) — 분산 환경 취약
-3. **BE: Occurrence 용량 동시성 제어** (T-100) — 오버부킹 위험
+2. **BE: Occurrence 용량 동시성 제어 검증** (T-100) — 락은 존재(`OccurrenceJpaRepository.findLockedById`), 호출 순서·정렬 검증 필요
+3. **FE: 라우트 가드 middleware.ts** (T-915) — 역할 기반 redirect 미구현
 
-### 🟡 중위험 (M1/M2 착수 전 해결)
-1. **BE: Idempotency-Key 부분 미구현** (T-903) — announcement, operations, organization, instructor
-2. **BE: 감사 이벤트 미기록** (T-904) — announcement, organization, instructor, tour, review
-3. **BE: PaymentProviderPort 미구현** (T-104) — 실제 결제 연동 불가
-4. **FE: 크로스컷팅 프리쿼지트** (T-910~916) — 모든 FE 기능의 선행 조건
+### 🟡 중위험 (M2 착수 전 해결)
+1. **BE: PaymentProviderPort 미구현** (T-104) — 실제 결제 연동 불가
+2. **BE: Asset 통합 테스트** (T-205) — presigned URL flow 미검증
+3. **BE: NotificationChannelPort 이메일 어댑터** (T-207) — Password reset 실제 발송 어댑터 부재
 
 ### 🟢 저위험 (M3/M4에서 처리)
 1. **BE: Test 분리 및 정리** (T-906, T-905, T-902)
