@@ -4,6 +4,7 @@ import com.demo.tourwave.adapter.out.payment.InMemoryRefundExecutionAdapter
 import com.demo.tourwave.adapter.out.persistence.audit.InMemoryAuditEventAdapter
 import com.demo.tourwave.adapter.out.persistence.booking.InMemoryBookingRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.operations.InMemoryOperatorFailureRecordRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.payment.InMemoryPaymentProviderEventRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.payment.InMemoryPaymentRecordRepositoryAdapter
@@ -45,6 +46,7 @@ class OperatorRemediationQueueServiceTest {
     private val notificationDeliveryRepository = InMemoryNotificationDeliveryRepositoryAdapter()
     private val operatorFailureRecordRepository = InMemoryOperatorFailureRecordRepositoryAdapter()
     private val auditEventAdapter = InMemoryAuditEventAdapter()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val refundExecutionAdapter = InMemoryRefundExecutionAdapter()
     private val notificationChannelPort = ScriptedNotificationChannelPort()
     private val clock = Clock.fixed(Instant.parse("2026-03-19T01:00:00Z"), ZoneOffset.UTC)
@@ -99,6 +101,7 @@ class OperatorRemediationQueueServiceTest {
             paymentWebhookService = paymentWebhookService,
             operatorFailureRecordRepository = operatorFailureRecordRepository,
             auditEventPort = auditEventAdapter,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
@@ -149,7 +152,13 @@ class OperatorRemediationQueueServiceTest {
         service.remediate(
             sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
             sourceKey = requireNotNull(failedNotification.id).toString(),
-            command = OperatorRemediationCommand(actorUserId = 7L, action = OperatorRemediationAction.RESOLVE, note = "acknowledged"),
+            command =
+                OperatorRemediationCommand(
+                    actorUserId = 7L,
+                    action = OperatorRemediationAction.RESOLVE,
+                    note = "acknowledged",
+                    idempotencyKey = "rem-resolve-001",
+                ),
         )
 
         val items = service.listOpenItems()
@@ -181,7 +190,13 @@ class OperatorRemediationQueueServiceTest {
         service.remediate(
             sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
             sourceKey = requireNotNull(delivery.id).toString(),
-            command = OperatorRemediationCommand(actorUserId = 11L, action = OperatorRemediationAction.RETRY, note = "replay email"),
+            command =
+                OperatorRemediationCommand(
+                    actorUserId = 11L,
+                    action = OperatorRemediationAction.RETRY,
+                    note = "replay email",
+                    idempotencyKey = "rem-retry-notification-001",
+                ),
         )
 
         val saved = notificationDeliveryRepository.findById(requireNotNull(delivery.id))
@@ -216,11 +231,99 @@ class OperatorRemediationQueueServiceTest {
         service.remediate(
             sourceType = OperatorFailureSourceType.PAYMENT_WEBHOOK,
             sourceKey = "evt-poison-retry",
-            command = OperatorRemediationCommand(actorUserId = 15L, action = OperatorRemediationAction.RETRY, note = "reprocess"),
+            command =
+                OperatorRemediationCommand(
+                    actorUserId = 15L,
+                    action = OperatorRemediationAction.RETRY,
+                    note = "reprocess",
+                    idempotencyKey = "rem-retry-webhook-001",
+                ),
         )
 
         assertEquals(PaymentProviderEventStatus.PROCESSED, paymentProviderEventRepository.findByProviderEventId("evt-poison-retry")?.status)
         assertEquals(PaymentRecordStatus.CAPTURED, paymentRecordRepository.findByBookingId(requireNotNull(booking.id))?.status)
+    }
+
+    @Test
+    fun `remediate with same idempotency key and same payload replays response`() {
+        val delivery =
+            notificationDeliveryService.deliver(
+                DeliverNotificationCommand(
+                    channel = NotificationChannel.EMAIL,
+                    templateCode = "booking-created",
+                    recipient = "user@example.com",
+                    subject = "Booked",
+                    body = "Booked",
+                    resourceType = "BOOKING",
+                    resourceId = 999L,
+                    idempotencyKey = "notify-999",
+                ),
+            )
+        notificationChannelPort.failuresBeforeSuccess.set(0)
+        val cmd =
+            OperatorRemediationCommand(
+                actorUserId = 20L,
+                action = OperatorRemediationAction.RETRY,
+                note = "first-try",
+                idempotencyKey = "rem-idem-replay-001",
+            )
+
+        val result1 =
+            service.remediate(
+                sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
+                sourceKey = requireNotNull(delivery.id).toString(),
+                command = cmd,
+            )
+        // Second call with same key — item no longer in open queue, so retry would fail if not replayed
+        val result2 =
+            service.remediate(
+                sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
+                sourceKey = requireNotNull(delivery.id).toString(),
+                command = cmd,
+            )
+        assertEquals(result1, result2)
+    }
+
+    @Test
+    fun `remediate with same idempotency key but different payload returns 422`() {
+        val delivery =
+            notificationDeliveryService.deliver(
+                DeliverNotificationCommand(
+                    channel = NotificationChannel.EMAIL,
+                    templateCode = "booking-created",
+                    recipient = "user2@example.com",
+                    subject = "Booked",
+                    body = "Booked",
+                    resourceType = "BOOKING",
+                    resourceId = 998L,
+                    idempotencyKey = "notify-998",
+                ),
+            )
+        notificationChannelPort.failuresBeforeSuccess.set(0)
+        val key = "rem-idem-conflict-001"
+
+        service.remediate(
+            sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
+            sourceKey = requireNotNull(delivery.id).toString(),
+            command = OperatorRemediationCommand(actorUserId = 21L, action = OperatorRemediationAction.RETRY, note = "first", idempotencyKey = key),
+        )
+
+        try {
+            service.remediate(
+                sourceType = OperatorFailureSourceType.NOTIFICATION_DELIVERY,
+                sourceKey = requireNotNull(delivery.id).toString(),
+                command =
+                    OperatorRemediationCommand(
+                        actorUserId = 21L,
+                        action = OperatorRemediationAction.RETRY,
+                        note = "different-note",
+                        idempotencyKey = key,
+                    ),
+            )
+            kotlin.test.fail("Expected DomainException for IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD")
+        } catch (e: com.demo.tourwave.domain.common.DomainException) {
+            assertEquals(com.demo.tourwave.domain.common.ErrorCode.IDEMPOTENCY_KEY_REUSED_WITH_DIFFERENT_PAYLOAD, e.errorCode)
+        }
     }
 
     private fun createBooking(occurrenceId: Long): Booking =

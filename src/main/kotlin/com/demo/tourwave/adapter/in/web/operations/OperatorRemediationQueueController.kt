@@ -30,6 +30,7 @@ class OperatorRemediationQueueController(
         @PathVariable sourceType: OperatorFailureSourceType,
         @PathVariable sourceKey: String,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: OperatorRemediationRequest,
     ): OperatorRemediationQueueItemResponse {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
@@ -41,6 +42,7 @@ class OperatorRemediationQueueController(
                     actorUserId = requiredActorUserId,
                     action = request.action,
                     note = request.note,
+                    idempotencyKey = idempotencyKey,
                 ),
         ).toResponse()
     }
