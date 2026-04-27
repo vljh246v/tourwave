@@ -9,7 +9,7 @@ milestone: M2
 domain: occurrence
 layer: application
 size: M
-status: backlog
+status: in-progress
 
 depends_on: []
 blocks: []
@@ -22,7 +22,7 @@ created: 2026-04-28
 updated: 2026-04-28
 ---
 
-#status/backlog #area/be #risk/high
+#status/in-progress #area/be #risk/high
 
 # T-100 — [BE] occurrence — 락 획득 순서 검증
 
