@@ -246,6 +246,28 @@ Use alongside `docs/openapi.yaml` `x-error-code-map`:
 | 422 | `BOOKING_SCOPE_MISMATCH` | occurrence/org mismatch with booking | `POST /occurrences/{occurrenceId}/inquiries` |
 | 422 | `PARTY_SIZE_INCREASE_NOT_ALLOWED` | Party size increase attempt | `PATCH /bookings/{bookingId}/party-size` |
 | 422 | `INVITE_WINDOW_CLOSED` | Invitation within N-hour window | `POST /bookings/{bookingId}/participants/invite` |
+| 422 | `ASSET_UNSUPPORTED_CONTENT_TYPE` | MIME type not in allowed whitelist | `POST /assets/uploads` |
+
+---
+
+### 4.8 Asset Upload Policy
+
+#### Content-Type 화이트리스트 (T-204, 2026-04-28)
+
+`POST /assets/uploads` 엔드포인트는 `contentType` 필드를 반드시 허용 목록과 대조한다.
+
+| MIME 타입 | 허용 여부 | 설명 |
+|---|---|---|
+| `image/jpeg` | ✅ 허용 | JPEG 이미지 |
+| `image/png` | ✅ 허용 | PNG 이미지 |
+| `image/webp` | ✅ 허용 | WebP 이미지 |
+| `image/gif` | ✅ 허용 | GIF 애니메이션 |
+| `application/pdf` | ✅ 허용 | PDF 문서 |
+| 그 외 모든 타입 | ❌ 거부 | `422 ASSET_UNSUPPORTED_CONTENT_TYPE` |
+
+**구현 위치:** `domain/asset/AssetContentType.kt` — deny by default 원칙.  
+**대소문자 처리:** `trim().lowercase()` 정규화 후 비교. `IMAGE/JPEG` → 허용.  
+**향후 확장:** magic byte 검증(파일 시그니처)은 별도 카드 — adapter.out 레이어, 업로드 후 비동기.
 
 ---
 
