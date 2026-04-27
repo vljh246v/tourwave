@@ -1,5 +1,6 @@
 package com.demo.tourwave.application.instructor
 
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorRegistrationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
@@ -29,6 +30,7 @@ class InstructorAuditTest {
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val registrationService =
         InstructorRegistrationService(
@@ -38,6 +40,7 @@ class InstructorAuditTest {
             organizationAccessGuard = accessGuard,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val profileService =
@@ -46,6 +49,7 @@ class InstructorAuditTest {
             instructorRegistrationRepository = registrationRepository,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
@@ -55,6 +59,7 @@ class InstructorAuditTest {
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         registrationRepository.clear()
         profileRepository.clear()
         organizationRepository.clear()
@@ -100,6 +105,7 @@ class InstructorAuditTest {
                 headline = "City guide",
                 languages = listOf("ko"),
                 specialties = listOf("history"),
+                idempotencyKey = "audit-apply-001",
             ),
         )
 
@@ -121,6 +127,7 @@ class InstructorAuditTest {
                     headline = "City guide",
                     languages = listOf("ko"),
                     specialties = listOf("history"),
+                    idempotencyKey = "audit-apply-002",
                 ),
             )
         auditEventPort.clear()
@@ -129,6 +136,7 @@ class InstructorAuditTest {
             ReviewInstructorRegistrationCommand(
                 actorUserId = requireNotNull(owner.id),
                 registrationId = requireNotNull(registration.id),
+                idempotencyKey = "audit-approve-001",
             ),
         )
 
@@ -149,6 +157,7 @@ class InstructorAuditTest {
                     actorUserId = requireNotNull(instructor.id),
                     organizationId = organizationId,
                     headline = "City guide",
+                    idempotencyKey = "audit-apply-003",
                 ),
             )
         auditEventPort.clear()
@@ -158,6 +167,7 @@ class InstructorAuditTest {
                 actorUserId = requireNotNull(owner.id),
                 registrationId = requireNotNull(registration.id),
                 rejectionReason = "Not enough experience",
+                idempotencyKey = "audit-reject-001",
             ),
         )
 
@@ -180,6 +190,7 @@ class InstructorAuditTest {
                     headline = "City guide",
                     languages = listOf("ko"),
                     specialties = listOf("history"),
+                    idempotencyKey = "audit-apply-004",
                 ),
             )
         auditEventPort.clear()
@@ -188,6 +199,7 @@ class InstructorAuditTest {
             ReviewInstructorRegistrationCommand(
                 actorUserId = requireNotNull(owner.id),
                 registrationId = requireNotNull(registration.id),
+                idempotencyKey = "audit-approve-002",
             ),
         )
 
@@ -212,6 +224,7 @@ class InstructorAuditTest {
                     headline = "City guide",
                     languages = listOf("ko"),
                     specialties = listOf("history"),
+                    idempotencyKey = "audit-apply-005",
                 ),
             )
         // First approval creates profile
@@ -219,6 +232,7 @@ class InstructorAuditTest {
             ReviewInstructorRegistrationCommand(
                 actorUserId = requireNotNull(owner.id),
                 registrationId = requireNotNull(registration.id),
+                idempotencyKey = "audit-approve-003",
             ),
         )
         // Re-apply (as REJECTED logic flow is needed — skip this edge case,
@@ -242,6 +256,7 @@ class InstructorAuditTest {
             ReviewInstructorRegistrationCommand(
                 actorUserId = requireNotNull(owner.id),
                 registrationId = requireNotNull(secondRegistration.id),
+                idempotencyKey = "audit-approve-004",
             ),
         )
 
@@ -277,6 +292,7 @@ class InstructorAuditTest {
                 headline = "City guide",
                 languages = listOf("ko"),
                 specialties = listOf("history"),
+                idempotencyKey = "audit-create-profile-001",
             ),
         )
 
@@ -311,6 +327,7 @@ class InstructorAuditTest {
                 headline = "City guide",
                 languages = listOf("ko"),
                 specialties = listOf("history"),
+                idempotencyKey = "audit-create-profile-002",
             ),
         )
         auditEventPort.clear()
@@ -322,6 +339,7 @@ class InstructorAuditTest {
                 headline = "Updated headline",
                 languages = listOf("ko", "en"),
                 specialties = listOf("history", "food"),
+                idempotencyKey = "audit-update-profile-001",
             ),
         )
 

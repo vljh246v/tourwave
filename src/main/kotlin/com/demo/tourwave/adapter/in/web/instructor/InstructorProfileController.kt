@@ -33,6 +33,7 @@ class InstructorProfileController(
     @PostMapping("/me/instructor-profile")
     fun createMyProfile(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: UpsertInstructorProfileWebRequest,
     ): ResponseEntity<InstructorOperatorProfileResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
@@ -48,6 +49,7 @@ class InstructorProfileController(
                     certifications = request.certifications,
                     yearsOfExperience = request.yearsOfExperience,
                     internalNote = request.internalNote,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.status(201).body(profile.toOperatorResponse(requireUser(profile.userId)))
@@ -56,6 +58,7 @@ class InstructorProfileController(
     @PatchMapping("/me/instructor-profile")
     fun updateMyProfile(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: UpsertInstructorProfileWebRequest,
     ): ResponseEntity<InstructorOperatorProfileResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
@@ -71,6 +74,7 @@ class InstructorProfileController(
                     certifications = request.certifications,
                     yearsOfExperience = request.yearsOfExperience,
                     internalNote = request.internalNote,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.ok(profile.toOperatorResponse(requireUser(profile.userId)))

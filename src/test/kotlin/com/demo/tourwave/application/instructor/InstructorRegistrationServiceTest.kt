@@ -91,6 +91,7 @@ class InstructorRegistrationServiceTest {
             organizationAccessGuard = accessGuard,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val profileService =
@@ -99,6 +100,7 @@ class InstructorRegistrationServiceTest {
             instructorRegistrationRepository = registrationRepository,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
@@ -141,6 +143,7 @@ class InstructorRegistrationServiceTest {
                     headline = "City storyteller",
                     languages = listOf("ko", "en"),
                     specialties = listOf("history", "food"),
+                    idempotencyKey = "apply-reg-001",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.PENDING, registration.status)
@@ -150,6 +153,7 @@ class InstructorRegistrationServiceTest {
                 ReviewInstructorRegistrationCommand(
                     actorUserId = requireNotNull(owner.id),
                     registrationId = requireNotNull(registration.id),
+                    idempotencyKey = "approve-reg-001",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.APPROVED, approved.status)
@@ -169,6 +173,7 @@ class InstructorRegistrationServiceTest {
                     certifications = listOf("first aid"),
                     yearsOfExperience = 7,
                     internalNote = "operator note",
+                    idempotencyKey = "update-profile-001",
                 ),
             )
         assertEquals("Lead storyteller", updatedProfile.headline)
@@ -220,6 +225,7 @@ class InstructorRegistrationServiceTest {
                     actorUserId = requireNotNull(instructor.id),
                     organizationId = requireNotNull(organization.id),
                     headline = "Busan guide",
+                    idempotencyKey = "apply-busan-001",
                 ),
             )
 
@@ -228,6 +234,7 @@ class InstructorRegistrationServiceTest {
                 ReviewInstructorRegistrationCommand(
                     actorUserId = requireNotNull(member.id),
                     registrationId = requireNotNull(registration.id),
+                    idempotencyKey = "approve-busan-member-001",
                 ),
             )
         }
@@ -238,6 +245,7 @@ class InstructorRegistrationServiceTest {
                     actorUserId = requireNotNull(owner.id),
                     registrationId = requireNotNull(registration.id),
                     rejectionReason = "Need more experience",
+                    idempotencyKey = "reject-busan-001",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.REJECTED, rejected.status)
@@ -249,6 +257,7 @@ class InstructorRegistrationServiceTest {
                     organizationId = requireNotNull(organization.id),
                     headline = "Busan guide updated",
                     specialties = listOf("harbor"),
+                    idempotencyKey = "apply-busan-002",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.PENDING, resubmitted.status)
