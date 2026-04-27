@@ -358,6 +358,8 @@ paths:
       tags: [Organizations]
       summary: Create organization
       description: Creator becomes ORG_OWNER
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -373,6 +375,8 @@ paths:
                 $ref: '#/components/schemas/Organization'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /organizations/{orgId}:
     get:
@@ -412,6 +416,7 @@ paths:
       summary: Add organization member
       parameters:
         - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -429,6 +434,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /organizations/{orgId}/members/{userId}:
     patch:
@@ -437,6 +444,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/orgId'
         - $ref: '#/components/parameters/userId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -452,6 +460,8 @@ paths:
                 $ref: '#/components/schemas/OrganizationMember'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /organizations/{orgId}/members/{userId}/remove:
     post:
@@ -460,17 +470,22 @@ paths:
       parameters:
         - $ref: '#/components/parameters/orgId'
         - $ref: '#/components/parameters/userId'
+        - $ref: '#/components/parameters/idempotencyKey'
       responses:
         '204':
           description: Removed
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /instructor-registrations:
     post:
       tags: [Instructors]
       summary: Request instructor registration
       description: User applies to become instructor in an organization
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -486,6 +501,8 @@ paths:
                 $ref: '#/components/schemas/InstructorRegistration'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /organizations/{orgId}/instructor-registrations:
     get:
@@ -514,11 +531,18 @@ paths:
           schema:
             type: integer
             format: int64
+        - $ref: '#/components/parameters/idempotencyKey'
       responses:
-        '204':
+        '200':
           description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorRegistration'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /instructor-registrations/{registrationId}/reject:
     post:
@@ -531,16 +555,25 @@ paths:
           schema:
             type: integer
             format: int64
+        - $ref: '#/components/parameters/idempotencyKey'
       responses:
-        '204':
+        '200':
           description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorRegistration'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /me/instructor-profile:
     post:
       tags: [Instructors]
       summary: Create instructor profile
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -554,10 +587,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InstructorProfile'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
     patch:
       tags: [Instructors]
       summary: Update instructor profile
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -571,6 +610,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InstructorProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 
   /instructors/{instructorProfileId}:
     get:
@@ -1212,6 +1255,7 @@ paths:
       summary: Create announcement (ORG_ADMIN/ORG_OWNER)
       parameters:
         - $ref: '#/components/parameters/orgId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -1233,6 +1277,7 @@ paths:
       summary: Update announcement (ORG_ADMIN/ORG_OWNER)
       parameters:
         - $ref: '#/components/parameters/announcementId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -1254,11 +1299,13 @@ paths:
       summary: Delete announcement (ORG_ADMIN/ORG_OWNER)
       parameters:
         - $ref: '#/components/parameters/announcementId'
+        - $ref: '#/components/parameters/idempotencyKey'
       responses:
         '204': { description: Deleted }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
 # =========================
 # 5) Bookings + Waitlist + Participants + Notes + Policies
 # =========================
@@ -2374,6 +2421,7 @@ paths:
           in: path
           required: true
           schema: { type: string }
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -2390,6 +2438,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
 components:
   securitySchemes:
     bearerAuth:
