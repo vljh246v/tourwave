@@ -133,6 +133,7 @@ class CommunicationReportingIntegrationTest {
             mockMvc.perform(
                 post("/organizations/${organization.id}/announcements")
                     .header("X-Actor-User-Id", requireNotNull(owner.id))
+                    .header("Idempotency-Key", "comm-create-ann-001")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """{
@@ -168,6 +169,7 @@ class CommunicationReportingIntegrationTest {
         mockMvc.perform(
             patch("/announcements/$announcementId")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "comm-update-ann-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"title":"Updated notice","visibility":"INTERNAL"}"""),
         )
@@ -268,7 +270,8 @@ class CommunicationReportingIntegrationTest {
 
         mockMvc.perform(
             delete("/announcements/$announcementId")
-                .header("X-Actor-User-Id", requireNotNull(owner.id)),
+                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "comm-delete-ann-001"),
         )
             .andExpect(status().isNoContent)
     }

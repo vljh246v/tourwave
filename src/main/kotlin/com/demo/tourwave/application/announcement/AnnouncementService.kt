@@ -3,12 +3,15 @@ package com.demo.tourwave.application.announcement
 import com.demo.tourwave.application.announcement.port.AnnouncementRepository
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyDecision
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
 import com.demo.tourwave.domain.announcement.Announcement
 import com.demo.tourwave.domain.announcement.AnnouncementVisibility
 import com.demo.tourwave.domain.common.DomainException
 import com.demo.tourwave.domain.common.ErrorCode
 import org.springframework.transaction.annotation.Transactional
+import java.security.MessageDigest
 import java.time.Clock
 
 data class CreateAnnouncementCommand(
@@ -19,6 +22,7 @@ data class CreateAnnouncementCommand(
     val visibility: AnnouncementVisibility,
     val publishStartsAtUtc: java.time.Instant?,
     val publishEndsAtUtc: java.time.Instant?,
+    val idempotencyKey: String,
 )
 
 data class UpdateAnnouncementCommand(
@@ -29,6 +33,13 @@ data class UpdateAnnouncementCommand(
     val visibility: AnnouncementVisibility?,
     val publishStartsAtUtc: java.time.Instant?,
     val publishEndsAtUtc: java.time.Instant?,
+    val idempotencyKey: String,
+)
+
+data class DeleteAnnouncementCommand(
+    val actorUserId: Long,
+    val announcementId: Long,
+    val idempotencyKey: String,
 )
 
 data class AnnouncementCursorPage(
@@ -41,34 +52,64 @@ class AnnouncementService(
     private val announcementRepository: AnnouncementRepository,
     private val organizationAccessGuard: OrganizationAccessGuard,
     private val auditEventPort: AuditEventPort,
+    private val idempotencyStore: IdempotencyStore,
     private val clock: Clock,
 ) {
     fun create(command: CreateAnnouncementCommand): Announcement {
         organizationAccessGuard.requireOperator(command.actorUserId, command.organizationId)
-        val saved =
-            announcementRepository.save(
-                Announcement.create(
-                    organizationId = command.organizationId,
-                    title = command.title.trim(),
-                    body = command.body.trim(),
-                    visibility = command.visibility,
-                    publishStartsAtUtc = command.publishStartsAtUtc,
-                    publishEndsAtUtc = command.publishEndsAtUtc,
-                    now = clock.instant(),
-                ),
+
+        val pathTemplate = "/organizations/{organizationId}/announcements"
+        val requestHash =
+            requestHash(
+                "${command.organizationId}|${command.title}|${command.body}|${command.visibility}|${command.publishStartsAtUtc}|${command.publishEndsAtUtc}",
             )
-        auditEventPort.append(
-            AuditEventCommand(
-                actor = "OPERATOR:${command.actorUserId}",
-                action = "ANNOUNCEMENT_CREATED",
-                resourceType = "ANNOUNCEMENT",
-                resourceId = requireNotNull(saved.id),
-                occurredAtUtc = clock.instant(),
-                reasonCode = "ANNOUNCEMENT_CREATED",
-                afterJson = announcementSnapshot(saved),
-            ),
-        )
-        return saved
+
+        return when (
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
+        ) {
+            is IdempotencyDecision.Replay -> decision.body as Announcement
+            IdempotencyDecision.Reserved -> {
+                val saved =
+                    announcementRepository.save(
+                        Announcement.create(
+                            organizationId = command.organizationId,
+                            title = command.title.trim(),
+                            body = command.body.trim(),
+                            visibility = command.visibility,
+                            publishStartsAtUtc = command.publishStartsAtUtc,
+                            publishEndsAtUtc = command.publishEndsAtUtc,
+                            now = clock.instant(),
+                        ),
+                    )
+                auditEventPort.append(
+                    AuditEventCommand(
+                        actor = "OPERATOR:${command.actorUserId}",
+                        action = "ANNOUNCEMENT_CREATED",
+                        resourceType = "ANNOUNCEMENT",
+                        resourceId = requireNotNull(saved.id),
+                        occurredAtUtc = clock.instant(),
+                        reasonCode = "ANNOUNCEMENT_CREATED",
+                        afterJson = announcementSnapshot(saved),
+                    ),
+                )
+                idempotencyStore.complete(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    status = 201,
+                    body = saved,
+                )
+                saved
+            }
+        }
     }
 
     fun listOperatorAnnouncements(
@@ -101,52 +142,101 @@ class AnnouncementService(
     }
 
     fun update(command: UpdateAnnouncementCommand): Announcement {
-        val existing = requireAnnouncement(command.announcementId)
-        organizationAccessGuard.requireOperator(command.actorUserId, existing.organizationId)
-        val saved =
-            announcementRepository.save(
-                existing.update(
-                    title = command.title?.trim() ?: existing.title,
-                    body = command.body?.trim() ?: existing.body,
-                    visibility = command.visibility ?: existing.visibility,
-                    publishStartsAtUtc = command.publishStartsAtUtc ?: existing.publishStartsAtUtc,
-                    publishEndsAtUtc = command.publishEndsAtUtc ?: existing.publishEndsAtUtc,
-                    now = clock.instant(),
-                ),
+        val pathTemplate = "/announcements/{announcementId}"
+        val requestHash =
+            requestHash(
+                "${command.announcementId}|${command.title}|${command.body}|${command.visibility}|${command.publishStartsAtUtc}|${command.publishEndsAtUtc}",
             )
-        auditEventPort.append(
-            AuditEventCommand(
-                actor = "OPERATOR:${command.actorUserId}",
-                action = "ANNOUNCEMENT_UPDATED",
-                resourceType = "ANNOUNCEMENT",
-                resourceId = requireNotNull(saved.id),
-                occurredAtUtc = clock.instant(),
-                reasonCode = "ANNOUNCEMENT_UPDATED",
-                beforeJson = announcementSnapshot(existing),
-                afterJson = announcementSnapshot(saved),
-            ),
-        )
-        return saved
+
+        return when (
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "PATCH",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
+        ) {
+            is IdempotencyDecision.Replay -> decision.body as Announcement
+            IdempotencyDecision.Reserved -> {
+                val existing = requireAnnouncement(command.announcementId)
+                organizationAccessGuard.requireOperator(command.actorUserId, existing.organizationId)
+                val saved =
+                    announcementRepository.save(
+                        existing.update(
+                            title = command.title?.trim() ?: existing.title,
+                            body = command.body?.trim() ?: existing.body,
+                            visibility = command.visibility ?: existing.visibility,
+                            publishStartsAtUtc = command.publishStartsAtUtc ?: existing.publishStartsAtUtc,
+                            publishEndsAtUtc = command.publishEndsAtUtc ?: existing.publishEndsAtUtc,
+                            now = clock.instant(),
+                        ),
+                    )
+                auditEventPort.append(
+                    AuditEventCommand(
+                        actor = "OPERATOR:${command.actorUserId}",
+                        action = "ANNOUNCEMENT_UPDATED",
+                        resourceType = "ANNOUNCEMENT",
+                        resourceId = requireNotNull(saved.id),
+                        occurredAtUtc = clock.instant(),
+                        reasonCode = "ANNOUNCEMENT_UPDATED",
+                        beforeJson = announcementSnapshot(existing),
+                        afterJson = announcementSnapshot(saved),
+                    ),
+                )
+                idempotencyStore.complete(
+                    actorUserId = command.actorUserId,
+                    method = "PATCH",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    status = 200,
+                    body = saved,
+                )
+                saved
+            }
+        }
     }
 
-    fun delete(
-        actorUserId: Long,
-        announcementId: Long,
-    ) {
-        val existing = requireAnnouncement(announcementId)
-        organizationAccessGuard.requireOperator(actorUserId, existing.organizationId)
-        announcementRepository.deleteById(announcementId)
-        auditEventPort.append(
-            AuditEventCommand(
-                actor = "OPERATOR:$actorUserId",
-                action = "ANNOUNCEMENT_DELETED",
-                resourceType = "ANNOUNCEMENT",
-                resourceId = requireNotNull(existing.id),
-                occurredAtUtc = clock.instant(),
-                reasonCode = "ANNOUNCEMENT_DELETED",
-                beforeJson = announcementSnapshot(existing),
-            ),
-        )
+    fun delete(command: DeleteAnnouncementCommand) {
+        val pathTemplate = "/announcements/{announcementId}"
+        val requestHash = requestHash("${command.announcementId}")
+
+        when (
+            idempotencyStore.reserveOrReplay(
+                actorUserId = command.actorUserId,
+                method = "DELETE",
+                pathTemplate = pathTemplate,
+                idempotencyKey = command.idempotencyKey,
+                requestHash = requestHash,
+            )
+        ) {
+            is IdempotencyDecision.Replay -> Unit
+            IdempotencyDecision.Reserved -> {
+                val existing = requireAnnouncement(command.announcementId)
+                organizationAccessGuard.requireOperator(command.actorUserId, existing.organizationId)
+                announcementRepository.deleteById(command.announcementId)
+                auditEventPort.append(
+                    AuditEventCommand(
+                        actor = "OPERATOR:${command.actorUserId}",
+                        action = "ANNOUNCEMENT_DELETED",
+                        resourceType = "ANNOUNCEMENT",
+                        resourceId = requireNotNull(existing.id),
+                        occurredAtUtc = clock.instant(),
+                        reasonCode = "ANNOUNCEMENT_DELETED",
+                        beforeJson = announcementSnapshot(existing),
+                    ),
+                )
+                idempotencyStore.complete(
+                    actorUserId = command.actorUserId,
+                    method = "DELETE",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    status = 204,
+                    body = Unit,
+                )
+            }
+        }
     }
 
     private fun announcementSnapshot(announcement: Announcement): Map<String, Any?> =
@@ -178,5 +268,10 @@ class AnnouncementService(
         val items = filtered.take(safeLimit)
         val nextCursor = items.takeIf { filtered.size > safeLimit }?.lastOrNull()?.id?.toString()
         return AnnouncementCursorPage(items = items, nextCursor = nextCursor)
+    }
+
+    private fun requestHash(input: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        return digest.digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
     }
 }

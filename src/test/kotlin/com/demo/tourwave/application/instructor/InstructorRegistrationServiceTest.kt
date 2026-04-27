@@ -3,6 +3,7 @@ package com.demo.tourwave.application.instructor
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorProfileRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.instructor.InMemoryInstructorRegistrationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
@@ -39,6 +40,7 @@ class InstructorRegistrationServiceTest {
     private val instructorProfileRepository = InMemoryInstructorProfileRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val invitationDeliveryService =
         OrganizationInvitationDeliveryService(
@@ -68,6 +70,7 @@ class InstructorRegistrationServiceTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val membershipService =
@@ -77,6 +80,7 @@ class InstructorRegistrationServiceTest {
             organizationAccessGuard = accessGuard,
             organizationInvitationDeliveryService = invitationDeliveryService,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val registrationService =
@@ -87,6 +91,7 @@ class InstructorRegistrationServiceTest {
             organizationAccessGuard = accessGuard,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val profileService =
@@ -95,11 +100,13 @@ class InstructorRegistrationServiceTest {
             instructorRegistrationRepository = registrationRepository,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         instructorProfileRepository.clear()
         registrationRepository.clear()
         membershipRepository.clear()
@@ -124,6 +131,7 @@ class InstructorRegistrationServiceTest {
                     slug = "seoul-guides",
                     name = "Seoul Guides",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-instructor-001",
                 ),
             )
 
@@ -135,6 +143,7 @@ class InstructorRegistrationServiceTest {
                     headline = "City storyteller",
                     languages = listOf("ko", "en"),
                     specialties = listOf("history", "food"),
+                    idempotencyKey = "apply-reg-001",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.PENDING, registration.status)
@@ -144,6 +153,7 @@ class InstructorRegistrationServiceTest {
                 ReviewInstructorRegistrationCommand(
                     actorUserId = requireNotNull(owner.id),
                     registrationId = requireNotNull(registration.id),
+                    idempotencyKey = "approve-reg-001",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.APPROVED, approved.status)
@@ -163,6 +173,7 @@ class InstructorRegistrationServiceTest {
                     certifications = listOf("first aid"),
                     yearsOfExperience = 7,
                     internalNote = "operator note",
+                    idempotencyKey = "update-profile-001",
                 ),
             )
         assertEquals("Lead storyteller", updatedProfile.headline)
@@ -190,6 +201,7 @@ class InstructorRegistrationServiceTest {
                     slug = "busan-guides",
                     name = "Busan Guides",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-instructor-002",
                 ),
             )
         membershipService.invite(
@@ -198,6 +210,7 @@ class InstructorRegistrationServiceTest {
                 organizationId = requireNotNull(organization.id),
                 userId = requireNotNull(member.id),
                 role = OrganizationRole.MEMBER,
+                idempotencyKey = "invite-member-instructor-001",
             ),
         )
         membershipService.acceptInvitation(
@@ -212,6 +225,7 @@ class InstructorRegistrationServiceTest {
                     actorUserId = requireNotNull(instructor.id),
                     organizationId = requireNotNull(organization.id),
                     headline = "Busan guide",
+                    idempotencyKey = "apply-busan-001",
                 ),
             )
 
@@ -220,6 +234,7 @@ class InstructorRegistrationServiceTest {
                 ReviewInstructorRegistrationCommand(
                     actorUserId = requireNotNull(member.id),
                     registrationId = requireNotNull(registration.id),
+                    idempotencyKey = "approve-busan-member-001",
                 ),
             )
         }
@@ -230,6 +245,7 @@ class InstructorRegistrationServiceTest {
                     actorUserId = requireNotNull(owner.id),
                     registrationId = requireNotNull(registration.id),
                     rejectionReason = "Need more experience",
+                    idempotencyKey = "reject-busan-001",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.REJECTED, rejected.status)
@@ -241,6 +257,7 @@ class InstructorRegistrationServiceTest {
                     organizationId = requireNotNull(organization.id),
                     headline = "Busan guide updated",
                     specialties = listOf("harbor"),
+                    idempotencyKey = "apply-busan-002",
                 ),
             )
         assertEquals(InstructorRegistrationStatus.PENDING, resubmitted.status)

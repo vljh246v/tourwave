@@ -3,6 +3,7 @@ package com.demo.tourwave.application.organization
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
@@ -28,6 +29,7 @@ class OrganizationMembershipAuditTest {
     private val userRepository = FakeUserRepository()
     private val organizationRepository = FakeOrganizationRepository()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val deliveryRepository = InMemoryNotificationDeliveryRepositoryAdapter()
     private val actionTokenRepository = InMemoryUserActionTokenRepositoryAdapter()
     private val service =
@@ -57,6 +59,7 @@ class OrganizationMembershipAuditTest {
                     clock = clock,
                 ),
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
@@ -66,6 +69,7 @@ class OrganizationMembershipAuditTest {
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         membershipRepository.clear()
         userRepository.clear()
         organizationRepository.clear()
@@ -110,6 +114,7 @@ class OrganizationMembershipAuditTest {
                 organizationId = organizationId,
                 userId = requireNotNull(invitee.id),
                 role = OrganizationRole.MEMBER,
+                idempotencyKey = "audit-invite-001",
             ),
         )
 
@@ -138,6 +143,7 @@ class OrganizationMembershipAuditTest {
                 organizationId = organizationId,
                 memberUserId = requireNotNull(invitee.id),
                 role = OrganizationRole.ADMIN,
+                idempotencyKey = "audit-change-role-001",
             ),
         )
 
@@ -165,6 +171,7 @@ class OrganizationMembershipAuditTest {
                 actorUserId = requireNotNull(owner.id),
                 organizationId = organizationId,
                 memberUserId = requireNotNull(invitee.id),
+                idempotencyKey = "audit-deactivate-001",
             ),
         )
 

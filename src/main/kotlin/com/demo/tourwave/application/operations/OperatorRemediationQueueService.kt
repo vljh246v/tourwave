@@ -3,6 +3,8 @@ package com.demo.tourwave.application.operations
 import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.common.port.AuditEventCommand
 import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyDecision
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.operations.port.OperatorFailureRecordRepository
@@ -16,6 +18,7 @@ import com.demo.tourwave.domain.operations.OperatorFailureRecordStatus
 import com.demo.tourwave.domain.operations.OperatorFailureSourceType
 import com.demo.tourwave.domain.payment.PaymentProviderEventStatus
 import com.demo.tourwave.domain.payment.PaymentRecordStatus
+import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
 
@@ -28,6 +31,7 @@ data class OperatorRemediationCommand(
     val actorUserId: Long,
     val action: OperatorRemediationAction,
     val note: String? = null,
+    val idempotencyKey: String,
 )
 
 data class OperatorRemediationQueueItem(
@@ -58,6 +62,7 @@ class OperatorRemediationQueueService(
     private val paymentWebhookService: PaymentWebhookService,
     private val operatorFailureRecordRepository: OperatorFailureRecordRepository,
     private val auditEventPort: AuditEventPort,
+    private val idempotencyStore: IdempotencyStore,
     private val clock: Clock,
 ) {
     fun listOpenItems(): List<OperatorRemediationQueueItem> {
@@ -67,6 +72,43 @@ class OperatorRemediationQueueService(
     }
 
     fun remediate(
+        sourceType: OperatorFailureSourceType,
+        sourceKey: String,
+        command: OperatorRemediationCommand,
+    ): OperatorRemediationQueueItem {
+        val pathTemplate = "/operator/operations/remediation-queue/{sourceType}/{sourceKey}"
+        val requestHash =
+            requestHash(
+                "$sourceType|$sourceKey|${command.action}|${command.note}",
+            )
+
+        return when (
+            val decision =
+                idempotencyStore.reserveOrReplay(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    requestHash = requestHash,
+                )
+        ) {
+            is IdempotencyDecision.Replay -> decision.body as OperatorRemediationQueueItem
+            IdempotencyDecision.Reserved -> {
+                val result = doRemediate(sourceType, sourceKey, command)
+                idempotencyStore.complete(
+                    actorUserId = command.actorUserId,
+                    method = "POST",
+                    pathTemplate = pathTemplate,
+                    idempotencyKey = command.idempotencyKey,
+                    status = 200,
+                    body = result,
+                )
+                result
+            }
+        }
+    }
+
+    private fun doRemediate(
         sourceType: OperatorFailureSourceType,
         sourceKey: String,
         command: OperatorRemediationCommand,
@@ -303,5 +345,10 @@ class OperatorRemediationQueueService(
                     ),
             ),
         )
+    }
+
+    private fun requestHash(input: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        return digest.digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
     }
 }

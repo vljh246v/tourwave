@@ -1,6 +1,7 @@
 package com.demo.tourwave.application.announcement
 
 import com.demo.tourwave.adapter.out.persistence.announcement.InMemoryAnnouncementRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
@@ -22,17 +23,20 @@ class AnnouncementAuditTest {
     private val organizationRepository = InMemoryOrganizationRepositoryAdapter()
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val fixedClock = Clock.fixed(Instant.parse("2026-03-19T09:00:00Z"), ZoneOffset.UTC)
     private val service =
         AnnouncementService(
             announcementRepository = announcementRepository,
             organizationAccessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository),
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = fixedClock,
         )
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         announcementRepository.clear()
         membershipRepository.clear()
         organizationRepository.clear()
@@ -73,6 +77,7 @@ class AnnouncementAuditTest {
                 visibility = AnnouncementVisibility.PUBLIC,
                 publishStartsAtUtc = null,
                 publishEndsAtUtc = null,
+                idempotencyKey = "audit-create-001",
             ),
         )
 
@@ -96,6 +101,7 @@ class AnnouncementAuditTest {
                     visibility = AnnouncementVisibility.DRAFT,
                     publishStartsAtUtc = null,
                     publishEndsAtUtc = null,
+                    idempotencyKey = "audit-create-002",
                 ),
             )
         auditEventPort.clear()
@@ -109,6 +115,7 @@ class AnnouncementAuditTest {
                 visibility = null,
                 publishStartsAtUtc = null,
                 publishEndsAtUtc = null,
+                idempotencyKey = "audit-update-002",
             ),
         )
 
@@ -133,11 +140,18 @@ class AnnouncementAuditTest {
                     visibility = AnnouncementVisibility.DRAFT,
                     publishStartsAtUtc = null,
                     publishEndsAtUtc = null,
+                    idempotencyKey = "audit-create-003",
                 ),
             )
         auditEventPort.clear()
 
-        service.delete(actorUserId = 11L, announcementId = requireNotNull(created.id))
+        service.delete(
+            DeleteAnnouncementCommand(
+                actorUserId = 11L,
+                announcementId = requireNotNull(created.id),
+                idempotencyKey = "audit-delete-003",
+            ),
+        )
 
         assertEquals(1, auditEventPort.events.size)
         val event = auditEventPort.events.first()

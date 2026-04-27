@@ -3,6 +3,7 @@ package com.demo.tourwave.application.organization
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.user.UserQueryAdapter
@@ -28,6 +29,7 @@ class OrganizationCommandServiceTest {
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val userRepository = UserQueryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val accessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository)
     private val invitationDeliveryService =
         OrganizationInvitationDeliveryService(
@@ -57,6 +59,7 @@ class OrganizationCommandServiceTest {
             userRepository = userRepository,
             organizationAccessGuard = accessGuard,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val membershipService =
@@ -66,6 +69,7 @@ class OrganizationCommandServiceTest {
             organizationAccessGuard = accessGuard,
             organizationInvitationDeliveryService = invitationDeliveryService,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     private val queryService =
@@ -77,6 +81,7 @@ class OrganizationCommandServiceTest {
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         organizationRepository.clear()
         membershipRepository.clear()
         userRepository.clear()
@@ -98,6 +103,7 @@ class OrganizationCommandServiceTest {
                     publicDescription = "City walks",
                     timezone = "Asia/Seoul",
                     contactEmail = "ops@seoul.test",
+                    idempotencyKey = "create-org-001",
                 ),
             )
 
@@ -124,6 +130,7 @@ class OrganizationCommandServiceTest {
                     slug = "busan-guides",
                     name = "Busan Guides",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-busan-001",
                 ),
             )
         val organizationId = requireNotNull(organization.id)
@@ -135,6 +142,7 @@ class OrganizationCommandServiceTest {
                     organizationId = organizationId,
                     userId = requireNotNull(member.id),
                     role = OrganizationRole.MEMBER,
+                    idempotencyKey = "invite-member-001",
                 ),
             )
         assertEquals(OrganizationMembershipStatus.INVITED, invited.status)
@@ -155,6 +163,7 @@ class OrganizationCommandServiceTest {
                     organizationId = organizationId,
                     memberUserId = requireNotNull(member.id),
                     role = OrganizationRole.ADMIN,
+                    idempotencyKey = "change-role-001",
                 ),
             )
         assertEquals(OrganizationRole.ADMIN, promoted.role)
@@ -165,6 +174,7 @@ class OrganizationCommandServiceTest {
                     actorUserId = requireNotNull(owner.id),
                     organizationId = organizationId,
                     memberUserId = requireNotNull(member.id),
+                    idempotencyKey = "deactivate-member-001",
                 ),
             )
         assertEquals(OrganizationMembershipStatus.INACTIVE, deactivated.status)
@@ -187,6 +197,7 @@ class OrganizationCommandServiceTest {
                     slug = "jeju-trails",
                     name = "Jeju Trails",
                     timezone = "Asia/Seoul",
+                    idempotencyKey = "create-org-jeju-001",
                 ),
             )
         val organizationId = requireNotNull(organization.id)
@@ -197,6 +208,7 @@ class OrganizationCommandServiceTest {
                 organizationId = organizationId,
                 userId = requireNotNull(admin.id),
                 role = OrganizationRole.ADMIN,
+                idempotencyKey = "invite-admin-001",
             ),
         )
         membershipService.acceptInvitation(AcceptOrganizationInvitationCommand(requireNotNull(admin.id), organizationId))
@@ -208,6 +220,7 @@ class OrganizationCommandServiceTest {
                     organizationId = organizationId,
                     userId = requireNotNull(owner.id),
                     role = OrganizationRole.OWNER,
+                    idempotencyKey = "invite-owner-forbidden-001",
                 ),
             )
         }
@@ -217,6 +230,7 @@ class OrganizationCommandServiceTest {
                     actorUserId = requireNotNull(admin.id),
                     organizationId = organizationId,
                     memberUserId = requireNotNull(admin.id),
+                    idempotencyKey = "deactivate-self-forbidden-001",
                 ),
             )
         }

@@ -1,5 +1,6 @@
 package com.demo.tourwave.adapter.`in`.web.organization
 
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
 import com.demo.tourwave.application.organization.port.OrganizationRepository
@@ -37,8 +38,12 @@ class OrganizationControllerIntegrationTest {
     @Autowired
     private lateinit var notificationDeliveryRepository: NotificationDeliveryRepository
 
+    @Autowired
+    private lateinit var idempotencyStore: IdempotencyStore
+
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         notificationDeliveryRepository.clear()
         membershipRepository.clear()
         organizationRepository.clear()
@@ -59,6 +64,7 @@ class OrganizationControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "create-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """{
@@ -78,6 +84,7 @@ class OrganizationControllerIntegrationTest {
         mockMvc.perform(
             patch("/operator/organizations/$organizationId")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "update-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """{
@@ -94,6 +101,7 @@ class OrganizationControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations/$organizationId/members/invitations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "invite-member-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"userId":${requireNotNull(invitee.id)},"role":"MEMBER"}"""),
         )
@@ -119,6 +127,7 @@ class OrganizationControllerIntegrationTest {
         mockMvc.perform(
             patch("/operator/organizations/$organizationId/members/${requireNotNull(invitee.id)}/role")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "change-role-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"role":"ADMIN"}"""),
         )
@@ -151,6 +160,7 @@ class OrganizationControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "create-jeju-ops-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"jeju-ops","name":"Jeju Ops","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)

@@ -3,6 +3,7 @@ package com.demo.tourwave.application.organization
 import com.demo.tourwave.adapter.out.persistence.auth.InMemoryUserActionTokenRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.FakeEmailNotificationChannelAdapter
 import com.demo.tourwave.adapter.out.persistence.customer.InMemoryNotificationDeliveryRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.application.auth.UserActionTokenService
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.NotificationTemplateFactory
@@ -28,6 +29,7 @@ class OrganizationMembershipServiceTest {
     private val userRepository = FakeUserRepository()
     private val organizationRepository = FakeOrganizationRepository()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val deliveryRepository = InMemoryNotificationDeliveryRepositoryAdapter()
     private val actionTokenRepository = InMemoryUserActionTokenRepositoryAdapter()
     private val service =
@@ -57,11 +59,13 @@ class OrganizationMembershipServiceTest {
                     clock = clock,
                 ),
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         membershipRepository.clear()
         userRepository.clear()
         organizationRepository.clear()
@@ -110,6 +114,7 @@ class OrganizationMembershipServiceTest {
                     organizationId = 1L,
                     userId = 2L,
                     role = OrganizationRole.MEMBER,
+                    idempotencyKey = "invite-001",
                 ),
             )
 
@@ -136,6 +141,7 @@ class OrganizationMembershipServiceTest {
                 organizationId = 1L,
                 userId = 2L,
                 role = OrganizationRole.MEMBER,
+                idempotencyKey = "invite-002",
             ),
         )
 

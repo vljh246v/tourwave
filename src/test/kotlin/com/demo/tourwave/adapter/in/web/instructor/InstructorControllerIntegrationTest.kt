@@ -1,5 +1,6 @@
 package com.demo.tourwave.adapter.`in`.web.instructor
 
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
 import com.demo.tourwave.application.instructor.port.InstructorRegistrationRepository
 import com.demo.tourwave.application.organization.port.OrganizationMembershipRepository
@@ -41,8 +42,12 @@ class InstructorControllerIntegrationTest {
     @Autowired
     private lateinit var instructorProfileRepository: InstructorProfileRepository
 
+    @Autowired
+    private lateinit var idempotencyStore: IdempotencyStore
+
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         instructorProfileRepository.clear()
         instructorRegistrationRepository.clear()
         membershipRepository.clear()
@@ -64,6 +69,7 @@ class InstructorControllerIntegrationTest {
         mockMvc.perform(
             post("/operator/organizations")
                 .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "instructor-create-org-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"slug":"seoul-team","name":"Seoul Team","timezone":"Asia/Seoul"}"""),
         ).andExpect(status().isCreated)
@@ -73,6 +79,7 @@ class InstructorControllerIntegrationTest {
         mockMvc.perform(
             post("/instructor-registrations")
                 .header("X-Actor-User-Id", requireNotNull(instructor.id))
+                .header("Idempotency-Key", "instructor-apply-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """{
@@ -93,7 +100,8 @@ class InstructorControllerIntegrationTest {
 
         mockMvc.perform(
             post("/instructor-registrations/$registrationId/approve")
-                .header("X-Actor-User-Id", requireNotNull(owner.id)),
+                .header("X-Actor-User-Id", requireNotNull(owner.id))
+                .header("Idempotency-Key", "instructor-approve-001"),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("APPROVED"))
@@ -109,6 +117,7 @@ class InstructorControllerIntegrationTest {
         mockMvc.perform(
             patch("/me/instructor-profile")
                 .header("X-Actor-User-Id", requireNotNull(instructor.id))
+                .header("Idempotency-Key", "instructor-patch-profile-001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """{

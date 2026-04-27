@@ -4,6 +4,7 @@ import com.demo.tourwave.application.booking.port.PaymentRecordRepository
 import com.demo.tourwave.application.common.JobExecutionMonitor
 import com.demo.tourwave.application.common.ScheduledJobCoordinator
 import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.common.port.WorkerJobLockRepository
 import com.demo.tourwave.application.customer.NotificationDeliveryService
 import com.demo.tourwave.application.customer.port.NotificationDeliveryRepository
@@ -57,6 +58,7 @@ class OperationsConfig {
         paymentWebhookService: PaymentWebhookService,
         operatorFailureRecordRepository: OperatorFailureRecordRepository,
         auditEventPort: AuditEventPort,
+        idempotencyStore: IdempotencyStore,
         clock: Clock,
     ): OperatorRemediationQueueService {
         return OperatorRemediationQueueService(
@@ -68,6 +70,7 @@ class OperationsConfig {
             paymentWebhookService = paymentWebhookService,
             operatorFailureRecordRepository = operatorFailureRecordRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
     }

@@ -1,6 +1,7 @@
 package com.demo.tourwave.application.announcement
 
 import com.demo.tourwave.adapter.out.persistence.announcement.InMemoryAnnouncementRepositoryAdapter
+import com.demo.tourwave.adapter.out.persistence.idempotency.InMemoryIdempotencyStoreAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationMembershipRepositoryAdapter
 import com.demo.tourwave.adapter.out.persistence.organization.InMemoryOrganizationRepositoryAdapter
 import com.demo.tourwave.application.organization.OrganizationAccessGuard
@@ -23,17 +24,20 @@ class AnnouncementServiceTest {
     private val organizationRepository = InMemoryOrganizationRepositoryAdapter()
     private val membershipRepository = InMemoryOrganizationMembershipRepositoryAdapter()
     private val auditEventPort = FakeAuditEventPort()
+    private val idempotencyStore = InMemoryIdempotencyStoreAdapter()
     private val fixedClock = Clock.fixed(Instant.parse("2026-03-19T09:00:00Z"), ZoneOffset.UTC)
     private val service =
         AnnouncementService(
             announcementRepository = announcementRepository,
             organizationAccessGuard = OrganizationAccessGuard(organizationRepository, membershipRepository),
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = fixedClock,
         )
 
     @BeforeEach
     fun setUp() {
+        idempotencyStore.clear()
         announcementRepository.clear()
         membershipRepository.clear()
         organizationRepository.clear()
@@ -73,6 +77,7 @@ class AnnouncementServiceTest {
                 visibility = AnnouncementVisibility.PUBLIC,
                 publishStartsAtUtc = fixedClock.instant().minusSeconds(60),
                 publishEndsAtUtc = fixedClock.instant().plusSeconds(60),
+                idempotencyKey = "idem-visible",
             ),
         )
         service.create(
@@ -84,6 +89,7 @@ class AnnouncementServiceTest {
                 visibility = AnnouncementVisibility.DRAFT,
                 publishStartsAtUtc = null,
                 publishEndsAtUtc = null,
+                idempotencyKey = "idem-draft",
             ),
         )
         service.create(
@@ -95,6 +101,7 @@ class AnnouncementServiceTest {
                 visibility = AnnouncementVisibility.PUBLIC,
                 publishStartsAtUtc = fixedClock.instant().plusSeconds(3600),
                 publishEndsAtUtc = null,
+                idempotencyKey = "idem-future",
             ),
         )
 
@@ -117,6 +124,7 @@ class AnnouncementServiceTest {
                         visibility = AnnouncementVisibility.PUBLIC,
                         publishStartsAtUtc = null,
                         publishEndsAtUtc = null,
+                        idempotencyKey = "idem-forbidden",
                     ),
                 )
             }

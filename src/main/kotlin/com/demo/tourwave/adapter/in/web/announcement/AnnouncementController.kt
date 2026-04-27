@@ -2,6 +2,7 @@ package com.demo.tourwave.adapter.`in`.web.announcement
 
 import com.demo.tourwave.application.announcement.AnnouncementService
 import com.demo.tourwave.application.announcement.CreateAnnouncementCommand
+import com.demo.tourwave.application.announcement.DeleteAnnouncementCommand
 import com.demo.tourwave.application.announcement.UpdateAnnouncementCommand
 import com.demo.tourwave.application.common.port.AuthzGuardPort
 import com.demo.tourwave.domain.announcement.Announcement
@@ -54,6 +55,7 @@ class AnnouncementController(
     fun createAnnouncement(
         @PathVariable organizationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: AnnouncementCreateRequest,
     ): ResponseEntity<AnnouncementResponse> {
         val announcement =
@@ -66,6 +68,7 @@ class AnnouncementController(
                     visibility = request.visibility,
                     publishStartsAtUtc = request.publishStartsAtUtc,
                     publishEndsAtUtc = request.publishEndsAtUtc,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.status(201).body(announcement.toResponse())
@@ -75,6 +78,7 @@ class AnnouncementController(
     fun updateAnnouncement(
         @PathVariable announcementId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: AnnouncementPatchRequest,
     ): ResponseEntity<AnnouncementResponse> {
         val announcement =
@@ -87,6 +91,7 @@ class AnnouncementController(
                     visibility = request.visibility,
                     publishStartsAtUtc = request.publishStartsAtUtc,
                     publishEndsAtUtc = request.publishEndsAtUtc,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.ok(announcement.toResponse())
@@ -96,8 +101,15 @@ class AnnouncementController(
     fun deleteAnnouncement(
         @PathVariable announcementId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
     ): ResponseEntity<Void> {
-        announcementService.delete(authzGuardPort.requireActorUserId(actorUserId), announcementId)
+        announcementService.delete(
+            DeleteAnnouncementCommand(
+                actorUserId = authzGuardPort.requireActorUserId(actorUserId),
+                announcementId = announcementId,
+                idempotencyKey = idempotencyKey,
+            ),
+        )
         return ResponseEntity.noContent().build()
     }
 }

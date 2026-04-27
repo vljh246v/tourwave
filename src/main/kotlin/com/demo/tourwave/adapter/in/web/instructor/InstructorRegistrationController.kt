@@ -22,6 +22,7 @@ class InstructorRegistrationController(
     @PostMapping("/instructor-registrations")
     fun apply(
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: ApplyInstructorRegistrationWebRequest,
     ): ResponseEntity<InstructorRegistrationResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
@@ -34,6 +35,7 @@ class InstructorRegistrationController(
                     bio = request.bio,
                     languages = request.languages,
                     specialties = request.specialties,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.status(201).body(registration.toResponse(requireUser(registration.userId)))
@@ -56,6 +58,7 @@ class InstructorRegistrationController(
     fun approve(
         @PathVariable registrationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
     ): ResponseEntity<InstructorRegistrationResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
         val registration =
@@ -63,6 +66,7 @@ class InstructorRegistrationController(
                 ReviewInstructorRegistrationCommand(
                     actorUserId = requiredActorUserId,
                     registrationId = registrationId,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.ok(registration.toResponse(requireUser(registration.userId)))
@@ -72,6 +76,7 @@ class InstructorRegistrationController(
     fun reject(
         @PathVariable registrationId: Long,
         @RequestHeader("X-Actor-User-Id", required = false) actorUserId: Long?,
+        @RequestHeader("Idempotency-Key") idempotencyKey: String,
         @RequestBody request: RejectInstructorRegistrationWebRequest,
     ): ResponseEntity<InstructorRegistrationResponse> {
         val requiredActorUserId = authzGuardPort.requireActorUserId(actorUserId)
@@ -81,6 +86,7 @@ class InstructorRegistrationController(
                     actorUserId = requiredActorUserId,
                     registrationId = registrationId,
                     rejectionReason = request.rejectionReason,
+                    idempotencyKey = idempotencyKey,
                 ),
             )
         return ResponseEntity.ok(registration.toResponse(requireUser(registration.userId)))

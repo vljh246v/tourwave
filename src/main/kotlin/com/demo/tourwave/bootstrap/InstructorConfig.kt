@@ -1,6 +1,7 @@
 package com.demo.tourwave.bootstrap
 
 import com.demo.tourwave.application.common.port.AuditEventPort
+import com.demo.tourwave.application.common.port.IdempotencyStore
 import com.demo.tourwave.application.instructor.InstructorProfileService
 import com.demo.tourwave.application.instructor.InstructorRegistrationService
 import com.demo.tourwave.application.instructor.port.InstructorProfileRepository
@@ -22,6 +23,7 @@ class InstructorConfig {
         organizationAccessGuard: OrganizationAccessGuard,
         userRepository: UserRepository,
         auditEventPort: AuditEventPort,
+        idempotencyStore: IdempotencyStore,
         clock: Clock,
     ): InstructorRegistrationService =
         InstructorRegistrationService(
@@ -31,6 +33,7 @@ class InstructorConfig {
             organizationAccessGuard = organizationAccessGuard,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 
@@ -40,6 +43,7 @@ class InstructorConfig {
         instructorRegistrationRepository: InstructorRegistrationRepository,
         userRepository: UserRepository,
         auditEventPort: AuditEventPort,
+        idempotencyStore: IdempotencyStore,
         clock: Clock,
     ): InstructorProfileService =
         InstructorProfileService(
@@ -47,6 +51,7 @@ class InstructorConfig {
             instructorRegistrationRepository = instructorRegistrationRepository,
             userRepository = userRepository,
             auditEventPort = auditEventPort,
+            idempotencyStore = idempotencyStore,
             clock = clock,
         )
 }
