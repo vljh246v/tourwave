@@ -9,20 +9,21 @@ milestone: M2
 domain: occurrence
 layer: application
 size: M
-status: in-progress
+status: done
+completed_at: 2026-04-28
 
 depends_on: []
 blocks: []
 sub_tasks: []
 
 github_issue: null
-exec_plan: ""
+exec_plan: "docs/exec-plans/active/T-100.md"
 
 created: 2026-04-28
 updated: 2026-04-28
 ---
 
-#status/in-progress #area/be #risk/high
+#status/done #area/be #risk/high
 
 # T-100 — [BE] occurrence — 락 획득 순서 검증
 

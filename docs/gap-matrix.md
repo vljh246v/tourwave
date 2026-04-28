@@ -1,6 +1,6 @@
 # Gap Matrix — Phase 2
 
-마지막 갱신: 2026-04-28 (재감사)
+마지막 갱신: 2026-04-28 (재감사 + T-100 완료)
 
 이 문서는 Phase 1 감사 결과 + SSOT 문서 대비 현재 구현의 갭을 태스크 ID로 매핑한 것이다.
 
@@ -32,7 +32,7 @@
 | customer | ✅ | 🟡 [T-206](T-206) Notification filtering | ✅ | 🟡 [T-207](T-207) Email adapter | 🟡 [T-208](T-208) iCal RFC | 🟡 [T-209](T-209) |
 | inquiry | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ [T-210](T-210) OpenAPI 계약 |
 | instructor | 🟡 [T-211](T-211) Status 검증 | ✅ T-904 흡수 (감사) | ✅ T-903 done | 🟡 [T-214](T-214) Role 검증 | ✅ T-905 done | 🟡 [T-215](T-215) |
-| occurrence | ✅ | 🟡 [T-100](T-100) Race condition | 🟡 [T-101](T-101) Idempotency reschedule | 🟡 [T-102](T-102) Status guard | ✅ | 🟡 [T-103](T-103) Timezone 중앙화 |
+| occurrence | ✅ | ✅ T-100 done 2026-04-28 (lock 순서 검증+회귀테스트) | 🟡 [T-101](T-101) Idempotency reschedule | 🟡 [T-102](T-102) Status guard | ✅ | 🟡 [T-103](T-103) Timezone 중앙화 |
 | operations | ✅ | 🟡 [T-216](T-216) Audit events | ✅ T-903 done | ✅ | ✅ | 🟡 [T-218](T-218) |
 | organization | ✅ | ✅ T-904 흡수 | ✅ T-903 done | ✅ | ✅ | 🟡 [T-221](T-221) slug normalize |
 | participant | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |

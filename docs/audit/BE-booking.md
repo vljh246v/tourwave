@@ -1,6 +1,6 @@
 # BE 감사: booking
 
-마지막 감사: 2026-04-18
+마지막 감사: 2026-04-28 (T-100)
 
 ## 요약
 - 구현 완성도: ✅
@@ -120,7 +120,9 @@
 - `BookingQueryServiceTest` — 쿼리 서비스 통합 테스트
 - `BookingRefundPreviewServiceTest` — 환불 미리보기 서비스 테스트
 - `BookingControllerIntegrationTest` — HTTP 계약 가드 (OpenAPI SSOT)
-- `MysqlBookingConcurrencyTest` — Testcontainers 기반 MySQL 동시성 테스트
+- `MysqlBookingConcurrencyTest` — Testcontainers 기반 MySQL 동시성 테스트 (단일 occurrence, capacity=1 approve 충돌)
+- `BookingCommandServiceLockOrderTest` — lock() → capacity-read 호출 순서 단위 검증 (Spring 미사용) [T-100]
+- `BookingConcurrencyAuditTest` — MySQL Testcontainer 동시성 회귀 (100개 동시 create/approve, 데드락 미발생) [T-100]
 
 ### 실패 중
 - (모두 통과)
